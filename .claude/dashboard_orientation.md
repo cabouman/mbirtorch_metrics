@@ -66,8 +66,10 @@ Three subsystems, three directories — the boundaries matter when changing thin
 - **Fingerprint** (`fingerprint()`): float64 `sum/mean/l2norm` + sampled values + `shape/dtype/
   padding_zero`, computed on the op's **true (unpadded) shape** (`op_true_shape`), so it's comparable
   across device counts. The correctness signal.
-- **Sharding probe** (`_probe_sharding_by_geom`): per-**branch** capability check → the orchestrator
-  sweeps each geometry only at the device counts it supports (unsharded branch like `main` ⇒ n=1 only).
+- **Device pin** (`pin_devices`): every measured row calls `configure_devices` and then asserts the
+  realized device list, count and kind. An unpinned mbirtorch model auto-widens on a multi-GPU node,
+  so without the pin an all-device run would be filed under a cell labelled n=1. The one unpinned
+  settle per night is the `auto-choice` worker, which is what covers the automatic path.
 - **Two gates, different jobs**:
   - *Engine gate* (`REG_GATE`, `Config.gate`): compares each run only to **this branch's own prior
     run** (commit-over-commit); sets the process exit code (the nightly's alert). Tolerances
@@ -95,9 +97,9 @@ Three subsystems, three directories — the boundaries matter when changing thin
 
 | file | role | you'd change it to… |
 |---|---|---|
-| `tooling/scaling_tests/performance_tracking.py` | the engine: `Config`, `make_model`, `measure_cell_group`, `fingerprint`, `run_*` timed ops, `_probe_sharding_by_geom`, `run()` | add a geometry/op/size, change what's measured or fingerprinted, tune engine-gate tolerances |
-| `tooling/scaling_tests/scaling_common.py` | process plumbing: `build_worker_env`, `run_worker`, `time_op`, `peak_memory_mb`, `detect_platform`, `beta_root` | change worker env / timing / memory measurement / device detection |
-| `tooling/scaling_tests/run_nightly.py` · `run_performance_local.py` | engine entry points (env-driven nightly vs edit-the-`CONFIG` local) | run a scoped manual measurement |
+| `tooling/scaling_tests/performance_tracking.py` | the engine: `Config`, `make_model`, `pin_devices`, `measure_cell_group`, `fingerprint`, `run_*` timed ops, the gate, the record book, `run()`, `main()` | add a geometry/op/size, change what's measured or fingerprinted, tune engine-gate tolerances |
+| `tooling/scaling_tests/scaling_common.py` | process plumbing: `run_worker`, `time_op`, `peak_memory_mb`, `run_measure_loop`, the GPU health sampler, YAML I/O | change worker isolation / timing / memory measurement |
+| `tooling/scaling_tests/run_performance_local.py` · `measure_one_cell.py` | manual entry points (edit-the-`CONFIG` local sweep; one cell group) | run a scoped manual measurement |
 | `tooling/regression/run_regression.sh` | the nightly orchestrator (fire-on-change → clone → install → measure → push) | change the run flow, gating, or push logic |
 | `tooling/regression/lib_env.sh` | shared dedicated-env + worktree install (`reg_activate_env`, `reg_plat_extras`, `reg_install_lib`) — used by the nightly **and** `add_run.sh` | change how the env is built / the library is installed |
 | `tooling/regression/regression.env` | infra config (URLs, `WORK_DIR`, `CONDA_ENV`, schedule) — sources `action_scripts/run_configs.env` | change infra (not run knobs) |
@@ -117,13 +119,13 @@ Three subsystems, three directories — the boundaries matter when changing thin
 The **denoiser** is the most recent full worked example of "add a geometry"; grep for `denoiser` /
 `denoise` across the four files below to see every touchpoint in one diff.
 
-**Add a geometry** (pattern: translation, multiaxis_parallel, denoiser):
+**Add a geometry** (the denoiser is the worked example):
 1. `Config`: append to `geometries`; add `geom_ops[g]` and `geom_sizes[g]` if it differs from the
    defaults (image-shaped sizes, restricted op set, etc.).
 2. `make_model`: add an `elif geometry == g:` branch building the model from `size`.
 3. `measure_cell_group`: only if its input/op differ from the projection norm — guard the
    sinogram/indices/partition setup and add the op's input builder + dispatch + an `op_true_shape` entry.
-4. `_probe_sharding_by_geom`: add a tiny builder so the device sweep is detected per branch.
+4. `cell_device_counts`: say whether the geometry sweeps more than one device count.
 5. Dashboard: add to `GEOM_ORDER`, `GEOM_DASH`, `GEOM_LABEL`, `OP_ORDER`, and (if it gets a History
    trend) a `HIST_GROUPS` entry. Scaling's op dropdown + the device selector are data-driven.
 
@@ -185,14 +187,14 @@ the `renderAll()` chain.
 
 ## 6. How to verify a change (the toolkit we actually use)
 
-- **Engine, fast (no subprocess):** `import performance_tracking as pt; pt.measure_cell_group(cfg, geom,
-  op, "AxBxC", [1,2,4], tmpfile)` — checks measurement + the cross-device fingerprint match in
-  seconds.
-- **Full pipeline into a throwaway tree:** `pt.run(pt.Config(inline=True, geometries=[...],
-  out_dir=<tmp>/results/<plat>/<branch>, ...))` → a real YAML; point `build_dashboard.REPO_ROOT` at
-  `<tmp>` and `build()` → inspect/screenshot. Use **`inline=True`** — the subprocess path needs
-  `REG_LIB_ROOT` and otherwise trips a `beta_root()` namespace-package import. **Rebuild the real
-  dashboard afterward** (the temp build overwrites `dashboard/index.html`).
+- **One cell, fast:** `python tooling/scaling_tests/measure_one_cell.py --geometry cone --op back
+  --size 200x208x160` — the nightly's own `measure_cell_group`, for one cell group, in this process.
+- **The gate, with no hardware:** `python tooling/scaling_tests/test_gate.py` covers the rolling-min
+  memory window at every setting. The gate is pure, so it can also be replayed over the tracked runs.
+- **Full pipeline into a throwaway tree:** set `REG_PLATFORM`, `REG_LIB_ROOT`, `REG_OUT_DIR` and run
+  `python tooling/scaling_tests/performance_tracking.py`. Add `REG_SMOKE=1` for a toy one-cell sweep
+  that finishes in seconds. Point `build_dashboard.REPO_ROOT` at the temp tree to render it.
+  **Rebuild the real dashboard afterward** (the temp build overwrites `dashboard/index.html`).
 - **UI:** serve `dashboard/` with a static server and drive it with the preview tools (`preview_eval`
   to click rows / read `ui_state`); headless Chrome `--screenshot` is fine for layout, but `--dump-dom`
   hangs on this machine. → memory `dashboard-verify-gotchas.md`.
