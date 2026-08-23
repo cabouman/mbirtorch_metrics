@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TEMPLATE — enable_nightly.sh fills the @PLACEHOLDERS@ and writes the result to
+     ~/Library/LaunchAgents/com.mbirtorch.regression.plist.  Do not load this file directly.
+     Dark-wake caveat: a LaunchAgent runs only on a FULL wake, so
+     MACOS_NIGHTLY_TIME must be a time the Mac is normally AWAKE (default 10:00, an hour after
+     the mbirjax Mac run, so the two never contend for the machine). -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>@LABEL@</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>@WRAPPER@</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>@HOUR@</integer>
+    <key>Minute</key><integer>@MINUTE@</integer>
+  </dict>
+  <!-- launchd gives a minimal PATH; include the conda bin so `conda` resolves in the wrapper. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>@PATH@</string>
+  </dict>
+  <key>StandardOutPath</key><string>@LOGOUT@</string>
+  <key>StandardErrorPath</key><string>@LOGERR@</string>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>

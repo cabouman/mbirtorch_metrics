@@ -910,7 +910,7 @@ def _fmt_delta(today, ref, unit=""):
 
 
 def _gate_fingerprint(key, tf, rf, op, lab, config, hard, soft):
-    """Correctness gate on the tolerant fingerprint (see §7): exact shape/dtype, robust
+    """Correctness gate on the tolerant fingerprint: exact shape/dtype, robust
     aggregates within rtol (HARD), a few sample deviations allowed (SOFT), new padding leak (HARD).
     Each aggregate finding shows the relative diff vs the tolerance plus the absolute change."""
     if not tf or not rf:
@@ -994,7 +994,7 @@ def _gate_metrics(key, t, r, lab, plat, config, hard, soft):
 
 
 def _compare_cell(key, t, r, lab, plat, expected, oom_gos, config, hard, soft):
-    """Classify one cell vs one reference (see plan §10a status transitions)."""
+    """Classify one cell against one reference, by status transition."""
     ts, rs = _cell_status(t), _cell_status(r)
     if rs == "absent":
         soft.append(f"[{lab}] new cell, no baseline (not gated): {key}")
@@ -1024,7 +1024,7 @@ def _compare_cell(key, t, r, lab, plat, expected, oom_gos, config, hard, soft):
 def gate_run(result, references, config):
     """Compare ``result`` against each (label, ref_result) and return the gate dict.
 
-    Fires on a CHANGE vs the reference (plan §10/§10a): ok->fail / memory / speedup / structural /
+    Fires on a CHANGE against the reference: ok->fail / memory / speedup / structural /
     correctness are HARD; absolute time / added-dropped / improvements are SOFT; persistent
     failures are quiet.  Cold start (no usable reference) is all-SOFT, never a fail.
     """
