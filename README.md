@@ -41,3 +41,10 @@ commit `e37bc93e`, which is the last commit before that repository grew a second
 nightly.  The two repositories now run independently.  `mbirjax_metrics` records mbirjax and this one
 records mbirtorch.  The design record for the port is
 `mbirtorch_plans/plans/mbirtorch_metrics/mbirjax_port.md`.
+
+The measured runs from 2026-08-05 onward were migrated from `mbirjax_metrics`, where they were filed
+under the platform keys `gpu-torch` and `cpu-torch`.  This repository records one backend, so those
+keys are `gpu` and `cpu` here.  The migration renamed the two keys wherever they appeared, which
+covers directory names, file names, the `platform` fields, the `sizes` keys in each run's config
+block, the `device_label` text, and the recorded `out_dir` paths.  It changed nothing else, and no
+measured value moved.

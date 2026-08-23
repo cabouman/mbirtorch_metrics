@@ -1,0 +1,130 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/buzzard/.mbirtorch/regression/lib_main
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 4/4 workers
+4 workers [495 items]
+
+s.ss.s.ss.s............................................................. [ 14%]
+....sssssssssssssssssssssssssssssss..........ssssssss........s....s..... [ 29%]
+...ssssssssss.....................sssssss.sssssssssss................... [ 43%]
+........................................................................ [ 58%]
+.......................................................................s [ 72%]
+........................................................................ [ 87%]
+........ssssssss.....s......................................s..          [100%]
+=============================== warnings summary ===============================
+tests/test_denoiser.py: 14 warnings
+tests/test_memory_ledger.py: 14 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_prox_map.py: 14 warnings
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_memory_ledger.py: 3 warnings
+tests/test_device_policy.py: 1 warning
+tests/test_sharding.py: 13 warnings
+  /home/buzzard/.mbirtorch/regression/lib_main/mbirtorch/vcd_utils.py:125: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_triton_cone.py::test_cone_back_kernel_selection_and_end_to_end
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/_inductor/compile_fx.py:321: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+    warnings.warn(
+
+tests/test_sharding.py::test_move_shard_small_and_scalar_tensors
+  /home/buzzard/.mbirtorch/regression/lib_main/tests/test_sharding.py:605: UserWarning: Direct device-to-device transfer failed the round-trip probe on this hardware; routing cross-device transfers through host memory.  This is correct but slower.
+    out = move_shard(s, torch.device("cpu"), dev2dev_safe=safe)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] ../tests/test_hdf5_family.py:142: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:154: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hsnt_vcls.py:32: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hsnt_vcls.py:63: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hsnt_vcls.py:73: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hsnt_vcls.py:85: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hsnt_vcls.py:98: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:158: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:168: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:177: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:184: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:36: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:44: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:51: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:58: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:69: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:75: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_stripe_segmentation.py:85: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:51: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:61: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:73: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:82: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:90: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:98: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:109: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:122: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:132: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:144: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:154: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:164: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:172: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:178: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:190: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:197: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:208: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:233: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_utilities.py:250: no mbirjax-written cone save golden
+SKIPPED [1] ../tests/test_preprocess_utilities.py:260: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:30: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:41: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:49: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:58: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:69: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:78: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:107: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_hdf5_family.py:122: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_params_and_paths.py:87: cell is a cube; transposed shape identical
+SKIPPED [1] ../tests/test_phantom.py:24: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_loaders.py:172: no preprocess goldens
+SKIPPED [1] ../tests/test_preprocess_loaders.py:185: no preprocess goldens
+SKIPPED [1] ../tests/test_preprocess_mar.py:57: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:64: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:71: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:78: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:91: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:110: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:118: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_preprocess_mar.py:129: no preprocess goldens: run tests/generate_preprocess_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_cone.py:80: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:89: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:97: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:105: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:113: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:122: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:130: no cone goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:206: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:212: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:221: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:230: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:238: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:247: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:267: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:276: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:285: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:293: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_denoiser.py:22: no denoiser goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_sharding.py:66: needs a second local device (mps)
+SKIPPED [1] ../tests/test_vs_goldens.py:47: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:51: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:58: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:65: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:80: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:87: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:94: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_vs_goldens.py:105: no goldens: run tests/generate_goldens.py in the mbirjax env
+SKIPPED [1] ../tests/test_sharding.py:174: needs a second local device (mps)
+SKIPPED [1] ../tests/test_split_sino.py:96: no preprocess goldens
+=========== 408 passed, 87 skipped, 75 warnings in 242.14s (0:04:02) ===========

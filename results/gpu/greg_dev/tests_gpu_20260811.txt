@@ -1,0 +1,313 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/buzzard/.mbirtorch/regression/lib_greg_dev
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 4/4 workers
+4 workers [575 items]
+
+.................................................ssssssssss............. [ 12%]
+.....................................................s.................. [ 25%]
+........................................................................ [ 37%]
+........................................................................ [ 50%]
+........................................................................ [ 62%]
+.............F......s...................s............................... [ 75%]
+........................................................................ [ 87%]
+.........................................s....................F........  [100%]
+=================================== FAILURES ===================================
+____ test_masked_single_device_plastic_floor_keeps_the_unsharded_arithmetic ____
+[gw3] linux -- Python 3.12.13 /home/buzzard/.conda/envs/mbirtorch_regression/bin/python
+
+    def test_masked_single_device_plastic_floor_keeps_the_unsharded_arithmetic():
+        """One plain tensor plus a view mask must take the float32 reduction.
+    
+        This is the branch a padded sinogram would reach if it were handed to
+        the correction as a single tensor, and it is the one combination the MAR
+        tests never drove.  The sharded form sums each piece to a Python float
+        and divides in float64, which is a different rounding: the check below
+        pins the result to the float32 expression and, on this seeded input,
+        shows the float64 form landing somewhere else -- so a change back to it
+        fails here instead of silently moving a single-device answer.
+        """
+        plastic, metal, measured, view_mask, num_real_pixels = _masked_floor_case()
+        theta, gamma = MASKED_FLOOR_THETA, MASKED_FLOOR_GAMMA
+    
+        out = mtmar._correct_plastic_sinogram(
+            measured, plastic, [metal], theta, MASKED_FLOOR_EXPONENTS,
+            num_cross_terms=1, num_metal_terms=1, p_normalization=1.0, gamma=gamma,
+            view_mask=view_mask, num_real_pixels=num_real_pixels)
+    
+        plastic_coef = (torch.zeros_like(plastic)
+                        + float(theta[0]) * torch.ones_like(plastic)
+                        + float(theta[1]) * metal)
+        residual = torch.clamp(measured - float(theta[2]) * metal, min=0)
+    
+        # The expression this branch is required to keep: a float32 masked sum,
+        # divided by the real pixel count, held against Sp with torch.maximum.
+        float32_floor = gamma * (torch.sum(plastic_coef * view_mask) / float(num_real_pixels))
+        expected = 1.0 * residual / torch.maximum(plastic_coef, float32_floor)
+        assert torch.equal(out, expected)
+    
+        # The float64 host divide, which is what the sharded branch must use and
+        # what this branch must not: on this input it moves the floor by one unit
+        # in the last place and changes every clamped element.
+        float64_floor = gamma * (float(torch.sum(plastic_coef * view_mask)) / float(num_real_pixels))
+        combined = 1.0 * residual / torch.clamp(plastic_coef, min=float64_floor)
+        assert float32_floor.item() != float64_floor, (
+            'the two reductions agree on this input, so the check above would '
+            'pass either way; pick an input where they differ')
+        print("masked single-device Sp floor: "
+              f"float32 {float32_floor.item()!r} vs float64 {float64_floor!r}, "
+              f"{int((expected != combined).sum())} elements differ")
+>       assert not torch.equal(expected, combined)
+E       assert not True
+E        +  where True = <built-in method equal of type object at 0x14b98c850f20>(tensor([[[0.4882, 0.1475, 0.7577, 0.0247, 0.5544, 0.4526, 0.4925],\n         [0.6597, 0.0000, 0.4673, 0.2287, 0.5832, 0..., 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000],\n         [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000]]]), tensor([[[0.4882, 0.1475, 0.7577, 0.0247, 0.5544, 0.4526, 0.4925],\n         [0.6597, 0.0000, 0.4673, 0.2287, 0.5832, 0..., 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000],\n         [0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000]]]))
+E        +    where <built-in method equal of type object at 0x14b98c850f20> = torch.equal
+
+../tests/test_sharded_segmentation.py:287: AssertionError
+----------------------------- Captured stdout call -----------------------------
+masked single-device Sp floor: float32 1.0095429420471191 vs float64 1.0095429284232003, 0 elements differ
+__________ test_parallel_column_gather_matches_the_shape_it_replaces ___________
+[gw0] linux -- Python 3.12.13 /home/buzzard/.conda/envs/mbirtorch_regression/bin/python
+
+    def test_parallel_column_gather_matches_the_shape_it_replaces():
+        # The values gate.  Both shapes are run over the same inputs in the same
+        # process and both are held to the same bar, which is the reading that
+        # does not move with the compile state above; the two distances are
+        # printed side by side for the same reason.  One call per view-owner over
+        # every pixel is the single-device call in every respect that sets a
+        # value: the same voxel columns in one array, the whole slice range
+        # anchored at 0, and each detector row produced by that one call and no
+        # other.  A row taking contributions from more than one call would show up
+        # here as an order-one error, not as a last bit.
+        for n in (2, 3):
+            # None takes the shipped batch, which covers a pass this size in one
+            # call; the large value asks for that explicitly.
+            for batch in (None, 10 ** 6):
+                m, idx, vals, _sino, ref_fwd, _rb = _banded_case(["cpu"] * n)[:6]
+                banded = m._gather_sinogram(m.sparse_forward_project(vals, idx))
+                m.forward_column_gather = True
+                if batch is not None:
+                    m.forward_project_pixel_batch = batch
+                fwd = m._gather_sinogram(m.sparse_forward_project(vals, idx))
+                scale = np.max(np.abs(ref_fwd))
+                rel = np.max(np.abs(fwd - ref_fwd)) / scale
+                rel_banded = np.max(np.abs(banded - ref_fwd)) / scale
+                print(f"parallel column gather n={n} batch={batch}: rel {rel:.2e},"
+                      f" banded {rel_banded:.2e}")
+                assert rel < 1e-5 and rel_banded < 1e-5, (n, batch, rel,
+                                                          rel_banded)
+    
+        # The one summation order this shape does change for a row-aligned
+        # geometry: several pixel batches turn a single accumulation over every
+        # pixel into a host-side sum of per-batch partials.  Nothing about the
+        # rows moves, so what is left is float noise in the same class as above
+        # (measured 1.0e-07 to 1.6e-07 here).  This is the case that runs at
+        # production sizes, where the pass is far wider than one batch.
+        for batch in (1, 5, 7):
+            m, idx, vals, _sino, ref_fwd, _rb = _parallel_column_case(
+                ["cpu", "cpu"], pixel_batch=batch)
+            fwd = m._gather_sinogram(m.sparse_forward_project(vals, idx))
+            rel = np.max(np.abs(fwd - ref_fwd)) / np.max(np.abs(ref_fwd))
+            print(f"parallel column gather, {batch}-pixel batches: rel {rel:.2e}")
+>           assert rel < 1e-5, (batch, rel)
+E           AssertionError: (1, np.float32(0.06560517))
+E           assert np.float32(0.06560517) < 1e-05
+
+../tests/test_sharding.py:1111: AssertionError
+----------------------------- Captured stdout call -----------------------------
+parallel column gather n=2 batch=None: rel 0.00e+00, banded 0.00e+00
+parallel column gather n=2 batch=1000000: rel 0.00e+00, banded 0.00e+00
+parallel column gather n=3 batch=None: rel 0.00e+00, banded 0.00e+00
+parallel column gather n=3 batch=1000000: rel 0.00e+00, banded 0.00e+00
+parallel column gather, 1-pixel batches: rel 6.56e-02
+------------------------------ Captured log call -------------------------------
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:5400 
+DEBUG    torch.__trace:convert_frame.py:303 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:output_graph.py:2841 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:autograd_cache.py:1130 
+DEBUG    torch.__trace:compile_fx.py:2625 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2656 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:graph_capture.py:426 
+DEBUG    torch.__trace:graph_capture.py:444 
+DEBUG    torch.__trace:graph_compile.py:381 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2448 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2474 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:codecache.py:1996 
+DEBUG    torch.__trace:codecache.py:2004 
+DEBUG    torch.__trace:codecache.py:2008 
+DEBUG    torch.__trace:codecache.py:2016 
+DEBUG    torch.__trace:codecache.py:2024 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:compile_fx.py:1149 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:subclass_codegen.py:333 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:4552 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2009 
+DEBUG    torch.__trace:utils.py:2350
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 14 warnings
+tests/test_denoiser.py: 14 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_logging.py: 14 warnings
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 1 warning
+tests/test_memory_ledger.py: 3 warnings
+tests/test_sharding.py: 8 warnings
+tests/test_translation.py: 3 warnings
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/vcd_utils.py:125: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_logging.py: 11 warnings
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/osqp/interface.py:405: PendingDeprecationWarning: The default value of raise_error will change to True in the future.
+    warnings.warn(
+
+tests/test_logging.py::test_recon_plastic_metal_merges_pass_logs
+tests/test_logging.py::test_recon_plastic_metal_merges_pass_logs
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/cone_beam.py:986: UserWarning: split_index is too close to the volume boundary for the recon overlap; falling back to standard MBIR reconstruction.
+    warnings.warn(
+
+tests/test_widening_floors.py::test_drift_in_the_projection_cost_code_is_reported_and_not_fatal
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/_pytest/python.py:167: UserWarning: FLOORS STALE: the projection-cost code changed, so the multi-GPU widening speed floors in mbirtorch/_widening_floors.py no longer describe it.  They still govern, and every automatic device selection logs this.
+  
+  changed inputs:
+      TomographyModel._sparse_forward_project_columns
+          recorded MISSING
+          now      73f545dbd63188d6
+      TomographyModel._sparse_forward_project_sharded
+          recorded f2a1fff6d1ea2627
+          now      546201c90075a19f
+      _sharding.py
+          recorded MISSING
+          now      424ada53243fa9f4
+  
+  To RE-MEASURE (on a 4-GPU node, roughly 30-60 minutes), then paste the printed block:
+      python dev_scripts/refresh_widening_floors.py
+  
+  To RE-RECORD the hashes only, when the change provably cannot move a projection cost (no GPU needed):
+      python dev_scripts/refresh_widening_floors.py --bless
+  
+  Nothing needs to be done to keep working: this test passes stale.
+    result = testfunction(**testargs)
+
+tests/test_sharding.py::test_move_shard_small_and_scalar_tensors
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharding.py:605: UserWarning: Direct device-to-device transfer failed the round-trip probe on this hardware; routing cross-device transfers through host memory.  This is correct but slower.
+    out = move_shard(s, torch.device("cpu"), dev2dev_safe=safe)
+
+tests/test_triton_cone.py::test_cone_back_kernel_selection_and_end_to_end
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/_inductor/compile_fx.py:321: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] ../tests/test_cone.py:213: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:219: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:228: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:237: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:245: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:254: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:274: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:283: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:292: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:300: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_params_and_paths.py:87: cell is a cube; transposed shape identical
+SKIPPED [1] ../tests/test_sharding.py:66: needs a second local device (mps)
+SKIPPED [1] ../tests/test_sharding.py:174: needs a second local device (mps)
+SKIPPED [1] ../tests/test_sharding.py:803: needs a second local device (mps)
+FAILED ../tests/test_sharded_segmentation.py::test_masked_single_device_plastic_floor_keeps_the_unsharded_arithmetic
+FAILED ../tests/test_sharding.py::test_parallel_column_gather_matches_the_shape_it_replaces
+====== 2 failed, 559 passed, 14 skipped, 91 warnings in 130.13s (0:02:10) ======

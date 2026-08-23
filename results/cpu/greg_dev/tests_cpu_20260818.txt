@@ -1,0 +1,131 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 8/8 workers
+8 workers [665 items]
+
+........................................................................ [ 10%]
+........................................................................ [ 21%]
+.......................................................s................ [ 32%]
+...........ssssssssssss.............................................ssss [ 43%]
+ssssssssssssssssssssssssssssss.........sssssssssssssssssssssssssssssssss [ 54%]
+ssss.................................................................... [ 64%]
+.......................................................ssssssss......... [ 75%]
+........................................................................ [ 86%]
+........................................................................ [ 97%]
+.................                                                        [100%]
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 56 warnings
+tests/test_demo_data.py: 14 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_memory_ledger.py: 14 warnings
+tests/test_logging.py: 14 warnings
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 3 warnings
+tests/test_memory_ledger.py: 3 warnings
+tests/test_translation.py: 4 warnings
+tests/test_sharding.py: 13 warnings
+  /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/vcd_utils.py:127: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_logging.py: 11 warnings
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/osqp/interface.py:405: PendingDeprecationWarning: The default value of raise_error will change to True in the future.
+    warnings.warn(
+
+tests/test_logging.py::test_recon_plastic_metal_merges_pass_logs
+tests/test_logging.py::test_recon_plastic_metal_merges_pass_logs
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+  /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/cone_beam.py:1000: UserWarning: split_index is too close to the volume boundary for the recon overlap; falling back to standard MBIR reconstruction.
+    warnings.warn(
+
+tests/test_widening_floors.py::test_drift_in_the_projection_cost_code_is_reported_and_not_fatal
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/_pytest/python.py:167: UserWarning: FLOORS STALE: the projection-cost code changed, so the multi-GPU widening speed floors in mbirtorch/_widening_floors.py no longer describe it.  They still govern, and every automatic device selection logs this.
+  
+  changed inputs:
+      triton_cone.py
+          recorded 36e72e6f0f6f3ca7
+          now      a4d8350b350cd34a
+      triton_parallel.py
+          recorded 78fc531463124e63
+          now      874f80d8a4a0b482
+  
+  To RE-MEASURE (on a 4-GPU node, roughly 30-60 minutes), then paste the printed block:
+      python dev_scripts/refresh_widening_floors.py
+  
+  To RE-RECORD the hashes only, when the change provably cannot move a projection cost (no GPU needed):
+      python dev_scripts/refresh_widening_floors.py --bless
+  
+  Nothing needs to be done to keep working: this test passes stale.
+    result = testfunction(**testargs)
+
+tests/test_sharding.py::test_real_cross_device_transfer_cpu_mps
+  /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharding.py:172: UserWarning: Direct device-to-device transfer failed the round-trip probe on this hardware; routing cross-device transfers through host memory.  This is correct but slower.
+    bounced = move_shard(band.to("mps"), torch.device("cpu"), dev2dev_safe=False)
+
+tests/test_sharding.py::test_move_shard_small_and_scalar_tensors
+  /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharding.py:861: UserWarning: Direct device-to-device transfer failed the round-trip probe on this hardware; routing cross-device transfers through host memory.  This is correct but slower.
+    out = move_shard(s, torch.device("cpu"), dev2dev_safe=safe)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] ../tests/test_params_and_paths.py:87: cell is a cube; transposed shape identical
+SKIPPED [2] ../tests/test_kernels_sharded.py:142: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [2] ../tests/test_kernels_sharded.py:165: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [2] ../tests/test_kernels_sharded.py:191: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [2] ../tests/test_kernels_sharded.py:219: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [2] ../tests/test_kernels_sharded.py:253: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [2] ../tests/test_kernels_sharded.py:295: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [1] ../tests/test_cone.py:187: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:193: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:202: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:211: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:219: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:228: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:248: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:257: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:266: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:274: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [4] ../tests/test_triton_cone.py:144: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:186: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] ../tests/test_triton_cone.py:209: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:235: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] ../tests/test_triton_cone.py:288: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:310: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] ../tests/test_triton_cone.py:339: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:367: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] ../tests/test_triton_cone.py:387: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:417: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:437: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:485: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:524: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] ../tests/test_triton_parallel.py:121: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:142: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] ../tests/test_triton_parallel.py:168: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:209: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] ../tests/test_triton_parallel.py:229: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:255: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] ../tests/test_triton_parallel.py:271: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:293: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] ../tests/test_triton_parallel.py:320: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:353: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:372: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] ../tests/test_triton_parallel.py:393: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:424: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:454: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:474: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:520: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:559: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_parallel.py:616: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] ../tests/test_triton_cone.py:95: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] ../tests/test_triton_cone.py:118: the hand-written Triton kernels need a CUDA device
+========== 573 passed, 92 skipped, 155 warnings in 109.48s (0:01:49) ===========

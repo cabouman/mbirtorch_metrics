@@ -1,0 +1,88 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/buzzard/.mbirtorch/regression/lib_greg_dev
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 4/4 workers
+4 workers [669 items]
+
+........................................................................ [ 10%]
+ssssssssss.............................................................. [ 21%]
+...............................................................s....s... [ 32%]
+..............................................................s......... [ 43%]
+..................s..................................................... [ 53%]
+........................................................................ [ 64%]
+........................................................................ [ 75%]
+........................................................................ [ 86%]
+........................................................................ [ 96%]
+.....................                                                    [100%]
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 28 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_logging.py: 14 warnings
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 3 warnings
+tests/test_memory_ledger.py: 3 warnings
+tests/test_sharding.py: 8 warnings
+tests/test_translation.py: 3 warnings
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/vcd_utils.py:127: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_logging.py: 11 warnings
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/osqp/interface.py:405: PendingDeprecationWarning: The default value of raise_error will change to True in the future.
+    warnings.warn(
+
+tests/test_logging.py::test_recon_plastic_metal_merges_pass_logs
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+tests/test_sharded_segmentation.py::test_sharded_bh_correction_matches_single_device
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/cone_beam.py:1000: UserWarning: split_index is too close to the volume boundary for the recon overlap; falling back to standard MBIR reconstruction.
+    warnings.warn(
+
+tests/test_sharding.py::test_move_shard_small_and_scalar_tensors
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharding.py:861: UserWarning: Direct device-to-device transfer failed the round-trip probe on this hardware; routing cross-device transfers through host memory.  This is correct but slower.
+    out = move_shard(s, torch.device("cpu"), dev2dev_safe=safe)
+
+tests/test_widening_floors.py::test_drift_in_the_projection_cost_code_is_reported_and_not_fatal
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/_pytest/python.py:167: UserWarning: FLOORS STALE: the projection-cost code changed, so the multi-GPU widening speed floors in mbirtorch/_widening_floors.py no longer describe it.  They still govern, and every automatic device selection logs this.
+  
+  changed inputs:
+      triton_parallel.py
+          recorded 874f80d8a4a0b482
+          now      79c4aaaa071c0356
+  
+  To RE-MEASURE (on a 4-GPU node, roughly 30-60 minutes), then paste the printed block:
+      python dev_scripts/refresh_widening_floors.py
+  
+  To RE-RECORD the hashes only, when the change provably cannot move a projection cost (no GPU needed):
+      python dev_scripts/refresh_widening_floors.py --bless
+  
+  Nothing needs to be done to keep working: this test passes stale.
+    result = testfunction(**testargs)
+
+tests/test_translation.py::test_translation_adjointness[cuda]
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/_inductor/compile_fx.py:321: UserWarning: TensorFloat32 tensor cores for float32 matrix multiplication available but not enabled. Consider setting `torch.set_float32_matmul_precision('high')` for better performance.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] ../tests/test_cone.py:187: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:193: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:202: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:211: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:219: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:228: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:248: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:257: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:266: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_cone.py:274: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_sharding.py:153: needs a second local device (mps)
+SKIPPED [1] ../tests/test_sharding.py:270: needs a second local device (mps)
+SKIPPED [1] ../tests/test_params_and_paths.py:87: cell is a cube; transposed shape identical
+SKIPPED [1] ../tests/test_sharding.py:1075: needs a second local device (mps)
+=========== 655 passed, 14 skipped, 91 warnings in 146.34s (0:02:26) ===========

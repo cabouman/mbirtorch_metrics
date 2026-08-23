@@ -1,0 +1,8 @@
+# Correctness 'reviewed-through' watermark.
+# Every correctness divergence on a commit dated <= this is acknowledged: greyed on the
+# dashboard, dropped from the banner and the browser-tab badge.  Set by
+# action_scripts/clear_correctness.sh.
+#
+# No watermark yet.  The mbirjax_metrics watermark (2026-07-25) predates the first mbirtorch
+# run (2026-08-05), so it carried no information here and was not migrated.
+cleared_through:

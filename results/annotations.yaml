@@ -1,0 +1,8 @@
+# Hand-written dashboard chart notes, rendered as purple markers with the config-change
+# markers; see build_dashboard._load_manual_annotations.  Fields: date (ISO, required),
+# text (required), platform (optional: cpu|gpu), branch (optional, display-only).
+# Use these for one-off events the recorded data cannot describe for itself.  Recurring
+# default changes are annotated automatically from the run headers' policy block.
+#
+# Empty at migration: mbirjax_metrics held no annotation for a torch run.
+[]
