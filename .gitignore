@@ -1,0 +1,97 @@
+# Generated performance dashboard.  The source lives in tooling/dashboard/ and the output is
+# derived from the YAML time series in results/, so the output is not tracked.  Regenerate it with
+# action_scripts/build_dashboard.sh.
+/dashboard/
+
+# Binary and generated artifacts.  *.npy is TRACKED here: small correctness baselines live beside
+# the runs, size-capped by the nightly wrapper.  png/pdf/csv stay ignored because they regenerate
+# from the YAML time series.
+*.png
+*.jpg
+*.pdf
+*.gif
+*.mp4
+*.h5
+*.hdf5
+*.npz
+*.csv
+*.pptx
+*.ppt
+*.docx
+*.xlsx
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# macOS
+*._*
+*.DS_Store
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# PyCharm
+.idea/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Logs
+*.log
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
