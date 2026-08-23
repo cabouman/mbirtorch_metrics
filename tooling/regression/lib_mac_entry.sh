@@ -35,6 +35,18 @@ _regm_log() { if declare -F log >/dev/null 2>&1; then log "$@"; else echo "$*"; 
 reg_entry_clone() {   # $1 = entry clone directory
   local dir="$1"
   [ -n "${METRICS_URL:-}" ] || { _regm_log "ERROR: METRICS_URL is not set."; return 2; }
+  # A clone of a DIFFERENT repository must never be refreshed in place.  This directory held the
+  # mbirtorch entry clone while that nightly still lived in mbirjax_metrics, so a clone left here
+  # can point at the wrong origin.  Refreshing it would leave the agent pointing at another
+  # repository's wrapper of the same name.  Replace it instead.
+  if [ -d "$dir/.git" ]; then
+    local origin
+    origin="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
+    if [ "${origin%.git}" != "${METRICS_URL%.git}" ]; then
+      _regm_log "  entry clone at $dir points at '${origin:-<none>}', not '$METRICS_URL' — re-cloning."
+      rm -rf "$dir"
+    fi
+  fi
   if [ -d "$dir/.git" ]; then
     # Refresh to origin's tip.  Shallow fetch keeps it small; reset --hard discards any local
     # edit, which is correct for a clone nobody should be editing.  A refresh failure is NOT
