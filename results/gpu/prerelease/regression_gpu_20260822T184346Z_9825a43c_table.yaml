@@ -4,7 +4,7 @@ run:
   branch: prerelease
   commit: 9825a43c
   commit_date: '2026-08-22T14:43:46-04:00'
-  mbirjax_version: mbirtorch 0.0.2
+  mbirtorch_version: mbirtorch 0.0.2
   date: '20260823'
   device: GPU (NVIDIA H100 80GB HBM3)
   toolchain:

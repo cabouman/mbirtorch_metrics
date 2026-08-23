@@ -4,7 +4,7 @@ run:
   branch: greg_dev
   commit: 0089d2be
   commit_date: '2026-08-14T17:19:19-04:00'
-  mbirjax_version: mbirtorch 0.0.1
+  mbirtorch_version: mbirtorch 0.0.1
   date: '20260815'
   device: CPU (arm)
   toolchain:

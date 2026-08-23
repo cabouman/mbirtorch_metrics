@@ -12,7 +12,7 @@ git_branch: greg_dev
 git_dirty: false
 git_dirty_files: []
 git_dirty_code: false
-mbirjax_version: mbirtorch 0.0.1
+mbirtorch_version: mbirtorch 0.0.1
 toolchain:
   torch: 2.13.0+cu130
   torch_cuda: '13.0'
@@ -101,7 +101,7 @@ kernels:
 mem_kind: gpu_peak_per_device
 dep_gen: 0
 run_reason: commit
-jax_available:
+torch_available:
 measured_at: '2026-08-12T03:25:14-04:00'
 config:
   geometries:
@@ -178,7 +178,7 @@ config:
   run_tag: greg_dev
   dep_gen: 0
   run_reason: commit
-  jax_available: ''
+  torch_available: ''
   lib_root: /home/buzzard/.mbirtorch/regression/lib_greg_dev
   gate: true
   compare_to_prior: true

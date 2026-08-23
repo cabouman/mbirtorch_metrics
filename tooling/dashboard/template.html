@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mbirtorch metrics</title>
+<link id="favicon" rel="icon" href="data:,">
+<style>/*{{UPLOT_CSS}}*/</style>
+<style>/*{{DASHBOARD_CSS}}*/</style>
+</head>
+<body>
+<div id="app">
+  <div id="corr-banner" class="corr-banner" style="display:none"></div>
+  <header>
+    <div class="title-row">
+      <h1>mbirtorch metrics</h1>
+      <span id="gen" class="muted"></span>
+    </div>
+  </header>
+
+  <!-- Single-source reading guide: this panel is the ONE canonical "how to read it" copy.  The repo
+       README and the mbirtorch Sphinx "Performance Dashboard" page link here instead of duplicating it,
+       so the guide can never drift from the UI it describes (it ships in the same page). -->
+  <details id="help" class="help">
+    <summary>How to read this dashboard</summary>
+    <div class="help-body">
+      <p>A scheduled job measures each tracked mbirtorch branch — running its reconstruction operators (the
+      FBP filter, forward projection, back projection, and the iterative VCD recon) across a range of
+      problem sizes and device counts, on both CPU and GPU — and records, for every configuration:
+      <b>run time</b>, <b>peak memory</b>, and a numeric <b>fingerprint</b> of the output used to catch
+      correctness changes. The dashboard is the view onto that growing time series; read it top to bottom.</p>
+
+      <h3>Tiles — health of the shown run</h3>
+      <p>A row of cards for the selected run, each split <b>CPU | GPU</b>:</p>
+      <ul>
+        <li><b>configs measured</b> — how many (geometry × op × size × device-count) cells ran, and how many failed.</li>
+        <li><b>correctness</b> — how many configs diverge from a trusted reference (see <i>Correctness</i> below). Red = divergent.</li>
+        <li><b>performance regressions</b> — configs whose time or memory regressed versus the reference.</li>
+        <li><b>tests failed</b> — unit-test failures from that commit.</li>
+        <li><b>run shown</b> — which commit you're viewing (branch · platform · date).</li>
+      </ul>
+      <p>Click any card to drill into the specifics.</p>
+
+      <h3>Correctness banner (red, top of page)</h3>
+      <p>If any branch's latest run produces a <b>different reconstruction</b> than its reference, a red
+      banner appears — a summary line plus <b>one line per branch/platform</b> — and the browser tab gets a
+      ⚠ badge so you notice without even switching to it. <b>Click a line</b> to expand that run's full
+      divergence detail inline (click again to hide); <b>click the title</b> to collapse the banner to just
+      the summary line. This is the loudest signal on the page: correctness is treated as more important
+      than speed. It clears when the divergence goes away or is acknowledged as reviewed.</p>
+
+      <h3>History — trends over time</h3>
+      <p>Time-series panels (commit time on the x-axis) spanning both platforms and all branches:
+      <b>time</b> and <b>peak memory</b> at the largest size, plus a <b>performance-regressions</b> count.
+      Use the controls to pick a branch, a geometry group (cone + parallel, or translation + multiaxis),
+      and a device count. <b>Click any point to load that run</b> into the tiles and scaling views.</p>
+
+      <h3>Scaling — how the selected run behaves</h3>
+      <ul>
+        <li><b>time vs size</b> and <b>memory vs size</b> (log–log), each with an "ideal" slope for reference.</li>
+        <li><b>speedup vs devices</b> and <b>per-device memory</b> — i.e. does the work actually shard across GPUs?</li>
+        <li><b>compare against</b> overlays the same curves from <code>main</code>, <code>prerelease</code>, the prior run, or the best-ever.</li>
+      </ul>
+
+      <h3>Colors &amp; marks</h3>
+      <ul>
+        <li><b>Colour = platform:</b> GPU is blue, CPU is amber.</li>
+        <li><b>Line style = geometry</b> within each group (one solid, one dashed).</li>
+        <li><b>Red ✕</b> = a correctness fail (output mismatch between reference and the indicated run) ·
+        <b>red △</b> = failing tests · <b>amber ring</b> = a GPU that ran hot ·
+        <b>amber disc</b> = a GPU that throttled (so that point's timing is unreliable).</li>
+      </ul>
+
+      <h3>Correctness — what "diverges" means</h3>
+      <p>Each output's fingerprint is checked against up to four references:</p>
+      <ul>
+        <li>the <b>prior run</b> on the same branch — did this commit change the result?</li>
+        <li>the latest <b>main</b> — does this branch still match the canonical answer?</li>
+        <li><b>single- vs multi-device</b> within the same run — does sharding change the result?</li>
+        <li>the <b>other platform</b> — do CPU and GPU agree?</li>
+      </ul>
+      <p>A change beyond a small tolerance is flagged. Reviewed or expected changes can be
+      <b>acknowledged</b> so they stop alerting (without erasing the record).</p>
+    </div>
+  </details>
+
+  <div id="tiles" class="tiles"></div>
+  <div id="detail"></div>
+
+  <section>
+    <div class="sec-head"><h2>History</h2><span class="muted">both platforms · click a point to show that run · drag to zoom (x and y on time &amp; memory; x stays synced) · double-click to reset</span></div>
+    <div class="controls"><label>branch <select id="histBranch"></select></label><span class="seg" id="hist-group-seg"></span><label>devices <select id="histN"></select></label></div>
+    <div id="hist-legend" class="legend"></div>
+    <div class="panels hist">
+      <div class="panel"><div class="pcap" id="hCapVcd">VCD time at largest size (n=1)</div><div id="hVcd" class="chart"></div></div>
+      <div class="panel"><div class="pcap" id="hCapMem">peak memory at largest size (n=1)</div><div id="hMem" class="chart"></div></div>
+      <div class="panel"><div class="pcap">performance regressions (correctness ✕ on the panels above)</div><div id="hGate" class="chart"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>History by op</h2><span class="muted">time &amp; memory for one op + sinogram shape over commits · one line per branch · click a point to show that run · drag to zoom · double-click to reset</span></div>
+    <div class="controls wrap">
+      <label>platform <select id="poPlat"></select></label>
+      <label>branch <select id="poBranch"></select></label>
+      <label>op <select id="poOp"></select></label>
+      <label>sino shape <select id="poShape"></select></label>
+      <label>devices <select id="poN"></select></label>
+    </div>
+    <div id="po-legend" class="legend"></div>
+    <div class="panels">
+      <div class="panel"><div class="pcap" id="poCapTime">time</div><div id="poTime" class="chart"></div></div>
+      <div class="panel"><div class="pcap" id="poCapMem">peak memory</div><div id="poMem" class="chart"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Scaling</h2>
+      <span id="sv-meta" class="muted"></span>
+    </div>
+    <div class="controls wrap">
+      <label>platform <select id="platform"></select></label>
+      <label>branch <select id="branch"></select></label>
+      <label>op <select id="op"></select></label>
+      <label>compare against <select id="ref">
+        <option value="none">none</option>
+        <option value="main">main</option>
+        <option value="prerelease">prerelease</option>
+        <option value="prior">prior run</option>
+        <option value="best">best-ever</option>
+      </select></label>
+      <span class="seg" id="view-seg"></span>
+    </div>
+    <div id="sv-plot">
+      <div id="sv-legend" class="legend"></div>
+      <div class="panels">
+        <div class="panel"><div class="pcap" id="capTime">time vs size</div><div id="pTime" class="chart"></div></div>
+        <div class="panel"><div class="pcap" id="capMem">memory vs size</div><div id="pMem" class="chart"></div></div>
+      </div>
+      <div id="sv-legend2" class="legend" style="margin-top:16px;"></div>
+      <div class="panels">
+        <div class="panel"><div class="pcap" id="capSpeed">speedup vs devices</div><div id="pSpeed" class="chart"></div></div>
+        <div class="panel"><div class="pcap" id="capShard">per-device memory ÷ sino shard</div><div id="pShard" class="chart"></div></div>
+      </div>
+    </div>
+    <div id="sv-table" style="display:none;"></div>
+  </section>
+
+  <footer class="muted" id="footer"></footer>
+</div>
+
+<script>/*{{UPLOT_JS}}*/</script>
+<script>/*{{DATA}}*/</script>
+<script>/*{{DASHBOARD_JS}}*/</script>
+</body>
+</html>

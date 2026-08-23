@@ -1,0 +1,56 @@
+name: Build & publish dashboard
+
+# Rebuild the static dashboard from the YAML time series and publish it to GitHub Pages whenever new
+# results, the dashboard code, or this workflow change on main.  The cluster/nightly only PUSHES data
+# (results/ + state/); this Action regenerates and deploys the dashboard — so there is no committed
+# HTML artifact, and the cluster env needs no dashboard dependencies.
+#
+# One-time setup: repo Settings -> Pages -> Source = "GitHub Actions".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'results/**'
+      - 'tooling/dashboard/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a run finish; don't pile up deploys.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_retry.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build the dashboard
+        run: |
+          pip install --quiet pyyaml
+          python tooling/dashboard/build_dashboard.py     # writes dashboard/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dashboard
+      # deploy-pages intermittently returns "Deployment failed, try again later." (a GitHub Pages
+      # backend hiccup, not a build error).  Retry once so a transient failure doesn't page us — the
+      # build already succeeded and each deploy is a full rebuild, so a second attempt is safe.
+      - id: deploy
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - id: deploy_retry
+        if: steps.deploy.outcome == 'failure'
+        uses: actions/deploy-pages@v4

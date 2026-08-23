@@ -4,7 +4,7 @@ run:
   branch: greg_dev
   commit: c761b244
   commit_date: '2026-08-18T19:13:49-04:00'
-  mbirjax_version: mbirtorch 0.0.1
+  mbirtorch_version: mbirtorch 0.0.1
   date: '20260818'
   device: GPU (NVIDIA H100 80GB HBM3)
   toolchain:
