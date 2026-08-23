@@ -47,6 +47,8 @@ here propagate to the nightly automatically.
 | `TORCH_INDEX_URL_gpu` / `TORCH_INDEX_URL_cpu` | all | the wheel index each platform installs torch from.  torch selects its CUDA build through the index, not through a pip extra, so the GPU value must stay in sync with the CUDA module the node loads. |
 | `INSTALL_EXTRAS` | all | pip extras for each branch's editable install (`test` = pytest and pytest-xdist). |
 | `CONDA_PYTHON` | all | Python version for the dedicated `mbirtorch_regression` env, used only when the harness has to create it. |
+| `TORCH_LAST_REVIEWED` | all | the highest torch version that has been assessed for a performance change.  Each nightly checks PyPI and warns when a newer torch ships, with a headroom line saying whether it can install on the env's Python. |
+| `DEP_CANARY_ENABLED` / `DEP_CANARY_BRANCH` / `DEP_FULL_REFRESH_DAYS` | all | the dependency canary, off by default.  When it is on, a new torch triggers an upgrade and a re-measure of the canary branch, and every `DEP_FULL_REFRESH_DAYS` days every dependency is upgraded and the canary branch is re-measured. |
 | `MEM_GATE_WINDOW` | all | rolling-minimum window in runs for the GPU memory gate.  1 is a single-shot compare, which is correct here; see the comment in the file for the measurement behind that. |
 | `DEVICE_COUNTS` | all | device counts the nightly sweeps.  Counts above 1 apply only at the engine's multi-device cells. |
 | `MACOS_NIGHTLY_TIME` | macOS | local 24-hour `HH:MM` the launchd nightly runs.  Pick a time the Mac is **awake**; a scheduled wake from sleep is a dark wake and will not fire a LaunchAgent.  Re-run `enable_nightly.sh` after changing it. |

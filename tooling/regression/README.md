@@ -92,7 +92,28 @@ The recent-runs table comes from `recent_runs.py`, which reuses the dashboard's 
 `collect_data()`.  One parser serves both, so the table and the dashboard can never disagree about
 what a run says.
 
+## The torch-release watch and the dependency canary
+
+The watch runs every night, including no-change nights.  It compares PyPI's latest torch with
+`TORCH_LAST_REVIEWED` and prints two lines when a newer one exists: what shipped, and whether that
+version can install on the regression env's Python.  Both lines also go into the notify email.  The
+watch changes nothing on its own; it only says that a re-test is due.
+
+The canary is the measuring half, and it is off by default (`DEP_CANARY_ENABLED=0`).  When it is on
+it does three things.  A new torch bumps a dependency-generation counter, upgrades torch in the
+shared env, and adds the canary branch to tonight's work even when its tip has not moved.  When the
+canary branch's tip moved as well, the previous tip is re-measured under the new torch first, which
+separates the dependency's effect from the code's.  Every `DEP_FULL_REFRESH_DAYS` days, every
+dependency is eager-upgraded and the canary tip is re-measured, which catches drift in packages
+other than torch.
+
+A canary run keeps its own run file.  Its name gains a `_gNNNN` suffix, so two runs of one commit
+under different dependency sets do not collide, and the dashboard marks it as a dependency change
+rather than a code change.  The canary's own bookkeeping lives in `state/<plat>/depgen`,
+`torch_seen`, `torch_seen_python`, and `last_full_refresh`.
+
 ## Verify before scheduling
+
 
 ```
 REG_SMOKE=1 bash tooling/regression/run_regression.sh   # a one-cell plumbing check, no push

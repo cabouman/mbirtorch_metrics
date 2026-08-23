@@ -320,6 +320,26 @@ else
   watchdog_line || true
 fi
 
+# ── torch-release watch (best-effort, NON-FATAL, runs every night even on no-change) ──────────
+# Warn when a torch newer than TORCH_LAST_REVIEWED ships, so a release that changes performance
+# gets re-tested with measure_one_cell.py instead of riding in silently on the next clean install.
+# The companion --headroom line says whether that newer torch can even install on this env's
+# Python.  Both are captured rather than only printed, so the notify email below can carry them.
+# This block sits BEFORE the no-change exit, so it fires regardless of branch activity.
+ENV_PY="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "")"
+TORCHWATCH=""; HEADROOM=""
+if [ -n "${TORCH_LAST_REVIEWED:-}" ] && [ -f "$HERE/check_torch_release.py" ]; then
+  TORCHWATCH="$(python "$HERE/check_torch_release.py" "$TORCH_LAST_REVIEWED" 2>/dev/null || true)"
+  # Diagnose headroom ONLY when a newer torch exists, so bumping TORCH_LAST_REVIEWED quiets both
+  # lines.  An already-reviewed, held-back torch does not nag nightly, and the pair re-appears the
+  # moment a genuinely new torch ships.
+  if [ -n "$TORCHWATCH" ]; then
+    log "$TORCHWATCH"
+    HEADROOM="$(python "$HERE/check_torch_release.py" --headroom "$ENV_PY" 2>/dev/null || true)"
+    [ -n "$HEADROOM" ] && log "$HEADROOM"
+  fi
+fi
+
 # ── Change detection via ls-remote (don't clone mbirtorch unless something moved) ──────────────
 CHANGED_BR=()
 for BR in "${TRACKED_BRANCHES[@]}"; do
@@ -339,7 +359,54 @@ for BR in "${TRACKED_BRANCHES[@]}"; do
     CHANGED_BR+=("$BR")
   fi
 done
-[ "${#CHANGED_BR[@]}" -gt 0 ] || { log "no tracked branch changed — done."; exit 0; }
+
+# ── Dependency canary: a NEW torch counts as a change ─────────────────────────────────────────
+# Guarded by DEP_CANARY_ENABLED, which defaults to 0, so this whole feature is inert and the
+# nightly is unchanged.  When it is on and PyPI's latest torch differs from state/<plat>/torch_seen,
+# bump the dependency-generation counter and make sure the canary branch is measured even if its
+# tip did not move, so the new torch is re-measured against fixed code and attributed.
+# Two triggers: a NEW torch, and a periodic full refresh every DEP_FULL_REFRESH_DAYS days that
+# eager-upgrades every dependency and re-measures the canary branch.
+NEW_TORCH=0; FULL_REFRESH=0; DEP_GEN=""; FULL_GEN=""; RAN_TORCH_STEP=0; PYPI_TORCH=""
+CANARY=""; CANARY_PREV=""; CANARY_TIP=""
+if [ "${DEP_CANARY_ENABLED:-0}" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
+  CANARY="${DEP_CANARY_BRANCH:-main}"; _g="$(cat "$STATE/depgen" 2>/dev/null || echo 0)"
+  PYPI_TORCH="$(python "$HERE/check_torch_release.py" --print-latest 2>/dev/null || true)"
+  SEEN="$(cat "$STATE/torch_seen" 2>/dev/null || true)"
+  # torch_seen records the PyPI latest already reacted to, so a held-back release does not re-fire
+  # the canary every night.  If the env Python changed since then, a release the OLD floor held
+  # back could now install, so treat torch_seen as stale and re-evaluate.
+  SEEN_PY="$(cat "$STATE/torch_seen_python" 2>/dev/null || true)"
+  if [ -n "$SEEN" ] && [ -n "$SEEN_PY" ] && [ -n "$ENV_PY" ] && [ "$SEEN_PY" != "$ENV_PY" ]; then
+    log "dep-canary: env Python changed ($SEEN_PY -> $ENV_PY) — invalidating torch_seen ('$SEEN')."
+    SEEN=""
+  fi
+  [ -n "$PYPI_TORCH" ] && [ "$PYPI_TORCH" != "$SEEN" ] && NEW_TORCH=1
+  _last="$(cat "$STATE/last_full_refresh" 2>/dev/null || echo 0)"
+  _now="$(date +%s)"
+  _days="${DEP_FULL_REFRESH_DAYS:-14}"
+  [ "$(( (_now - _last) / 86400 ))" -ge "$_days" ] && FULL_REFRESH=1
+  if [ "$NEW_TORCH" = "1" ] || [ "$FULL_REFRESH" = "1" ]; then
+    DEP_GEN="$(( _g + 1 ))"; FULL_GEN="$DEP_GEN"
+    CANARY_TIP="$(git ls-remote "$MBIRTORCH_URL" "refs/heads/$CANARY" 2>/dev/null | awk '{print $1}')"
+    CANARY_PREV="$(cat "$STATE/${CANARY//\//_}" 2>/dev/null || true)"
+    # Both changed: a new torch AND a moved canary tip.  Measuring the PREVIOUS tip under the new
+    # torch isolates the dependency, and the ordinary loop then measures the new tip as the code step.
+    [ "$NEW_TORCH" = "1" ] && [ -n "$CANARY_PREV" ] && [ -n "$CANARY_TIP" ] && \
+      [ "$CANARY_PREV" != "$CANARY_TIP" ] && RAN_TORCH_STEP=1
+    log "dep-canary: NEW_TORCH=$NEW_TORCH FULL=$FULL_REFRESH  gen=$DEP_GEN  prev=${CANARY_PREV:0:8} tip=${CANARY_TIP:0:8}"
+    if [ "$NEW_TORCH" = "1" ]; then   # measure the canary even if its tip did not move
+      _in=0; for _b in "${CHANGED_BR[@]}"; do [ "$_b" = "$CANARY" ] && _in=1; done
+      [ "$_in" = "0" ] && [ -n "$CANARY_TIP" ] && { CHANGED_BR+=("$CANARY"); \
+        log "dep-canary: added $CANARY @ ${CANARY_TIP:0:8} (tip unchanged) for the torch re-measure."; }
+    fi
+  fi
+fi
+
+# Proceed when a branch changed OR the canary has a step to run.
+if [ "${#CHANGED_BR[@]}" -eq 0 ] && [ "$FULL_REFRESH" != "1" ]; then
+  log "no tracked branch changed — done."; exit 0
+fi
 
 DATE="$(date '+%Y%m%d')"
 GATE_FAIL=0
@@ -349,6 +416,59 @@ TEST_FAIL=0
 # failure emails its detail WITHOUT flipping the exit code.
 ALERT_BODY="$(mktemp)"
 MAIL_TO="${REG_MAIL_TO:-buzzard@purdue.edu}"
+
+# measure_commit: run the engine for ONE (branch, sha) at a given dependency generation and reason.
+# This is the vehicle for the canary steps that are not the plain per-branch loop below, which are
+# the torch step on the PREVIOUS canary tip and the full-dependency refresh.  It clones that exact
+# sha into a throwaway directory, fetching it directly when it is older than the tip, installs it,
+# runs the engine, and cleans up.  It runs no tests and writes no branch state; the caller owns
+# those.  It returns the engine's exit code.
+measure_commit() {   # $1=branch $2=sha $3=outdir $4=dep_gen $5=reason $6=upgrade(none|full)
+  local _br="$1" _sha="$2" _out="$3" _dg="$4" _reason="$5" _upg="${6:-none}" _rc=0
+  local _wt="$WORK_DIR/canary_${_br//\//_}_${_sha:0:8}"; rm -rf "$_wt"
+  if ! git clone --quiet --depth 1 --branch "$_br" --single-branch "$MBIRTORCH_URL" "$_wt"; then
+    log "  dep-canary: clone of $_br failed — skip step."; rm -rf "$_wt"; return 2; fi
+  if [ "$(git -C "$_wt" rev-parse HEAD)" != "$_sha" ]; then   # older than the tip -> fetch that commit
+    if ! { git -C "$_wt" fetch --quiet --depth 1 origin "$_sha" && git -C "$_wt" checkout --quiet "$_sha"; }; then
+      log "  dep-canary: could not check out ${_sha:0:8} of $_br — skip step."; rm -rf "$_wt"; return 2; fi
+  fi
+  local _ilog="$WORK_DIR/install_canary_${_br//\//_}.log"
+  if [ "$_upg" = "full" ]; then
+    reg_upgrade_all "$_wt" >"$_ilog" 2>&1 || log "  dep-canary: WARN full upgrade issue (see $_ilog)."
+  elif ! reg_install_lib "$_wt" >"$_ilog" 2>&1; then
+    log "  dep-canary: install of ${_sha:0:8} failed (see $_ilog) — skip step."; rm -rf "$_wt"; return 2; fi
+  mkdir -p "$_out"
+  REG_LIB_ROOT="$_wt" REG_OUT_DIR="$_out" REG_DATE="$DATE" REG_GATE=1 REG_RUN_TAG="$_br" \
+    REG_PLATFORM="$PLAT" REG_SKIP_TESTS=1 REG_DEP_GEN="$_dg" REG_RUN_REASON="$_reason" \
+    REG_TORCH_AVAILABLE="$PYPI_TORCH" REG_DEVICE_COUNTS="${DEVICE_COUNTS:-1}" \
+    REG_MEM_GATE_WINDOW="${MEM_GATE_WINDOW:-}" \
+    python "$HARNESS_DIR/scaling_tests/performance_tracking.py" || _rc=$?
+  rm -rf "$_wt"; return "$_rc"
+}
+
+# dep-canary: force torch to the newest the pinned index serves, in the shared env, BEFORE the
+# branch loop, so every branch measured tonight sees the new torch.  Non-fatal, and skipped in smoke.
+if [ "$NEW_TORCH" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+  log "dep-canary: upgrading torch to the newest available in ${REG_VENV:-$CONDA_ENV} ..."
+  reg_upgrade_torch >/dev/null 2>&1 || log "dep-canary: WARN torch upgrade failed — using the current torch."
+fi
+
+# dep-canary torch step: re-measure the PREVIOUS canary tip under the new torch, which isolates the
+# dependency.  The loop below then measures the new tip as the code step.
+if [ "$RAN_TORCH_STEP" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+  log "dep-canary: torch step — re-measuring $CANARY @ ${CANARY_PREV:0:8} under the new torch (gen $DEP_GEN)."
+  measure_commit "$CANARY" "$CANARY_PREV" "$RES/${CANARY//\//_}" "$DEP_GEN" "torch-step" none \
+    || log "dep-canary: torch step returned non-zero (gate or setup) — continuing."
+fi
+
+# dep-canary full refresh: eager-upgrade every dependency and re-measure the canary tip, which
+# catches drift in packages other than torch.
+if [ "$FULL_REFRESH" = "1" ] && [ -n "$CANARY_TIP" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+  log "dep-canary: full refresh — re-measuring $CANARY @ ${CANARY_TIP:0:8} with all deps upgraded (gen $FULL_GEN)."
+  measure_commit "$CANARY" "$CANARY_TIP" "$RES/${CANARY//\//_}" "$FULL_GEN" "deps-step" full \
+    || log "dep-canary: full refresh returned non-zero (gate or setup) — continuing."
+  date +%s >"$STATE/last_full_refresh"
+fi
 
 for BR in "${CHANGED_BR[@]}"; do
   SLUG="${BR//\//_}"
@@ -454,6 +574,13 @@ for BR in "${CHANGED_BR[@]}"; do
   rm -rf "$WT"
 done
 
+# dep-canary bookkeeping: record the dependency generation and the PyPI torch this run reacted to,
+# so the same release does not re-fire the canary tomorrow.  Written only after the steps above ran.
+if [ -n "$DEP_GEN" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+  echo "$DEP_GEN" >"$STATE/depgen"
+  [ -n "$PYPI_TORCH" ] && { echo "$PYPI_TORCH" >"$STATE/torch_seen"; echo "$ENV_PY" >"$STATE/torch_seen_python"; }
+fi
+
 # ── Publish to the metrics repo (conflict-safe; NON-FATAL) ────────────────────────────────────
 # This wrapper stages ONLY its own platform's paths (results/<plat>/, state/<plat>/), so the GPU
 # and CPU nightlies conflict only at the git level, where the rebase-retry below resolves them.
@@ -494,6 +621,7 @@ if [ "$GATE_FAIL" != "0" ] || [ "$TEST_FAIL" != "0" ]; then
     _brs="$(IFS=,; echo "${CHANGED_BR[*]}")"
     { printf 'Subject: [mbirtorch-nightly] %s regression: %s\nTo: %s\n\n' "$PLAT" "${_brs:-<none>}" "$MAIL_TO"
       echo "mbirtorch nightly ($PLAT) on $(hostname) at $(date '+%F %T')."
+      [ -n "$TORCHWATCH" ] && { echo; echo "$TORCHWATCH"; [ -n "$HEADROOM" ] && echo "$HEADROOM"; echo; }
       echo "Branches measured this run: ${_brs:-<none>}"
       echo
       cat "$ALERT_BODY"

@@ -79,3 +79,24 @@ reg_install_lib() {   # $1=clone dir ; caller logs/redirects/handles the exit co
   fi
   pip install -e "$wt[${INSTALL_EXTRAS:-test}]"
 }
+
+# ── Dependency canary helpers (used only when DEP_CANARY_ENABLED=1) ───────────────────────────
+# reg_upgrade_torch: force torch to the newest the pinned index serves, and nothing else.  The
+# per-branch reg_install_lib that follows re-resolves against the branch's pyproject, so a version
+# that pyproject excludes is pulled back down and the exclusion stays single-sourced there.
+reg_upgrade_torch() {   # caller logs, redirects, and handles the exit code
+  local idx
+  if [ "$(reg_plat)" = "gpu" ]; then idx="${TORCH_INDEX_URL_gpu:-}"; else idx="${TORCH_INDEX_URL_cpu:-}"; fi
+  if [ -n "$idx" ]; then
+    pip install -U --index-url "$idx" torch
+  else
+    pip install -U torch
+  fi
+}
+
+# reg_upgrade_all: the periodic FULL refresh.  Eager-upgrade every dependency the pyproject allows,
+# not just torch, so non-torch drift (numpy, triton, a CUDA runtime wheel) is caught too.  Uses the
+# editable install, so any pyproject pin is honored natively.
+reg_upgrade_all() {   # $1=clone dir ; caller logs, redirects, and handles the exit code
+  pip install -e "$1[${INSTALL_EXTRAS:-test}]" --upgrade --upgrade-strategy eager
+}

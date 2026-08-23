@@ -1334,7 +1334,8 @@ def run(config, platform_key):
         "packages": setup.get("packages") or {},
         "kernels": setup.get("kernels"),
         "mem_kind": "gpu_peak_per_device" if platform_key == "gpu" else "cpu_rss",
-        "dep_gen": 0, "run_reason": "commit", "torch_available": None,
+        "dep_gen": config.dep_gen, "run_reason": config.run_reason,
+        "torch_available": config.torch_available or None,
         "measured_at": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
         "config": cfg_dict, "device_counts": sorted(swept_counts), "cells": cells,
         "policy": {},
@@ -1370,7 +1371,11 @@ def run(config, platform_key):
             gate_dict["result"] = "fail"
         result["gate"] = gate_dict
 
-    out_path = os.path.join(config.out_dir, f"regression_{platform_key}_{file_tag}.yaml")
+    # A dependency-canary re-run of one commit with a different dependency set appends `_gNNNN`,
+    # so it does not overwrite that commit's other run.  Generation 0 keeps the plain name, and
+    # `_gNNNN` sorts after it, so the newest generation is the prior the next run compares against.
+    gen_tag = f"{file_tag}_g{config.dep_gen:04d}" if config.dep_gen else file_tag
+    out_path = os.path.join(config.out_dir, f"regression_{platform_key}_{gen_tag}.yaml")
     sc.save_yaml(out_path, result)
     try:
         import regression_to_table
@@ -1432,6 +1437,15 @@ def main():
     config = build_config(platform_key, out_dir, date,
                           os.environ.get("REG_RUN_TAG", ""), lib_root, counts,
                           gate=os.environ.get("REG_GATE", "1") == "1")
+    # Dependency-canary provenance, passed by run_regression.sh.  dep_gen is the installed
+    # dependency-set generation, and a value above 0 gives the run file a `_gNNNN` suffix.
+    # run_reason names the step, and torch_available records the PyPI-latest torch at run time.
+    if os.environ.get("REG_DEP_GEN"):
+        config.dep_gen = int(os.environ["REG_DEP_GEN"])
+    if os.environ.get("REG_RUN_REASON"):
+        config.run_reason = os.environ["REG_RUN_REASON"]
+    if os.environ.get("REG_TORCH_AVAILABLE"):
+        config.torch_available = os.environ["REG_TORCH_AVAILABLE"]
     if os.environ.get("REG_SMOKE") == "1":
         # Fast plumbing check (NOT a measurement): one tiny cell, end to end.
         config.geometries = ["parallel"]
