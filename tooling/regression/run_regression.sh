@@ -110,7 +110,16 @@ log "platform=$PLAT env=${REG_VENV:-$CONDA_ENV} metrics=$METRICS_REPO"
 # GIT_TERMINAL_PROMPT=0 makes a missing credential fail fast instead of hanging the job.
 export GIT_TERMINAL_PROMPT=0
 if [ -n "${TOKEN_FILE:-}" ] && [ -f "$TOKEN_FILE" ]; then
-  git -C "$METRICS_REPO" config credential.helper "store --file=$TOKEN_FILE"
+  # RESET the helper list before adding ours.  git consults every configured credential.helper in
+  # config order, system then global then local, and uses the FIRST credential returned.  A global
+  # `credential.helper = store` reads ~/.git-credentials, which matches by HOST only, so its
+  # github.com entry answers for every github.com request including this one.  On the cluster that
+  # entry holds another repository's token, and the push fails with
+  #     remote: Permission to cabouman/mbirtorch_metrics.git denied to <user>.
+  # even though TOKEN_FILE holds a token that works.  An EMPTY first value resets the list, which
+  # makes TOKEN_FILE the only helper for this repository.  Diagnosed 2026-08-24.
+  git -C "$METRICS_REPO" config --local --replace-all credential.helper ""
+  git -C "$METRICS_REPO" config --local --add credential.helper "store --file=$TOKEN_FILE"
 fi
 
 # ── Dependency-watch watchdog ─────────────────────────────────────────────────────────────────

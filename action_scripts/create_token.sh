@@ -46,4 +46,8 @@ echo
 echo "Wrote $CRED_FILE (chmod 600)."
 echo "regression.env defaults TOKEN_FILE to this path, so the harness will use it."
 echo "Verify from any mbirtorch_metrics clone:"
-echo "  GIT_TERMINAL_PROMPT=0 git -c credential.helper=\"store --file=$CRED_FILE\" push --dry-run"
+# The leading empty -c resets the helper list.  Without it a global `credential.helper = store`
+# answers first from ~/.git-credentials, which matches by host, and the check fails with a 403
+# that looks like a bad token but is not one.
+echo "  GIT_TERMINAL_PROMPT=0 git -c credential.helper= \\"
+echo "      -c credential.helper=\"store --file=$CRED_FILE\" push --dry-run"

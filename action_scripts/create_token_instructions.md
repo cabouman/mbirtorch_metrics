@@ -53,8 +53,16 @@ This writes a git **credential-store** file — one line `https://<user>:<token>
 ## 3. Verify (from any `mbirtorch_metrics` clone)
 
 ```
-GIT_TERMINAL_PROMPT=0 git -c credential.helper="store --file=$HOME/.config/mbirtorch/metrics_credentials" push --dry-run
+GIT_TERMINAL_PROMPT=0 git -c credential.helper= \
+    -c credential.helper="store --file=$HOME/.config/mbirtorch/metrics_credentials" push --dry-run
 ```
+
+The empty `-c credential.helper=` is required, not decoration.  git consults every configured
+helper in order and uses the first credential returned.  A global `credential.helper = store` reads
+`~/.git-credentials`, which matches by host alone, so its `github.com` entry answers for this
+request too.  If that entry holds a token for a different repository, the check fails with
+`Permission to ... denied` and a 403 that looks like a bad token but is not one.  The empty value
+resets the list, so only the file named after it is consulted.
 
 **The token is working if you see EITHER** `Everything up-to-date` **OR** `! [rejected] ... (fetch first)`
 — both mean git reached the remote and authenticated; "rejected" just means that clone is behind
