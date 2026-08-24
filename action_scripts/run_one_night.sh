@@ -33,7 +33,7 @@ case " $* " in *" --sbatch "*)
   # shellcheck disable=SC1091
   source "$_REPO/tooling/regression/sbatch_submit.sh"
   _ARGS=(); for _a in "$@"; do [ "$_a" = "--sbatch" ] || _ARGS+=("$_a"); done
-  submit_sbatch "mbirtorch-night" bash "$_HERE/run_one_night.sh" "${_ARGS[@]}"
+  submit_sbatch "mbirtorch-night" bash "$_HERE/run_one_night.sh" ${_ARGS[@]+"${_ARGS[@]}"}
   _rc=$?
   if [ "$_sourced" -eq 1 ]; then return "$_rc"; else exit "$_rc"; fi
   ;;

@@ -350,8 +350,14 @@ if [ -n "${TORCH_LAST_REVIEWED:-}" ] && [ -f "$HERE/check_torch_release.py" ]; t
 fi
 
 # ── Change detection via ls-remote (don't clone mbirtorch unless something moved) ──────────────
+# EMPTY-ARRAY EXPANSION.  macOS ships bash 3.2, where `"${arr[@]}"` on an EMPTY array raises
+# "unbound variable" under `set -u` and aborts the script; `${#arr[@]}` is safe, and bash 4.4 and
+# later are safe both ways.  Every expansion of an array that can be empty therefore uses the
+# `${arr[@]+"${arr[@]}"}` form, which expands to nothing when the array is empty.  This is not
+# hypothetical: the same construct aborted the mbirjax macOS nightly on every run from 2026-08-18,
+# and the only symptom was a log that stopped mid-run.
 CHANGED_BR=()
-for BR in "${TRACKED_BRANCHES[@]}"; do
+for BR in ${TRACKED_BRANCHES[@]+"${TRACKED_BRANCHES[@]}"}; do
   SHA="$(git ls-remote "$MBIRTORCH_URL" "refs/heads/$BR" 2>/dev/null | awk '{print $1}')"
   [ -n "$SHA" ] || { log "skip $BR: not found on remote."; continue; }
   SLUG="${BR//\//_}"
@@ -405,7 +411,7 @@ if [ "${DEP_CANARY_ENABLED:-0}" = "1" ] && [ -f "$HERE/check_torch_release.py" ]
       [ "$CANARY_PREV" != "$CANARY_TIP" ] && RAN_TORCH_STEP=1
     log "dep-canary: NEW_TORCH=$NEW_TORCH FULL=$FULL_REFRESH  gen=$DEP_GEN  prev=${CANARY_PREV:0:8} tip=${CANARY_TIP:0:8}"
     if [ "$NEW_TORCH" = "1" ]; then   # measure the canary even if its tip did not move
-      _in=0; for _b in "${CHANGED_BR[@]}"; do [ "$_b" = "$CANARY" ] && _in=1; done
+      _in=0; for _b in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do [ "$_b" = "$CANARY" ] && _in=1; done
       [ "$_in" = "0" ] && [ -n "$CANARY_TIP" ] && { CHANGED_BR+=("$CANARY"); \
         log "dep-canary: added $CANARY @ ${CANARY_TIP:0:8} (tip unchanged) for the torch re-measure."; }
     fi
@@ -479,7 +485,7 @@ if [ "$FULL_REFRESH" = "1" ] && [ -n "$CANARY_TIP" ] && [ "${REG_SMOKE:-0}" != "
   date +%s >"$STATE/last_full_refresh"
 fi
 
-for BR in "${CHANGED_BR[@]}"; do
+for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
   SLUG="${BR//\//_}"
   WT="$WORK_DIR/lib_$SLUG"; rm -rf "$WT"
   log "$BR: shallow-cloning the mbirtorch tip -> $WT"
