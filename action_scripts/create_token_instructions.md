@@ -4,15 +4,34 @@ The nightly regression harness pushes results to `mbirtorch_metrics` **non-inter
 a stored credential — GitHub no longer accepts a password. Do this once on each machine that runs the
 harness (e.g., each cluster login you use). `create_token.sh` (same directory) automates step 2.
 
-## 1. Create a fine-grained Personal Access Token (PAT)
+## 1. Create a Personal Access Token (PAT)
 
-1. GitHub → avatar → **Settings** → **Developer settings** → **Personal access tokens** →
-   **Fine-grained tokens** → **Generate new token**.
-2. **Resource owner:** `gbuzzard`.
-3. **Repository access:** *Only select repositories* → **`cabouman/mbirtorch_metrics`**.
-4. **Permissions** → **Repository permissions** → **Contents: Read and write** (the only one needed —
-   keep the scope minimal).
-5. Choose an expiration, generate, and **copy the token** (`github_pat_…`) — you can't view it again.
+This repository is owned by the user account `cabouman`, and that decides which kind of token works.
+
+**A fine-grained token can only target repositories owned by whoever creates it, or by an
+organization that has opted in.**  So a fine-grained token created by `gbuzzard` cannot reach
+`cabouman/mbirtorch_metrics`, however its permissions are set.  There are two workable routes.
+
+**Route A, a classic token, which anyone with push access can create.**
+
+1. GitHub, then avatar, then **Settings**, then **Developer settings**, then **Personal access
+   tokens**, then **Tokens (classic)**, then **Generate new token (classic)**.
+2. Give it a note, for example `mbirtorch_metrics nightly`, and choose an expiration.
+3. Tick the **`repo`** scope.  Nothing else is needed.
+4. Generate, then **copy the token** (`ghp_...`).  You cannot view it again.
+
+A classic token acts with your own permissions across every repository you can reach, so keep the
+expiration short and store it only in the credential file below.
+
+**Route B, a fine-grained token, which the repository's owner creates.**
+
+1. `cabouman` follows the fine-grained path, with **Resource owner:** `cabouman`.
+2. **Repository access:** *Only select repositories*, then **`mbirtorch_metrics`**.
+3. **Permissions**, then **Repository permissions**, then **Contents: Read and write**.  That is the
+   only permission needed.
+4. `cabouman` generates the token and passes it to whoever runs the nightly.
+
+Route B is the tighter of the two, because the token reaches one repository only.
 
 ## 2. Store it for the harness
 

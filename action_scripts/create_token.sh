@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# create_token.sh — store the GitHub fine-grained PAT the regression harness uses to push to
-# mbirtorch_metrics (one-time per node).  See create_token_instructions.md (same dir) for how to make
-# the PAT.  Writes a git credential-store file (chmod 600): one line  https://<user>:<token>@github.com
+# create_token.sh — store the GitHub personal access token the regression harness uses to push to
+# mbirtorch_metrics (one-time per node).  See create_token_instructions.md (same dir) for which kind
+# of token works and how to make it; the repository's owner decides that, so read it before
+# generating one.  Writes a git credential-store file (chmod 600), holding one line:
+#   https://<user>:<token>@github.com
 set -euo pipefail
 # Keep an interactive terminal open on a nonzero exit so the error stays visible.
 if [ -t 0 ]; then
@@ -12,7 +14,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTRUCTIONS="$HERE/create_token_instructions.md"
 CRED_FILE="${1:-$HOME/.config/mbirtorch/metrics_credentials}"
 
-echo "Store a GitHub fine-grained PAT so the regression harness can push to mbirtorch_metrics."
+echo "Store a GitHub personal access token so the regression harness can push to mbirtorch_metrics."
 echo "Credential file: $CRED_FILE"
 echo
 
