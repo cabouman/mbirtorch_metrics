@@ -76,12 +76,23 @@ import scaling_common as sc                # noqa: E402  torch-free at module le
 @dataclass
 class Config:
     # sweep dimensions
-    geometries: list = field(default_factory=lambda: ["parallel", "cone", "denoiser"])
+    geometries: list = field(default_factory=lambda: [
+        "parallel", "cone", "translation", "multiaxis_parallel", "denoiser"])
     ops: list = field(default_factory=lambda: ["direct_filter", "forward", "back", "vcd_nonconst"])
-    # Per-geometry op OVERRIDES (else `ops` is used).  The denoiser's only real op is
-    # `denoise`, the qGGMRF outer loop with identity projectors, which is the vcd_nonconst
-    # analog; its forward and back are the identity and it has no filtered back projection.
-    geom_ops: dict = field(default_factory=lambda: {"denoiser": ["denoise"]})
+    # Per-geometry op OVERRIDES (else `ops` is used).
+    #
+    # translation and multiaxis_parallel have geometry-SPECIFIC compute only in the projectors and
+    # the filter.  Their reconstruction is the qGGMRF outer loop shared with parallel and cone,
+    # which is already tracked there, so measuring vcd for them would be redundant.
+    #
+    # The denoiser's only real op is `denoise`, the qGGMRF outer loop with identity projectors,
+    # which is the vcd_nonconst analog.  Its forward and back are the identity and it has no
+    # filtered back projection.
+    geom_ops: dict = field(default_factory=lambda: {
+        "translation": ["direct_filter", "forward", "back"],
+        "multiaxis_parallel": ["direct_filter", "forward", "back"],
+        "denoiser": ["denoise"],
+    })
     device_counts: list = field(default_factory=lambda: [1, 2, 4])
     # SINOGRAM sizes (n_views, n_rows, n_channels) — ASYMMETRIC (all three differ) to surface
     # axis swaps; one DIVIDING and one NON-DIVIDING (all-odd) per platform to exercise padding;
@@ -93,9 +104,23 @@ class Config:
         "cpu": [(128, 112, 96), (129, 113, 97), (200, 208, 160)],
         "gpu": [(200, 208, 160), (512, 448, 384), (513, 449, 385), (1024, 1008, 992)],
     })
-    # Per-geometry size OVERRIDES (else `sizes[plat]` is used).  The denoiser's size tuple IS the
-    # IMAGE shape (rows, cols, slices), not a sinogram, so it needs its own table.
+    # Per-geometry size OVERRIDES (else `sizes[plat]` is used).  All three tables below are the
+    # mbirjax engine's, so the rows sit at coordinates the two backends share.
+    #
+    # multiaxis_parallel tops out at 512 on GPU: it is a projector-and-filter baseline, not a
+    # capacity probe.  translation's tuple is (n_views, n_det_rows, n_det_channels) with n_views
+    # fixed at tct_num_x * tct_num_z, so only the detector size varies.  The denoiser's tuple IS
+    # the IMAGE shape (rows, cols, slices) rather than a sinogram.  The first GPU entry of each
+    # table mirrors the largest CPU entry, which is the shared cell the cross-platform check needs.
     geom_sizes: dict = field(default_factory=lambda: {
+        "multiaxis_parallel": {
+            "cpu": [(96, 80, 64), (128, 112, 96), (129, 113, 97)],
+            "gpu": [(129, 113, 97), (256, 224, 192), (512, 448, 384), (513, 449, 385)],
+        },
+        "translation": {
+            "cpu": [(15, 64, 64), (15, 65, 65)],
+            "gpu": [(15, 65, 65), (15, 256, 256), (15, 257, 257)],
+        },
         "denoiser": {
             "cpu": [(128, 144, 160), (225, 241, 257)],
             "gpu": [(225, 241, 257), (512, 448, 384), (1024, 1008, 992)],
@@ -123,6 +148,15 @@ class Config:
 
     # geometry / seeds
     cone_sdd_over_channels: float = 4.0
+    multiaxis_elevation_deg: float = 25.0   # out-of-plane tilt for MultiAxisParallelModel
+    # Translation geometry, fixed.  The detector (n_rows, n_channels) from the size tuple is the
+    # knob; n_views is fixed at tct_num_x * tct_num_z.  The lengths are in arbitrary length units.
+    tct_sdd: float = 190000.0    # source to detector; magnification = sdd/sid, about 2.71
+    tct_sid: float = 70000.0     # source to iso
+    tct_delta_det: float = 75.0  # detector pixel pitch
+    tct_num_x: int = 5           # x translations
+    tct_num_z: int = 3           # z translations, so n_views = 15
+    tct_recon_rows: int = 40     # recon rows, the axis perpendicular to the detector
     input_seed: int = 0
     measure_seed: int = 7
 
@@ -187,9 +221,16 @@ CONE_RECON_SHAPE_PINS = {
 # device-policy work deliberately leaves it outside the widening.
 MULTI_DEVICE_SIZE_LABELS = {"512x448x384", "1024x1008x992"}
 
+# Geometries measured on a single device only.  The denoiser raises under any non-trivial
+# placement.  translation and multiaxis_parallel are projector baselines whose sizes stay small,
+# so a multi-device sweep would measure mostly communication; they join the sweep deliberately if
+# and when their own campaign asks for it.
+SINGLE_DEVICE_GEOMETRIES = ("denoiser", "translation", "multiaxis_parallel")
+
+
 def cell_device_counts(geometry, size_label, device_counts):
     """The device counts one (geometry, op, size) cell group sweeps."""
-    if geometry == "denoiser":
+    if geometry in SINGLE_DEVICE_GEOMETRIES:
         return [1]
     if size_label in MULTI_DEVICE_SIZE_LABELS:
         return list(device_counts)
@@ -340,11 +381,38 @@ def make_model(config, geometry, size, platform_key):
             print(f"WARNING: cone size {(n_views, n_rows, n_channels)} has no recon_shape pin; "
                   f"using auto {tuple(int(x) for x in model.get_params('recon_shape'))} — add it "
                   f"to CONE_RECON_SHAPE_PINS to decouple from padding policy.", file=sys.stderr)
+    elif geometry == "multiaxis_parallel":
+        # Parallel beam with a per-view elevation, so the angles are (azimuth, elevation) pairs.
+        # The recon shape is matched to the plain parallel model at the same sinogram size, which
+        # makes the problem size comparable between the two geometries and pins the shape.
+        elevation = np.full(n_views, np.deg2rad(config.multiaxis_elevation_deg), dtype=np.float64)
+        model = mbirtorch.MultiAxisParallelModel((n_views, n_rows, n_channels),
+                                                 np.column_stack([angles, elevation]))
+        reference = mbirtorch.ParallelBeamModel((n_views, n_rows, n_channels), angles)
+        model.set_params(recon_shape=reference.get_params('recon_shape'), no_warning=True)
+    elif geometry == "translation":
+        # The view count comes from the translation grid, not from the size tuple's first entry.
+        # The recon shape is set directly rather than derived, which decouples this geometry from
+        # the padding policy for the same reason CONE_RECON_SHAPE_PINS decouples cone.  Voxels are
+        # isotropic, which keeps the few recon rows well inside the source distance.
+        sdd, sid, delta_det = config.tct_sdd, config.tct_sid, config.tct_delta_det
+        num_x, num_z = config.tct_num_x, config.tct_num_z
+        delta_voxel = delta_det / (sdd / sid)
+        cols, slices = n_channels, n_rows
+        vectors = mbirtorch.gen_translation_vectors(num_x, num_z,
+                                                    cols * delta_voxel / (num_x - 1),
+                                                    slices * delta_voxel / (num_z - 1))
+        model = mbirtorch.TranslationModel((int(vectors.shape[0]), n_rows, n_channels), vectors,
+                                           source_detector_dist=sdd, source_iso_dist=sid)
+        model.set_params(delta_det_channel=delta_det, delta_det_row=delta_det,
+                         delta_voxel=delta_voxel, voxel_row_aspect=1.0, voxel_slice_aspect=1.0,
+                         recon_shape=(config.tct_recon_rows, cols, slices), no_warning=True)
     elif geometry == "denoiser":
         model = mbirtorch.QGGMRFDenoiser(tuple(int(x) for x in size))
         model.set_params(sharpness=config.denoise_sharpness, no_warning=True)
     else:
-        raise ValueError(f"unknown geometry {geometry!r} (expected parallel/cone/denoiser)")
+        raise ValueError(f"unknown geometry {geometry!r} (expected parallel/cone/translation/"
+                         f"multiaxis_parallel/denoiser)")
     model.set_params(verbose=0, no_warning=True)
     return model
 
@@ -1325,9 +1393,11 @@ def run(config, platform_key):
     cfg_dict["backend"] = "torch"
     result = {
         "kind": "regression", "date": config.date, "platform": platform_key,
-        # mbirtorch has no per-geometry sharding capability probe: every geometry either
-        # supports placement or, for the denoiser, is deliberately held at one device.
-        "sharding_by_geom": {g: (g != "denoiser") for g in config.geometries},
+        # Which geometries were measured across more than one device.  This is not a capability
+        # probe: it records the sweep, so the gate does not expect multi-device cells for a
+        # geometry this nightly deliberately holds at one device (SINGLE_DEVICE_GEOMETRIES).
+        "sharding_by_geom": {g: (g not in SINGLE_DEVICE_GEOMETRIES)
+                             for g in config.geometries},
         "device_label": setup["device_label"], **prov,
         "mbirtorch_version": f"mbirtorch {setup['mbirtorch_version']}",
         "toolchain": setup["toolchain"],
