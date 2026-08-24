@@ -91,10 +91,10 @@ parallel|direct_filter|1024x1008x992|2:
     date: '20260820'
     prev: 3980.01953125
   speedup:
-    value: 1.9880021388929565
-    commit: e08d85a6dff57b1af3f552c2c34affec83c817ef
-    date: '20260816'
-    prev: 1.9809736961467832
+    value: 1.9892302136720692
+    commit: eee646afd36888f553f45163bbb1ab5a56278b51
+    date: '20260824'
+    prev: 1.9880021388929565
 parallel|direct_filter|1024x1008x992|1:
   min_ms:
     value: 109.78740398422815
@@ -151,10 +151,10 @@ parallel|forward|512x448x384|2:
     prev:
 parallel|forward|512x448x384|1:
   min_ms:
-    value: 87.44703803677112
-    commit: 42574f8350954ac76b4058021d166d23a26a70b7
-    date: '20260822'
-    prev: 87.4625310243573
+    value: 87.3859089333564
+    commit: eee646afd36888f553f45163bbb1ab5a56278b51
+    date: '20260824'
+    prev: 87.44703803677112
   mem_mb:
     value: 876.38427734375
     commit: a33c7e83ef93dccfbbba675883c129cd8c238721
@@ -351,10 +351,10 @@ parallel|vcd_nonconst|512x448x384|4:
     prev: 0.9499081435634551
 parallel|vcd_nonconst|512x448x384|2:
   min_ms:
-    value: 887.4770480324514
-    commit: b6e569979d0de93304654b858041838af11ea837
-    date: '20260821'
-    prev: 890.5587420158554
+    value: 887.3327440815046
+    commit: eee646afd36888f553f45163bbb1ab5a56278b51
+    date: '20260824'
+    prev: 887.4770480324514
   mem_mb:
     value: 1027.72119140625
     commit: 511af63042c47d01f67d8e694c34d8431928cfe6
@@ -367,10 +367,10 @@ parallel|vcd_nonconst|512x448x384|2:
     prev: 1.3861624224380946
 parallel|vcd_nonconst|512x448x384|1:
   min_ms:
-    value: 1009.4833769835532
-    commit: c761b244872ac8e72edbf2689fd423906bd343a2
-    date: '20260818'
-    prev: 1595.0989689999915
+    value: 1008.506449055858
+    commit: eee646afd36888f553f45163bbb1ab5a56278b51
+    date: '20260824'
+    prev: 1009.4833769835532
   mem_mb:
     value: 1988.96728515625
     commit: a33c7e83ef93dccfbbba675883c129cd8c238721
@@ -691,10 +691,10 @@ cone|back|512x448x384|2:
     prev: 1.6403806940807073
 cone|back|512x448x384|1:
   min_ms:
-    value: 151.55698799935635
-    commit: 78b4f78b43351659e2008651fd669fdc50515e21
-    date: '20260817'
-    prev: 151.5842373482883
+    value: 151.52738499455154
+    commit: eee646afd36888f553f45163bbb1ab5a56278b51
+    date: '20260824'
+    prev: 151.55698799935635
   mem_mb:
     value: 1240.1
     commit: 8959e324cdedd567f014b87a66ef4e0eb15523a7
