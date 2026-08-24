@@ -8,14 +8,14 @@ created: 4/4 workers
 4 workers [829 items]
 
 ........................................................................ [  8%]
-.ssssssssss............................................................. [ 17%]
+..ssssssssss............................................................ [ 17%]
 ........................................................................ [ 26%]
-............................................................s........... [ 34%]
+........................................................................ [ 34%]
 ........................................................................ [ 43%]
 ........................................................................ [ 52%]
-.......s........s.................................s..................... [ 60%]
-........................................................................ [ 69%]
-........................................................................ [ 78%]
+..........................s............................................. [ 60%]
+..................................s..................................... [ 69%]
+......................s....s............................................ [ 78%]
 ........................................................................ [ 86%]
 ........................................................................ [ 95%]
 ......................s..............                                    [100%]
@@ -64,9 +64,9 @@ SKIPPED [1] ../tests/test_cone.py:248: no helical/curved goldens: rerun tests/ge
 SKIPPED [1] ../tests/test_cone.py:257: no helical/curved goldens: rerun tests/generate_goldens.py
 SKIPPED [1] ../tests/test_cone.py:266: no helical/curved goldens: rerun tests/generate_goldens.py
 SKIPPED [1] ../tests/test_cone.py:274: no helical/curved goldens: rerun tests/generate_goldens.py
+SKIPPED [1] ../tests/test_triton_multiaxis.py:1138: a CUDA host selects through the gates; see test_multiaxis_kernel_selection_and_end_to_end
 SKIPPED [1] ../tests/test_params_and_paths.py:87: cell is a cube; transposed shape identical
 SKIPPED [1] ../tests/test_sharding.py:264: needs a second local device (mps)
 SKIPPED [1] ../tests/test_sharding.py:381: needs a second local device (mps)
-SKIPPED [1] ../tests/test_triton_multiaxis.py:1138: a CUDA host selects through the gates; see test_multiaxis_kernel_selection_and_end_to_end
 SKIPPED [1] ../tests/test_sharding.py:1186: needs a second local device (mps)
-========== 814 passed, 15 skipped, 106 warnings in 183.30s (0:03:03) ===========
+========== 814 passed, 15 skipped, 106 warnings in 330.44s (0:05:30) ===========

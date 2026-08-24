@@ -4,6 +4,8 @@ platform: gpu
 sharding_by_geom:
   parallel: true
   cone: true
+  translation: false
+  multiaxis_parallel: false
   denoiser: false
 device_label: GPU (NVIDIA H100 80GB HBM3)
 git_commit: eee646afd36888f553f45163bbb1ab5a56278b51
@@ -78,6 +80,7 @@ packages:
   pytest-xdist: 3.8.0
   python-dateutil: 2.9.0.post0
   pywavelets: 1.9.0
+  pyyaml: 6.0.3
   requests: 2.34.2
   ruamel.yaml: 0.19.1
   scikit-learn: 1.9.0
@@ -102,11 +105,13 @@ mem_kind: gpu_peak_per_device
 dep_gen: 0
 run_reason: commit
 torch_available:
-measured_at: '2026-08-24T03:21:40-04:00'
+measured_at: '2026-08-24T14:51:13-04:00'
 config:
   geometries:
   - parallel
   - cone
+  - translation
+  - multiaxis_parallel
   - denoiser
   ops:
   - direct_filter
@@ -114,6 +119,14 @@ config:
   - back
   - vcd_nonconst
   geom_ops:
+    translation:
+    - direct_filter
+    - forward
+    - back
+    multiaxis_parallel:
+    - direct_filter
+    - forward
+    - back
     denoiser:
     - denoise
   device_counts:
@@ -121,6 +134,16 @@ config:
   - 2
   - 4
   sizes:
+    cpu:
+    - - 128
+      - 112
+      - 96
+    - - 129
+      - 113
+      - 97
+    - - 200
+      - 208
+      - 160
     gpu:
     - - 200
       - 208
@@ -135,7 +158,56 @@ config:
       - 1008
       - 992
   geom_sizes:
+    multiaxis_parallel:
+      cpu:
+      - - 96
+        - 80
+        - 64
+      - - 128
+        - 112
+        - 96
+      - - 129
+        - 113
+        - 97
+      gpu:
+      - - 129
+        - 113
+        - 97
+      - - 256
+        - 224
+        - 192
+      - - 512
+        - 448
+        - 384
+      - - 513
+        - 449
+        - 385
+    translation:
+      cpu:
+      - - 15
+        - 64
+        - 64
+      - - 15
+        - 65
+        - 65
+      gpu:
+      - - 15
+        - 65
+        - 65
+      - - 15
+        - 256
+        - 256
+      - - 15
+        - 257
+        - 257
     denoiser:
+      cpu:
+      - - 128
+        - 144
+        - 160
+      - - 225
+        - 241
+        - 257
       gpu:
       - - 225
         - 241
@@ -161,7 +233,6 @@ config:
     back: 3
     vcd_nonconst: 1
     denoise: 1
-  inline: false
   cone_sdd_over_channels: 4.0
   multiaxis_elevation_deg: 25.0
   tct_sdd: 190000.0
@@ -172,8 +243,7 @@ config:
   tct_recon_rows: 40
   input_seed: 0
   measure_seed: 7
-  out_dir: 
-    /home/buzzard/.mbirtorch/regression/metrics/results/gpu/greg_dev
+  out_dir: /home/buzzard/.mbirtorch/regression/metrics/results/gpu/greg_dev
   date: '20260824'
   run_tag: greg_dev
   dep_gen: 0
@@ -196,31 +266,31 @@ device_counts:
 - 4
 cells:
 - n_devices: 1
-  min_ms: 3.125831950455904
-  mean_ms: 3.2206136578073106
-  std_ms: 0.08190734146923762
+  min_ms: 3.0679639894515276
+  mean_ms: 3.146006648118297
+  std_ms: 0.0639888587898242
   mem_mb: 63.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
+    temp_c: 37
     mem_temp_c: 41
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
+    temp_c: 33
     mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 35
+    temp_c: 33
+    mem_temp_c: 34
   - index: 3
-    sm_mhz: 795
+    sm_mhz: 780
     mem_mhz: 2619
     temp_c: 37
-    mem_temp_c: 40
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -268,31 +338,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 9.2948799720034
-  mean_ms: 9.514051993998388
-  std_ms: 0.25818691996044296
+  min_ms: 9.263067971915007
+  mean_ms: 10.775040990362564
+  std_ms: 1.9226813154660836
   mem_mb: 195.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 40
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 38
-    mem_temp_c: 40
+    mem_temp_c: 38
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -341,33 +411,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.647667528476814
+  speedup: 1.6352956801799612
 - n_devices: 2
-  min_ms: 9.67249390669167
-  mean_ms: 9.907518979161978
-  std_ms: 0.16687306529776977
+  min_ms: 10.430576978251338
+  mean_ms: 11.707111339395246
+  std_ms: 0.9042925093751377
   mem_mb: 363.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 39
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
+    temp_c: 34
     mem_temp_c: 36
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 35
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 38
-    mem_temp_c: 40
+    mem_temp_c: 38
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -414,33 +484,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.5833426269066218
+  speedup: 1.452254757456904
 - n_devices: 1
-  min_ms: 15.314871910959482
-  mean_ms: 15.396583282078305
-  std_ms: 0.07242512738465597
+  min_ms: 15.147855039685965
+  mean_ms: 15.23575970592598
+  std_ms: 0.07194787822791504
   mem_mb: 699.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 39
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
+    temp_c: 34
     mem_temp_c: 36
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 35
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -488,31 +558,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 1
-  min_ms: 16.404649941250682
-  mean_ms: 16.49742228134225
-  std_ms: 0.1159608040413862
+  min_ms: 16.371377045288682
+  mean_ms: 16.410471017782886
+  std_ms: 0.04153935589445613
   mem_mb: 708.1
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 41
+    temp_c: 37
+    mem_temp_c: 39
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 36
+    temp_c: 33
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
+    temp_c: 33
     mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 37
-    mem_temp_c: 40
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -560,31 +630,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 38.76430506352335
-  mean_ms: 38.76430506352335
+  min_ms: 39.134631981141865
+  mean_ms: 39.134631981141865
   std_ms: 0.0
   mem_mb: 2025.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 38
+    mem_temp_c: 40
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 38
-    mem_temp_c: 40
+    mem_temp_c: 39
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -631,33 +701,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 2.9272389332849866
+  speedup: 2.8814638675882445
 - n_devices: 2
-  min_ms: 57.0433639222756
-  mean_ms: 57.0433639222756
+  min_ms: 56.60579493269324
+  mean_ms: 56.60579493269324
   std_ms: 0.0
   mem_mb: 3980.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 40
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -702,35 +772,35 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.9892302136720692
+  speedup: 1.9921110225394092
   new_records:
   - speedup
 - n_devices: 1
-  min_ms: 113.4723830036819
-  mean_ms: 113.4723830036819
+  min_ms: 112.76502802502364
+  mean_ms: 112.76502802502364
   std_ms: 0.0
   mem_mb: 7884.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
+    temp_c: 39
     mem_temp_c: 41
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 41
+    temp_c: 38
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -776,54 +846,54 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 4.032684955745935
-  mean_ms: 4.345053302434583
-  std_ms: 0.2307554898856436
+  min_ms: 4.128820961341262
+  mean_ms: 4.157724673859775
+  std_ms: 0.03245245301411798
   mem_mb: 161.6
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 40
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 33
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 37
+    temp_c: 33
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 37
-    mem_temp_c: 40
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 358686.97793741943
-    mean: 0.053889269521847874
-    l2norm: 24087.3598998169
-    min: -52.2319221496582
-    max: 53.049442291259766
+    sum: 358686.97690218524
+    mean: 0.053889269366313886
+    l2norm: 24087.359900676656
+    min: -52.23191452026367
+    max: 53.04944610595703
     samples:
     - 0.0
     - -7.771563529968262
-    - -10.209131240844727
-    - 4.1634745597839355
+    - -10.209132194519043
+    - 4.163475513458252
     - 17.506362915039062
     - -9.257894515991211
     - -2.2318029403686523
-    - -14.055354118347168
-    - -7.573271751403809
+    - -14.055355072021484
+    - -7.573272705078125
     - -3.2124719619750977
-    - 5.382434368133545
+    - 5.382434844970703
     - 0.1007968857884407
     shape:
     - 200
@@ -848,31 +918,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 27.288552024401724
-  mean_ms: 27.87970332428813
-  std_ms: 0.5396468150560854
+  min_ms: 27.025598101317883
+  mean_ms: 27.6060647253568
+  std_ms: 0.5972481865088868
   mem_mb: 474.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
+    temp_c: 42
     mem_temp_c: 41
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 36
-    mem_temp_c: 36
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 36
-    mem_temp_c: 36
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 40
+    mem_temp_c: 39
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -882,9 +952,82 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: -637348.8081714374
-    mean: -0.007235990344586115
-    l2norm: 136066.31639251055
+    sum: -637348.803384647
+    mean: -0.007235990290240413
+    l2norm: 136066.31639285164
+    min: -87.91465759277344
+    max: 93.2774658203125
+    samples:
+    - 0.0
+    - 3.4689016342163086
+    - 27.455307006835938
+    - -15.717945098876953
+    - 2.7097530364990234
+    - -11.702805519104004
+    - 12.980257034301758
+    - 1.0397238731384277
+    - 28.481340408325195
+    - 16.545984268188477
+    - -8.378129005432129
+    - 0.06166061386466026
+    shape:
+    - 512
+    - 448
+    - 384
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 474.9
+  mem_peaks_trial_mb:
+  - 474.9
+  - 474.9
+  - 474.9
+  geometry: parallel
+  op: forward
+  size: 512x448x384
+  recon_shape:
+  - 384
+  - 384
+  - 448
+  trials: 3
+  speedup: 3.249801786032125
+- n_devices: 2
+  min_ms: 47.2479130839929
+  mean_ms: 47.5661470166718
+  std_ms: 0.43492607858879345
+  mem_mb: 691.3
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 40
+  - index: 1
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 34
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 38
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: true
+  n_shard_devices: 2
+  devices:
+  - cuda:0
+  - cuda:1
+  fingerprint:
+    sum: -637348.8081945889
+    mean: -0.0072359903448489605
+    l2norm: 136066.3163927289
     min: -87.91465759277344
     max: 93.27747344970703
     samples:
@@ -893,85 +1036,12 @@ cells:
     - 27.455307006835938
     - -15.717945098876953
     - 2.7097530364990234
-    - -11.702804565429688
-    - 12.980256080627441
-    - 1.0397224426269531
-    - 28.481342315673828
-    - 16.545982360839844
-    - -8.378128051757812
-    - 0.06166061386466026
-    shape:
-    - 512
-    - 448
-    - 384
-    dtype: float32
-    padding_zero:
-  platform: gpu
-  mem_peaks_warmup_mb:
-  - 474.9
-  mem_peaks_trial_mb:
-  - 474.9
-  - 474.9
-  - 474.9
-  geometry: parallel
-  op: forward
-  size: 512x448x384
-  recon_shape:
-  - 384
-  - 384
-  - 448
-  trials: 3
-  speedup: 3.202291893509592
-- n_devices: 2
-  min_ms: 47.32358793262392
-  mean_ms: 47.35216199575613
-  std_ms: 0.025926161212038067
-  mem_mb: 691.3
-  gpu_health:
-  - index: 0
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
-  - index: 1
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 36
-  - index: 2
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 35
-  - index: 3
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 41
-  throttled: false
-  is_sharded: true
-  n_shard_devices: 2
-  devices:
-  - cuda:0
-  - cuda:1
-  fingerprint:
-    sum: -637348.8029697461
-    mean: -0.0072359902855299325
-    l2norm: 136066.31639357322
-    min: -87.91465759277344
-    max: 93.27747344970703
-    samples:
-    - 0.0
-    - 3.4689016342163086
-    - 27.455307006835938
-    - -15.71794605255127
-    - 2.709749221801758
     - -11.702805519104004
-    - 12.980256080627441
-    - 1.0397216081619263
+    - 12.980257034301758
+    - 1.0397233963012695
     - 28.481342315673828
     - 16.545982360839844
-    - -8.378128051757812
+    - -8.378129005432129
     - 0.06166061386466026
     shape:
     - 512
@@ -994,55 +1064,55 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.8465613608539249
+  speedup: 1.858872302404493
 - n_devices: 1
-  min_ms: 87.3859089333564
-  mean_ms: 87.39852730650455
-  std_ms: 0.010503140608670924
+  min_ms: 87.82783697824925
+  mean_ms: 87.98797067720443
+  std_ms: 0.17278144157681605
   mem_mb: 1212.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 41
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 40
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
+    temp_c: 35
     mem_temp_c: 36
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: -637348.7843018833
-    mean: -0.0072359900735887266
-    l2norm: 136066.31639155227
-    min: -87.91465759277344
+    sum: -637348.8143561279
+    mean: -0.007235990414802549
+    l2norm: 136066.31639166875
+    min: -87.9146499633789
     max: 93.27748107910156
     samples:
     - 0.0
     - 3.4688992500305176
-    - 27.455303192138672
+    - 27.455305099487305
     - -15.717944145202637
-    - 2.709752082824707
-    - -11.702803611755371
+    - 2.709751844406128
+    - -11.702804565429688
     - 12.980255126953125
-    - 1.0397160053253174
+    - 1.039717674255371
     - 28.481340408325195
-    - 16.545984268188477
+    - 16.545982360839844
     - -8.378128051757812
     - 0.06166061386466026
     shape:
@@ -1067,56 +1137,54 @@ cells:
   - 448
   trials: 3
   speedup: 1.0
-  new_records:
-  - min_ms
 - n_devices: 1
-  min_ms: 90.92548699118197
-  mean_ms: 91.09353231421362
-  std_ms: 0.14412734722942644
+  min_ms: 91.26847400330007
+  mean_ms: 91.48176767242451
+  std_ms: 0.15307543347638727
   mem_mb: 1429.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
+    temp_c: 39
     mem_temp_c: 41
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
+    temp_c: 33
     mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 36
+    temp_c: 33
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 37
-    mem_temp_c: 40
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: -719364.7637533101
-    mean: -0.008111939922169489
-    l2norm: 136713.31026706053
-    min: -87.76780700683594
-    max: 91.85858154296875
+    sum: -719364.751599606
+    mean: -0.008111939785117853
+    l2norm: 136713.31026655302
+    min: -87.76781463623047
+    max: 91.85858917236328
     samples:
     - -0.18624547123908997
-    - -2.3632259368896484
+    - -2.3632256984710693
     - 13.930235862731934
-    - 7.76158332824707
-    - -7.786695957183838
-    - 8.004398345947266
-    - 0.26948070526123047
-    - 9.766870498657227
-    - -9.525235176086426
-    - 6.966373920440674
+    - 7.761585235595703
+    - -7.7866950035095215
+    - 8.00439739227295
+    - 0.26948082447052
+    - 9.76686954498291
+    - -9.52523422241211
+    - 6.966376781463623
     - 11.350886344909668
     - -1.5568968057632446
     shape:
@@ -1142,31 +1210,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 632.5522619299591
-  mean_ms: 632.5522619299591
+  min_ms: 633.1539830425754
+  mean_ms: 633.1539830425754
   std_ms: 0.0
   mem_mb: 3096.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 49
+    temp_c: 46
     mem_temp_c: 44
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 44
+    temp_c: 43
     mem_temp_c: 39
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 44
-    mem_temp_c: 39
+    temp_c: 43
+    mem_temp_c: 38
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 47
-    mem_temp_c: 44
+    temp_c: 46
+    mem_temp_c: 42
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -1176,21 +1244,21 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: 8166491.211770479
-    mean: 0.0079755995123634
-    l2norm: 746746.7825122428
+    sum: 8166491.275491182
+    mean: 0.00797559957459463
+    l2norm: 746746.7825122183
     min: -159.06826782226562
     max: 153.55892944335938
     samples:
     - 0.0
-    - -8.138983726501465
+    - -8.138984680175781
     - 2.1006107330322266
     - 43.477378845214844
-    - -18.681110382080078
+    - -18.681114196777344
     - 32.85934066772461
-    - 29.00742530822754
-    - -5.388125419616699
-    - -6.7811737060546875
+    - 29.007427215576172
+    - -5.388123989105225
+    - -6.78117561340332
     - 27.396198272705078
     - -15.348442077636719
     - -0.20931190252304077
@@ -1213,33 +1281,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 3.9988676956802274
+  speedup: 3.9966437546065685
 - n_devices: 2
-  min_ms: 1237.9272050457075
-  mean_ms: 1237.9272050457075
+  min_ms: 1237.1831099735573
+  mean_ms: 1237.1831099735573
   std_ms: 0.0
   mem_mb: 4815.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 51
-    mem_temp_c: 45
+    temp_c: 48
+    mem_temp_c: 44
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 46
+    temp_c: 45
     mem_temp_c: 40
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 41
+    temp_c: 38
+    mem_temp_c: 39
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -1247,20 +1315,20 @@ cells:
   - cuda:0
   - cuda:1
   fingerprint:
-    sum: 8166491.281340858
-    mean: 0.007975599580307571
-    l2norm: 746746.782514065
+    sum: 8166491.2398923095
+    mean: 0.007975599539827882
+    l2norm: 746746.7825147578
     min: -159.06826782226562
-    max: 153.55892944335938
+    max: 153.5589141845703
     samples:
     - 0.0
-    - -8.138980865478516
+    - -8.138982772827148
     - 2.1006107330322266
     - 43.477378845214844
     - -18.681106567382812
     - 32.85934066772461
-    - 29.00742530822754
-    - -5.388125896453857
+    - 29.007423400878906
+    - -5.388125419616699
     - -6.78117561340332
     - 27.396198272705078
     - -15.348443984985352
@@ -1284,56 +1352,56 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 2.0433292004175443
+  speedup: 2.045364903248208
 - n_devices: 1
-  min_ms: 2529.492806061171
-  mean_ms: 2529.492806061171
+  min_ms: 2530.4909120313823
+  mean_ms: 2530.4909120313823
   std_ms: 0.0
   mem_mb: 9737.4
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 52
-    mem_temp_c: 47
+    temp_c: 50
+    mem_temp_c: 45
   - index: 1
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
-  - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 36
     mem_temp_c: 37
+  - index: 2
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 8166491.310347682
-    mean: 0.00797559960863636
-    l2norm: 746746.7825298997
+    sum: 8166491.346011947
+    mean: 0.007975599643466974
+    l2norm: 746746.7825242976
     min: -159.06825256347656
-    max: 153.5589141845703
+    max: 153.55889892578125
     samples:
     - 0.0
-    - -8.138984680175781
-    - 2.10060977935791
+    - -8.138983726501465
+    - 2.1006100177764893
     - 43.477386474609375
-    - -18.68110466003418
+    - -18.681106567382812
     - 32.85934829711914
     - 29.007429122924805
-    - -5.388129711151123
-    - -6.781172752380371
-    - 27.396202087402344
-    - -15.348443984985352
+    - -5.388129234313965
+    - -6.78117561340332
+    - 27.39620018005371
+    - -15.348444938659668
     - -0.20931190252304077
     shape:
     - 1024
@@ -1356,31 +1424,31 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 1.7445370322093368
-  mean_ms: 1.8493853664646547
-  std_ms: 0.13659696609136718
+  min_ms: 1.715481048449874
+  mean_ms: 1.783498718092839
+  std_ms: 0.0585123434968901
   mem_mb: 110.4
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 42
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
+    temp_c: 34
     mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 35
+    temp_c: 33
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 40
+    temp_c: 37
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -1426,32 +1494,34 @@ cells:
   - 208
   trials: 3
   speedup: 1.0
+  new_records:
+  - min_ms
 - n_devices: 4
-  min_ms: 13.627774082124233
-  mean_ms: 13.97498871665448
-  std_ms: 0.41453787705247347
+  min_ms: 13.92173208296299
+  mean_ms: 15.092236688360572
+  std_ms: 0.8440895696863333
   mem_mb: 393.6
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 44
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 42
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 2
-    sm_mhz: 345
+    sm_mhz: 795
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 38
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -1499,33 +1569,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 2.136455652339474
+  speedup: 2.086193357111215
 - n_devices: 2
-  min_ms: 17.415361013263464
-  mean_ms: 17.701206690010924
-  std_ms: 0.2032339504320045
+  min_ms: 17.36500207334757
+  mean_ms: 17.40016237211724
+  std_ms: 0.03563205102857187
   mem_mb: 650.6
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 42
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 38
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -1571,33 +1641,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.67180771873668
+  speedup: 1.672526433816922
 - n_devices: 1
-  min_ms: 29.115134966559708
-  mean_ms: 29.131028684787452
-  std_ms: 0.015721001758408893
+  min_ms: 29.043424990959466
+  mean_ms: 29.05862363210569
+  std_ms: 0.010875876613898475
   mem_mb: 959.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 41
+    temp_c: 40
+    mem_temp_c: 42
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 36
+    temp_c: 35
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 35
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 41
+    temp_c: 38
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -1644,31 +1714,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 1
-  min_ms: 30.32116498798132
-  mean_ms: 30.424843658693135
-  std_ms: 0.1387746285192238
+  min_ms: 30.21175100002438
+  mean_ms: 30.342056648805737
+  std_ms: 0.1395777029191843
   mem_mb: 982.1
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 41
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 33
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 36
+    temp_c: 33
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 37
-    mem_temp_c: 41
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -1715,30 +1785,30 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 248.0120649561286
-  mean_ms: 248.0120649561286
+  min_ms: 245.6251970725134
+  mean_ms: 245.6251970725134
   std_ms: 0.0
   mem_mb: 4140.9
   gpu_health:
   - index: 0
-    sm_mhz: 1980
+    sm_mhz: 1965
     mem_mhz: 2619
-    temp_c: 47
-    mem_temp_c: 47
+    temp_c: 44
+    mem_temp_c: 46
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 39
+    temp_c: 35
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 39
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 40
+    temp_c: 42
     mem_temp_c: 42
   throttled: false
   is_sharded: true
@@ -1785,37 +1855,37 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 3.157346640122661
+  speedup: 3.1956029484079314
 - n_devices: 2
-  min_ms: 413.4027829859406
-  mean_ms: 413.4027829859406
+  min_ms: 415.3907469008118
+  mean_ms: 415.3907469008118
   std_ms: 0.0
   mem_mb: 7488.5
   gpu_health:
   - index: 0
     sm_mhz: 1965
     mem_mhz: 2619
-    temp_c: 54
-    mem_temp_c: 51
+    temp_c: 51
+    mem_temp_c: 49
     throttle:
     - sw_power_cap
   - index: 1
     sm_mhz: 1965
     mem_mhz: 2619
-    temp_c: 47
-    mem_temp_c: 44
+    temp_c: 46
+    mem_temp_c: 43
     throttle:
     - sw_power_cap
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 36
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   throttled: true
   is_sharded: true
   n_shard_devices: 2
@@ -1859,35 +1929,35 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.8941818783686004
+  speedup: 1.8895957837877133
 - n_devices: 1
-  min_ms: 783.0600599991158
-  mean_ms: 783.0600599991158
+  min_ms: 784.9206039682031
+  mean_ms: 784.9206039682031
   std_ms: 0.0
   mem_mb: 11117.3
   gpu_health:
   - index: 0
-    sm_mhz: 1920
+    sm_mhz: 1950
     mem_mhz: 2619
-    temp_c: 57
-    mem_temp_c: 56
+    temp_c: 53
+    mem_temp_c: 51
     throttle:
     - sw_power_cap
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 35
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 38
   throttled: true
   is_sharded: false
   n_shard_devices: 1
@@ -1932,52 +2002,52 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 224.22247799113393
-  mean_ms: 224.22247799113393
+  min_ms: 223.505750996992
+  mean_ms: 223.505750996992
   std_ms: 0.0
   mem_mb: 235.6
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 42
   - index: 1
-    sm_mhz: 345
-    mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
-  - index: 2
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 34
     mem_temp_c: 36
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 41
+    temp_c: 37
+    mem_temp_c: 38
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 16547.403494222686
-    mean: 0.0031076103316974696
-    l2norm: 40.691203237717716
+    sum: 16547.40348885071
+    mean: 0.0031076103306886095
+    l2norm: 40.69120356504277
     min: -0.09801937639713287
     max: 0.13049019873142242
     samples:
     - 0.0
-    - 0.03941072151064873
+    - 0.03941073268651962
     - 0.0
-    - -0.016615815460681915
-    - -0.021196892485022545
-    - 0.029179425910115242
-    - 0.017069853842258453
-    - -0.018610382452607155
-    - 0.018079418689012527
+    - -0.016615819185972214
+    - -0.021196896210312843
+    - 0.029179420322179794
+    - 0.017069857567548752
+    - -0.018610384315252304
+    - 0.01807940937578678
     - 0.0
     - 0.027795452624559402
     - 0.0
@@ -2002,31 +2072,31 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 4
-  min_ms: 1670.4700459958985
-  mean_ms: 1670.4700459958985
+  min_ms: 1635.4617519536987
+  mean_ms: 1635.4617519536987
   std_ms: 0.0
   mem_mb: 716.5
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 44
-    mem_temp_c: 43
+    temp_c: 42
+    mem_temp_c: 41
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 38
-  - index: 2
-    sm_mhz: 345
-    mem_mhz: 2619
-    temp_c: 39
+    temp_c: 37
     mem_temp_c: 37
-  - index: 3
-    sm_mhz: 345
+  - index: 2
+    sm_mhz: 795
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 42
+    temp_c: 37
+    mem_temp_c: 36
+  - index: 3
+    sm_mhz: 780
+    mem_mhz: 2619
+    temp_c: 41
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -2036,22 +2106,22 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: 86003.75065383536
-    mean: 0.0013018979065582542
-    l2norm: 76.14643927182135
-    min: -0.059771597385406494
-    max: 0.07525434345006943
+    sum: 86003.75070488575
+    mean: 0.001301897907331039
+    l2norm: 76.1464388309081
+    min: -0.05977160111069679
+    max: 0.07525435090065002
     samples:
     - 0.0
     - 0.0
-    - -0.005314115434885025
-    - 0.005851381924003363
+    - -0.005314117297530174
+    - 0.00585138238966465
     - -0.00494063924998045
     - 0.011633855290710926
     - 0.014468846842646599
-    - -0.0013130311854183674
-    - -0.0031319193076342344
-    - 0.0044265431351959705
+    - -0.0013130318839102983
+    - -0.0031319200061261654
+    - 0.004426544066518545
     - 0.0
     - 0.0
     shape:
@@ -2073,33 +2143,35 @@ cells:
   - 384
   - 448
   trials: 1
-  speedup: 0.6037261496985467
+  speedup: 0.6193970722834428
+  new_records:
+  - min_ms
 - n_devices: 2
-  min_ms: 887.3327440815046
-  mean_ms: 887.3327440815046
+  min_ms: 875.0812510261312
+  mean_ms: 875.0812510261312
   std_ms: 0.0
   mem_mb: 1163.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
+    temp_c: 45
     mem_temp_c: 43
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 38
+    temp_c: 42
+    mem_temp_c: 39
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -2107,22 +2179,22 @@ cells:
   - cuda:0
   - cuda:1
   fingerprint:
-    sum: 86003.7505971051
-    mean: 0.0013018979056994891
-    l2norm: 76.14643939463218
+    sum: 86003.75061664937
+    mean: 0.0013018979059953443
+    l2norm: 76.146439166651
     min: -0.059771597385406494
     max: 0.07525436580181122
     samples:
     - 0.0
     - 0.0
     - -0.005314117297530174
-    - 0.005851381924003363
-    - -0.004940638784319162
-    - 0.011633853428065777
+    - 0.00585138238966465
+    - -0.00494063924998045
+    - 0.011633855290710926
     - 0.014468846842646599
-    - -0.001313031418249011
-    - -0.0031319200061261654
-    - 0.0044265431351959705
+    - -0.0013130316510796547
+    - -0.0031319204717874527
+    - 0.0044265445321798325
     - 0.0
     - 0.0
     shape:
@@ -2144,57 +2216,57 @@ cells:
   - 384
   - 448
   trials: 1
-  speedup: 1.136559487726087
+  speedup: 1.1576070448359101
   new_records:
   - min_ms
 - n_devices: 1
-  min_ms: 1008.506449055858
-  mean_ms: 1008.506449055858
+  min_ms: 1013.0002209916711
+  mean_ms: 1013.0002209916711
   std_ms: 0.0
   mem_mb: 2145.7
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 49
+    temp_c: 46
+    mem_temp_c: 48
   - index: 1
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
-  - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 36
     mem_temp_c: 37
+  - index: 2
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 86003.750807701
-    mean: 0.001301897908887424
-    l2norm: 76.14643354276228
+    sum: 86003.75085719336
+    mean: 0.001301897909636624
+    l2norm: 76.14643353828296
     min: -0.0597715899348259
-    max: 0.07525437325239182
+    max: 0.07525436580181122
     samples:
     - 0.0
     - 0.0
     - -0.005314117297530174
-    - 0.005851382855325937
+    - 0.00585138238966465
     - -0.004940638318657875
     - 0.011633855290710926
-    - 0.014468846842646599
-    - -0.0013130317674949765
-    - -0.0031319214031100273
-    - 0.004426543600857258
+    - 0.014468845911324024
+    - -0.0013130304869264364
+    - -0.003131920238956809
+    - 0.004426544066518545
     - 0.0
     - 0.0
     shape:
@@ -2217,45 +2289,43 @@ cells:
   - 448
   trials: 1
   speedup: 1.0
-  new_records:
-  - min_ms
 - n_devices: 1
-  min_ms: 1036.5863650804386
-  mean_ms: 1036.5863650804386
+  min_ms: 1024.5183270890266
+  mean_ms: 1024.5183270890266
   std_ms: 0.0
   mem_mb: 2370.3
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 45
-    mem_temp_c: 45
+    temp_c: 47
+    mem_temp_c: 47
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 36
+    temp_c: 33
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 41
+    temp_c: 37
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 86386.6516856529
-    mean: 0.0012980123996715837
-    l2norm: 76.42775162783524
-    min: -0.058405619114637375
-    max: 0.07201561331748962
+    sum: 86386.65155375638
+    mean: 0.0012980123976897577
+    l2norm: 76.42775179429002
+    min: -0.05840562283992767
+    max: 0.07201562076807022
     samples:
     - 0.0
     - 0.0
@@ -2289,34 +2359,36 @@ cells:
   - 449
   trials: 1
   speedup: 1.0
+  new_records:
+  - min_ms
 - n_devices: 4
-  min_ms: 5846.808183006942
-  mean_ms: 5846.808183006942
+  min_ms: 5819.364920957014
+  mean_ms: 5819.364920957014
   std_ms: 0.0
   mem_mb: 6453.7
   gpu_health:
   - index: 0
     sm_mhz: 1965
     mem_mhz: 2619
-    temp_c: 55
-    mem_temp_c: 51
+    temp_c: 53
+    mem_temp_c: 52
     throttle:
     - sw_power_cap
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 48
-    mem_temp_c: 47
+    mem_temp_c: 46
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 47
+    temp_c: 48
+    mem_temp_c: 44
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 53
-    mem_temp_c: 51
+    temp_c: 52
+    mem_temp_c: 49
     throttle:
     - sw_power_cap
   throttled: true
@@ -2328,21 +2400,21 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: 500509.91391501203
-    mean: 0.0005045785772174621
-    l2norm: 182.17373435714853
+    sum: 500509.913936166
+    mean: 0.000504578577238788
+    l2norm: 182.1737342985538
     min: -0.04372479394078255
-    max: 0.044388867914676666
+    max: 0.04438886418938637
     samples:
     - 0.0
     - 0.0
     - 0.010235387831926346
-    - 0.0021059666760265827
+    - 0.0021059669088572264
     - 0.014765527099370956
-    - 0.015000423416495323
-    - 0.008520442992448807
-    - -6.74234761390835e-05
-    - -0.007837728597223759
+    - 0.015000424347817898
+    - 0.008520443923771381
+    - -6.742350524291396e-05
+    - -0.007837729528546333
     - 0.010537013411521912
     - 0.0
     - 0.0
@@ -2365,37 +2437,37 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 3.15226775724824
+  speedup: 3.1496843992348236
 - n_devices: 2
-  min_ms: 10025.911160977557
-  mean_ms: 10025.911160977557
+  min_ms: 9988.1949480623
+  mean_ms: 9988.1949480623
   std_ms: 0.0
   mem_mb: 12055.3
   gpu_health:
   - index: 0
-    sm_mhz: 1905
+    sm_mhz: 1890
     mem_mhz: 2619
-    temp_c: 63
+    temp_c: 60
     mem_temp_c: 59
     throttle:
     - sw_power_cap
   - index: 1
-    sm_mhz: 1965
+    sm_mhz: 1935
     mem_mhz: 2619
-    temp_c: 55
-    mem_temp_c: 52
+    temp_c: 54
+    mem_temp_c: 51
     throttle:
     - sw_power_cap
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 39
+    temp_c: 37
+    mem_temp_c: 37
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
-    mem_temp_c: 44
+    temp_c: 42
+    mem_temp_c: 42
   throttled: true
   is_sharded: true
   n_shard_devices: 2
@@ -2403,20 +2475,20 @@ cells:
   - cuda:0
   - cuda:1
   fingerprint:
-    sum: 500509.9138116608
-    mean: 0.0005045785771132707
-    l2norm: 182.17373280944088
+    sum: 500509.9142100637
+    mean: 0.0005045785775149123
+    l2norm: 182.1737331779341
     min: -0.04372479394078255
-    max: 0.044388871639966965
+    max: 0.044388867914676666
     samples:
     - 0.0
     - 0.0
-    - 0.01023538876324892
-    - 0.0021059673745185137
-    - 0.014765526168048382
-    - 0.015000424347817898
-    - 0.008520444855093956
-    - -6.742359255440533e-05
+    - 0.010235387831926346
+    - 0.00210596714168787
+    - 0.014765525236725807
+    - 0.015000425279140472
+    - 0.00852044578641653
+    - -6.742353434674441e-05
     - -0.007837728597223759
     - 0.010537012480199337
     - 0.0
@@ -2440,56 +2512,56 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.8383072243691114
+  speedup: 1.835082615057342
 - n_devices: 1
-  min_ms: 18430.70491810795
-  mean_ms: 18430.70491810795
+  min_ms: 18329.1629049927
+  mean_ms: 18329.1629049927
   std_ms: 0.0
   mem_mb: 23418.0
   gpu_health:
   - index: 0
-    sm_mhz: 1695
+    sm_mhz: 1860
     mem_mhz: 2619
-    temp_c: 69
-    mem_temp_c: 65
+    temp_c: 63
+    mem_temp_c: 64
     throttle:
     - sw_power_cap
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
-    mem_temp_c: 42
+    temp_c: 41
+    mem_temp_c: 41
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 41
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 41
   throttled: true
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 500509.913885669
-    mean: 0.0005045785771878806
-    l2norm: 182.1737489622269
+    sum: 500509.91359839216
+    mean: 0.0005045785768982684
+    l2norm: 182.17374617454476
     min: -0.043724797666072845
-    max: 0.044388867914676666
+    max: 0.04438887536525726
     samples:
     - 0.0
     - 0.0
     - 0.010235389694571495
     - 0.002105967840179801
-    - 0.014765526168048382
+    - 0.014765523374080658
     - 0.015000423416495323
-    - 0.008520446717739105
-    - -6.742344703525304e-05
-    - -0.007837727665901184
+    - 0.00852044578641653
+    - -6.742359255440533e-05
+    - -0.00783772673457861
     - 0.010537013411521912
     - 0.0
     - 0.0
@@ -2514,31 +2586,31 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 5.367131903767586
-  mean_ms: 5.435582289161782
-  std_ms: 0.05724686018212464
+  min_ms: 5.06739504635334
+  mean_ms: 5.133396635452907
+  std_ms: 0.091556577928143
   mem_mb: 64.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 50
-    mem_temp_c: 51
+    temp_c: 48
+    mem_temp_c: 50
   - index: 1
-    sm_mhz: 375
+    sm_mhz: 525
     mem_mhz: 2619
-    temp_c: 37
+    temp_c: 35
     mem_temp_c: 38
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 42
+    temp_c: 38
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -2586,31 +2658,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 19.350550952367485
-  mean_ms: 19.59847565740347
-  std_ms: 0.2820824305418478
+  min_ms: 18.561735982075334
+  mean_ms: 18.90189367501686
+  std_ms: 0.2867163486198108
   mem_mb: 197.7
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 50
+    temp_c: 48
+    mem_temp_c: 49
   - index: 1
-    sm_mhz: 345
-    mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
-  - index: 2
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 36
     mem_temp_c: 37
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -2659,33 +2731,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.2984671149645939
+  speedup: 1.3153342496252198
 - n_devices: 2
-  min_ms: 17.336647026240826
-  mean_ms: 17.722437003006537
-  std_ms: 0.3277914262317763
+  min_ms: 16.843346995301545
+  mean_ms: 16.972987990205485
+  std_ms: 0.11707711026207669
   mem_mb: 365.7
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 49
+    temp_c: 47
     mem_temp_c: 49
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
+    temp_c: 36
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -2732,33 +2804,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.4493029724874178
+  speedup: 1.4495270492577894
 - n_devices: 1
-  min_ms: 25.126054068095982
-  mean_ms: 25.288255652412772
-  std_ms: 0.11598921328738324
+  min_ms: 24.4148870697245
+  mean_ms: 24.49779767387857
+  std_ms: 0.07788008682698087
   mem_mb: 701.7
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 49
+    temp_c: 47
     mem_temp_c: 49
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
+    temp_c: 36
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -2806,31 +2878,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 1
-  min_ms: 25.594645063392818
-  mean_ms: 25.918861695875723
-  std_ms: 0.4179184143127061
+  min_ms: 25.74483200442046
+  mean_ms: 26.157750010800857
+  std_ms: 0.4341577611099869
   mem_mb: 710.5
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 47
-    mem_temp_c: 47
+    temp_c: 45
+    mem_temp_c: 48
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 38
+    temp_c: 34
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 33
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 38
-    mem_temp_c: 42
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -2878,31 +2950,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 89.78345291689038
-  mean_ms: 89.78345291689038
+  min_ms: 90.77655605506152
+  mean_ms: 90.77655605506152
   std_ms: 0.0
   mem_mb: 2032.8
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 46
-    mem_temp_c: 47
+    temp_c: 45
+    mem_temp_c: 46
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 35
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 39
-    mem_temp_c: 42
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -2949,33 +3021,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.5509893581090464
+  speedup: 1.5319860993601122
 - n_devices: 2
-  min_ms: 87.7683040453121
-  mean_ms: 87.7683040453121
+  min_ms: 79.57940897904336
+  mean_ms: 79.57940897904336
   std_ms: 0.0
   mem_mb: 3987.8
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 45
-    mem_temp_c: 46
+    temp_c: 44
+    mem_temp_c: 45
   - index: 1
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
-  - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 36
     mem_temp_c: 37
+  - index: 2
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 39
-    mem_temp_c: 42
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -3020,33 +3092,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.5865998725062458
+  speedup: 1.7475427853549514
 - n_devices: 1
-  min_ms: 139.2531800083816
-  mean_ms: 139.2531800083816
+  min_ms: 139.06842202413827
+  mean_ms: 139.06842202413827
   std_ms: 0.0
   mem_mb: 7891.8
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 45
+    temp_c: 44
     mem_temp_c: 45
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 35
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -3092,30 +3164,30 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 10.495168040506542
-  mean_ms: 10.581747667553524
-  std_ms: 0.11224653247040638
+  min_ms: 10.424226988106966
+  mean_ms: 10.52984467241913
+  std_ms: 0.14372733016593545
   mem_mb: 157.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
-    mem_temp_c: 45
+    temp_c: 42
+    mem_temp_c: 44
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 38
+    temp_c: 34
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 33
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 38
+    temp_c: 37
     mem_temp_c: 40
   throttled: false
   is_sharded: false
@@ -3123,24 +3195,24 @@ cells:
   devices:
   - cuda
   fingerprint:
-    sum: 161093.99040183477
-    mean: 0.024202823077198735
-    l2norm: 9882.157341513808
-    min: -21.954967498779297
-    max: 21.881820678710938
+    sum: 161093.98816808587
+    mean: 0.02420282274159944
+    l2norm: 9882.157342970806
+    min: -21.95496368408203
+    max: 21.88181495666504
     samples:
     - -2.079191207885742
-    - -1.7245543003082275
-    - -3.409731388092041
-    - -4.844106197357178
-    - -0.29888683557510376
-    - -0.8683479428291321
-    - -2.4351189136505127
+    - -1.724554419517517
+    - -3.4097321033477783
+    - -4.844107627868652
+    - -0.2988867461681366
+    - -0.8683475852012634
+    - -2.435119390487671
     - 7.129515171051025
-    - 0.08163754642009735
-    - 6.229912281036377
-    - -4.6224565505981445
-    - 1.73133385181427
+    - 0.08163745701313019
+    - 6.2299113273620605
+    - -4.622455596923828
+    - 1.7313337326049805
     shape:
     - 200
     - 208
@@ -3164,31 +3236,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 76.95503893774003
-  mean_ms: 77.32836296781898
-  std_ms: 0.47997836110754477
+  min_ms: 77.00352207757533
+  mean_ms: 78.11753804950665
+  std_ms: 1.077618324103648
   mem_mb: 474.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
-    mem_temp_c: 44
+    temp_c: 47
+    mem_temp_c: 45
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
+    temp_c: 39
     mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 40
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 41
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -3198,24 +3270,24 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: -374975.70353012264
-    mean: -0.004257198782536218
-    l2norm: 55573.47723543847
-    min: -37.96198654174805
-    max: 35.99010467529297
+    sum: -374975.71683128446
+    mean: -0.0042571989335478426
+    l2norm: 55573.47723990268
+    min: -37.96198272705078
+    max: 35.990108489990234
     samples:
-    - 0.013454198837280273
-    - -14.64453125
-    - 0.731544017791748
-    - 4.620421886444092
-    - -2.7804481983184814
-    - 3.4232840538024902
-    - 6.084719181060791
-    - 0.820561408996582
-    - -6.07984733581543
-    - -6.27670955657959
-    - -3.2780513763427734
-    - -0.2866506278514862
+    - 0.013454079627990723
+    - -14.644532203674316
+    - 0.7315435409545898
+    - 4.620423316955566
+    - -2.780447006225586
+    - 3.4232826232910156
+    - 6.084720134735107
+    - 0.8205618858337402
+    - -6.0798492431640625
+    - -6.276707649230957
+    - -3.2780508995056152
+    - -0.2866503894329071
     shape:
     - 512
     - 448
@@ -3237,33 +3309,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 3.9934846149435494
+  speedup: 3.987909405229002
 - n_devices: 2
-  min_ms: 152.64804102480412
-  mean_ms: 152.71256297516325
-  std_ms: 0.06457699775461767
+  min_ms: 152.46728295460343
+  mean_ms: 152.96124364249408
+  std_ms: 0.4211913311741908
   mem_mb: 691.3
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 47
-    mem_temp_c: 46
+    temp_c: 46
+    mem_temp_c: 45
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 45
-    mem_temp_c: 40
+    temp_c: 44
+    mem_temp_c: 39
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 41
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -3271,24 +3343,24 @@ cells:
   - cuda:0
   - cuda:1
   fingerprint:
-    sum: -374975.69054040115
-    mean: -0.004257198635060459
-    l2norm: 55573.47723680535
+    sum: -374975.71024733793
+    mean: -0.004257198858798548
+    l2norm: 55573.47723911659
     min: -37.96198272705078
-    max: 35.990108489990234
+    max: 35.99010467529297
     samples:
-    - 0.013454079627990723
-    - -14.644530296325684
-    - 0.7315421104431152
-    - 4.620420932769775
-    - -2.7804453372955322
-    - 3.4232826232910156
-    - 6.084720134735107
-    - 0.8205610513687134
-    - -6.0798468589782715
-    - -6.276708602905273
-    - -3.2780508995056152
-    - -0.2866500914096832
+    - 0.013454198837280273
+    - -14.644533157348633
+    - 0.7315435409545898
+    - 4.620422840118408
+    - -2.7804460525512695
+    - 3.423281669616699
+    - 6.084719181060791
+    - 0.8205623626708984
+    - -6.079846382141113
+    - -6.276708126068115
+    - -3.27805233001709
+    - -0.2866502106189728
     shape:
     - 512
     - 448
@@ -3310,57 +3382,57 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 2.013250625275366
+  speedup: 2.014091574127117
 - n_devices: 1
-  min_ms: 307.3187640402466
-  mean_ms: 307.3688380342598
-  std_ms: 0.03541186045846005
+  min_ms: 307.08306992892176
+  mean_ms: 307.11959399438155
+  std_ms: 0.028596566627638407
   mem_mb: 1268.3
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 51
+    temp_c: 50
     mem_temp_c: 47
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
+    temp_c: 36
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 39
-    mem_temp_c: 41
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: -374975.7016735012
-    mean: -0.004257198761457502
-    l2norm: 55573.47723831094
+    sum: -374975.7021099399
+    mean: -0.004257198766412507
+    l2norm: 55573.47723770932
     min: -37.961971282958984
-    max: 35.9901237487793
+    max: 35.99013137817383
     samples:
-    - 0.013453967869281769
+    - 0.013453908264636993
     - -14.64453125
-    - 0.731544554233551
-    - 4.620421886444092
-    - -2.7804465293884277
-    - 3.4232802391052246
-    - 6.084717273712158
-    - 0.8205638527870178
-    - -6.079848289489746
+    - 0.7315428256988525
+    - 4.620422840118408
+    - -2.780447244644165
+    - 3.423283100128174
+    - 6.084714889526367
+    - 0.8205632567405701
+    - -6.0798492431640625
     - -6.276708126068115
-    - -3.2780494689941406
-    - -0.28665050864219666
+    - -3.278047800064087
+    - -0.2866499125957489
     shape:
     - 512
     - 448
@@ -3384,55 +3456,55 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 1
-  min_ms: 310.59524591546506
-  mean_ms: 311.01888794607174
-  std_ms: 0.30114287275770285
+  min_ms: 310.7023100601509
+  mean_ms: 310.8321266869704
+  std_ms: 0.178662973913513
   mem_mb: 1279.4
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 52
-    mem_temp_c: 48
+    temp_c: 45
+    mem_temp_c: 45
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 38
+    temp_c: 34
+    mem_temp_c: 36
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 33
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 40
+    temp_c: 37
+    mem_temp_c: 39
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: -384227.51825180865
-    mean: -0.004332753981778011
-    l2norm: 55841.46471251989
-    min: -36.34914016723633
-    max: 38.60496520996094
+    sum: -384227.5407335389
+    mean: -0.004332754235293966
+    l2norm: 55841.464714006535
+    min: -36.3491325378418
+    max: 38.6049690246582
     samples:
-    - 4.497866630554199
-    - -8.872239112854004
-    - 3.1422972679138184
-    - -13.838298797607422
-    - 2.150852918624878
-    - -5.512218475341797
-    - -0.6208054423332214
-    - 3.075911283493042
-    - -1.1804935932159424
-    - 0.22589872777462006
-    - -0.05157952755689621
-    - 1.580504298210144
+    - 4.497866153717041
+    - -8.87224006652832
+    - 3.142298698425293
+    - -13.838292121887207
+    - 2.150851011276245
+    - -5.512218952178955
+    - -0.6208057403564453
+    - 3.0759119987487793
+    - -1.1804941892623901
+    - 0.22589826583862305
+    - -0.05158110335469246
+    - 1.580504059791565
     shape:
     - 513
     - 449
@@ -3456,16 +3528,16 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 2086.336431093514
-  mean_ms: 2086.336431093514
+  min_ms: 2083.9541470631957
+  mean_ms: 2083.9541470631957
   std_ms: 0.0
   mem_mb: 3096.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 56
-    mem_temp_c: 51
+    temp_c: 54
+    mem_temp_c: 50
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
@@ -3474,13 +3546,13 @@ cells:
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 43
+    temp_c: 48
+    mem_temp_c: 41
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 52
-    mem_temp_c: 48
+    mem_temp_c: 46
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -3490,24 +3562,24 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: 5965834.670957619
-    mean: 0.005826383309388851
-    l2norm: 304410.0175497008
+    sum: 5965834.738056116
+    mean: 0.005826383374918921
+    l2norm: 304410.01755272265
     min: -65.60255432128906
     max: 63.4759635925293
     samples:
     - 2.9239516258239746
-    - -9.420684814453125
-    - 3.095689535140991
-    - 2.1498446464538574
-    - -15.071720123291016
-    - -11.104509353637695
-    - 13.330061912536621
-    - -10.900586128234863
-    - -1.2958191633224487
-    - 4.0100812911987305
-    - 5.053525447845459
-    - 2.0803072452545166
+    - -9.420685768127441
+    - 3.0956904888153076
+    - 2.1498451232910156
+    - -15.071722030639648
+    - -11.104508399963379
+    - 13.33006477355957
+    - -10.900588035583496
+    - -1.2958183288574219
+    - 4.010080337524414
+    - 5.053524971008301
+    - 2.080307960510254
     shape:
     - 1024
     - 1008
@@ -3527,33 +3599,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 3.8325321251630418
+  speedup: 3.833685618894452
 - n_devices: 2
-  min_ms: 4026.445519994013
-  mean_ms: 4026.445519994013
+  min_ms: 4024.1605290211737
+  mean_ms: 4024.1605290211737
   std_ms: 0.0
   mem_mb: 4815.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 59
+    temp_c: 57
     mem_temp_c: 53
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 52
-    mem_temp_c: 48
+    temp_c: 51
+    mem_temp_c: 47
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 36
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 41
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 41
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -3561,24 +3633,24 @@ cells:
   - cuda:0
   - cuda:1
   fingerprint:
-    sum: 5965834.680255116
-    mean: 0.005826383318469019
-    l2norm: 304410.0175499524
+    sum: 5965834.728811141
+    mean: 0.005826383365890047
+    l2norm: 304410.01755192917
     min: -65.60255432128906
-    max: 63.4759635925293
+    max: 63.47596740722656
     samples:
-    - 2.9239516258239746
-    - -9.420684814453125
-    - 3.0956897735595703
-    - 2.1498451232910156
-    - -15.071720123291016
-    - -11.104512214660645
-    - 13.330062866210938
-    - -10.900582313537598
-    - -1.295819640159607
+    - 2.923952341079712
+    - -9.420683860778809
+    - 3.095690965652466
+    - 2.149843692779541
+    - -15.071722030639648
+    - -11.104511260986328
+    - 13.330059051513672
+    - -10.90058708190918
+    - -1.2958199977874756
     - 4.010080337524414
-    - 5.053524971008301
-    - 2.0803074836730957
+    - 5.053526401519775
+    - 2.0803070068359375
     shape:
     - 1024
     - 1008
@@ -3598,57 +3670,57 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.9858585832984996
+  speedup: 1.9853146976656286
 - n_devices: 1
-  min_ms: 7995.9513960639015
-  mean_ms: 7995.9513960639015
+  min_ms: 7989.2250440316275
+  mean_ms: 7989.2250440316275
   std_ms: 0.0
   mem_mb: 8791.1
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 64
-    mem_temp_c: 57
+    temp_c: 62
+    mem_temp_c: 59
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 41
+    temp_c: 39
     mem_temp_c: 40
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 40
-    mem_temp_c: 42
+    mem_temp_c: 41
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 5965834.543272113
-    mean: 0.005826383184687993
-    l2norm: 304410.01754100336
-    min: -65.60253143310547
+    sum: 5965834.499789838
+    mean: 0.005826383142222115
+    l2norm: 304410.0175457787
+    min: -65.60252380371094
     max: 63.4759521484375
     samples:
     - 2.923952102661133
-    - -9.420694351196289
-    - 3.095688581466675
-    - 2.149841785430908
-    - -15.071718215942383
-    - -11.104501724243164
+    - -9.420696258544922
+    - 3.0956883430480957
+    - 2.1498427391052246
+    - -15.07171630859375
+    - -11.104504585266113
     - 13.330065727233887
-    - -10.900603294372559
-    - -1.2958171367645264
-    - 4.010078430175781
-    - 5.053523540496826
-    - 2.0803065299987793
+    - -10.900599479675293
+    - -1.2958170175552368
+    - 4.0100789070129395
+    - 5.053524971008301
+    - 2.0803070068359375
     shape:
     - 1024
     - 1008
@@ -3670,31 +3742,31 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 7.424638024531305
-  mean_ms: 7.556193663428227
-  std_ms: 0.14780439598135475
+  min_ms: 7.132587023079395
+  mean_ms: 7.168447986866037
+  std_ms: 0.04245077650239155
   mem_mb: 167.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 48
-    mem_temp_c: 49
+    temp_c: 47
+    mem_temp_c: 48
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
+    temp_c: 35
     mem_temp_c: 38
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 42
+    temp_c: 38
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -3740,32 +3812,34 @@ cells:
   - 208
   trials: 3
   speedup: 1.0
+  new_records:
+  - min_ms
 - n_devices: 4
-  min_ms: 57.543864008039236
-  mean_ms: 58.07057900043825
-  std_ms: 0.6283886739777691
+  min_ms: 57.58791894186288
+  mean_ms: 58.037956322853766
+  std_ms: 0.3567269873975563
   mem_mb: 716.5
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 50
+    temp_c: 46
     mem_temp_c: 47
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 41
+    temp_c: 39
     mem_temp_c: 38
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 37
+    temp_c: 36
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 42
+    temp_c: 41
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -3813,33 +3887,33 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 2.6332500885477943
+  speedup: 2.648242509750166
 - n_devices: 2
-  min_ms: 92.99191099125892
-  mean_ms: 93.2065350158761
-  std_ms: 0.15219309580976254
+  min_ms: 92.31815405655652
+  mean_ms: 92.48568400895844
+  std_ms: 0.15906513184090856
   mem_mb: 1016.3
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 46
+    temp_c: 45
     mem_temp_c: 47
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 38
-    mem_temp_c: 38
+    temp_c: 37
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -3885,33 +3959,36 @@ cells:
   - 384
   - 448
   trials: 3
-  speedup: 1.6294684492374272
+  speedup: 1.6519695020814478
+  new_records:
+  - min_ms
+  - speedup
 - n_devices: 1
-  min_ms: 151.52738499455154
-  mean_ms: 151.54017636086792
-  std_ms: 0.012796759683462723
+  min_ms: 152.50677498988807
+  mean_ms: 152.71006035618484
+  std_ms: 0.15906309924949477
   mem_mb: 1240.1
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 48
+    temp_c: 49
     mem_temp_c: 47
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 38
+    temp_c: 37
     mem_temp_c: 38
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -3957,29 +4034,27 @@ cells:
   - 448
   trials: 3
   speedup: 1.0
-  new_records:
-  - min_ms
 - n_devices: 1
-  min_ms: 174.30046398658305
-  mean_ms: 174.41415569434562
-  std_ms: 0.09544608280248203
+  min_ms: 174.21155597548932
+  mean_ms: 174.39992997484902
+  std_ms: 0.13320089555145473
   mem_mb: 1261.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 46
-    mem_temp_c: 45
+    temp_c: 51
+    mem_temp_c: 47
   - index: 1
-    sm_mhz: 345
-    mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 38
-  - index: 2
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 35
     mem_temp_c: 37
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 35
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
@@ -4031,31 +4106,31 @@ cells:
   trials: 3
   speedup: 1.0
 - n_devices: 4
-  min_ms: 1254.09120391123
-  mean_ms: 1254.09120391123
+  min_ms: 1252.14949704241
+  mean_ms: 1252.14949704241
   std_ms: 0.0
   mem_mb: 4533.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 58
+    temp_c: 55
     mem_temp_c: 49
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 42
+    temp_c: 48
+    mem_temp_c: 41
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 40
+    temp_c: 48
+    mem_temp_c: 39
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 53
-    mem_temp_c: 45
+    temp_c: 51
+    mem_temp_c: 44
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -4101,33 +4176,36 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 3.6252844720148003
+  speedup: 3.630404569622196
+  new_records:
+  - min_ms
+  - speedup
 - n_devices: 2
-  min_ms: 2354.614147101529
-  mean_ms: 2354.614147101529
+  min_ms: 2355.327181983739
+  mean_ms: 2355.327181983739
   std_ms: 0.0
   mem_mb: 7756.6
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 59
+    temp_c: 57
     mem_temp_c: 51
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 52
-    mem_temp_c: 44
+    mem_temp_c: 43
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 40
-    mem_temp_c: 42
+    mem_temp_c: 41
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -4171,33 +4249,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.9308630136391047
+  speedup: 1.9300118007742177
 - n_devices: 1
-  min_ms: 4546.4373680297285
-  mean_ms: 4546.4373680297285
+  min_ms: 4545.8092559129
+  mean_ms: 4545.8092559129
   std_ms: 0.0
   mem_mb: 11145.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 63
-    mem_temp_c: 53
+    temp_c: 61
+    mem_temp_c: 52
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -4242,54 +4320,54 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 334.8058279370889
-  mean_ms: 334.8058279370889
+  min_ms: 336.45565202459693
+  mean_ms: 336.45565202459693
   std_ms: 0.0
   mem_mb: 231.6
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 47
+    temp_c: 45
     mem_temp_c: 47
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 35
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 39
-    mem_temp_c: 42
+    temp_c: 38
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 34186.68309543831
-    mean: 0.006420275521228649
-    l2norm: 79.63420761278569
+    sum: 34186.683090855215
+    mean: 0.006420275520367941
+    l2norm: 79.63420692782636
     min: -0.21131080389022827
     max: 0.271376371383667
     samples:
     - 0.0
     - -0.0662098228931427
     - 0.0
-    - 0.03229370340704918
-    - 0.012708327732980251
-    - -0.017379378899931908
-    - 0.03195509687066078
-    - -0.04490629583597183
-    - 0.03343427553772926
+    - 0.03229370713233948
+    - 0.01270831935107708
+    - -0.017379380762577057
+    - 0.03195509314537048
+    - -0.04490630328655243
+    - 0.033434271812438965
     - 0.0
-    - -0.03891764581203461
+    - -0.0389176607131958
     - 0.0
     shape:
     - 160
@@ -4312,30 +4390,30 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 4
-  min_ms: 2362.2910330304876
-  mean_ms: 2362.2910330304876
+  min_ms: 2318.162824958563
+  mean_ms: 2318.162824958563
   std_ms: 0.0
   mem_mb: 894.2
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 46
+    temp_c: 48
+    mem_temp_c: 45
   - index: 1
-    sm_mhz: 345
+    sm_mhz: 780
     mem_mhz: 2619
     temp_c: 41
     mem_temp_c: 39
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 42
-    mem_temp_c: 38
+    temp_c: 41
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 45
+    temp_c: 44
     mem_temp_c: 42
   throttled: false
   is_sharded: true
@@ -4346,21 +4424,92 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: 177089.22973698395
-    mean: 0.0026807214303544054
-    l2norm: 129.9350890522311
-    min: -0.10996267944574356
-    max: 0.13231755793094635
+    sum: 177089.2297232849
+    mean: 0.002680721430147033
+    l2norm: 129.93508900149376
+    min: -0.10996265709400177
+    max: 0.13231757283210754
     samples:
     - 0.0
     - 0.0
-    - -0.014430987648665905
-    - 0.0037057579029351473
+    - -0.014430989511311054
+    - 0.0037057572044432163
+    - 0.031317006796598434
+    - 0.021607395261526108
+    - 0.02539292350411415
+    - 0.014432302676141262
+    - -0.026705335825681686
+    - 0.013798092491924763
+    - 0.0
+    - 0.0
+    shape:
+    - 384
+    - 384
+    - 448
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 894.2
+  mem_peaks_trial_mb:
+  - 894.2
+  geometry: cone
+  op: vcd_nonconst
+  size: 512x448x384
+  recon_shape:
+  - 384
+  - 384
+  - 448
+  trials: 1
+  speedup: 1.0608782327810893
+- n_devices: 2
+  min_ms: 1704.770156997256
+  mean_ms: 1704.770156997256
+  std_ms: 0.0
+  mem_mb: 1361.9
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 51
+    mem_temp_c: 48
+  - index: 1
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 45
+    mem_temp_c: 41
+  - index: 2
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 36
+  - index: 3
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 40
+    mem_temp_c: 40
+  throttled: false
+  is_sharded: true
+  n_shard_devices: 2
+  devices:
+  - cuda:0
+  - cuda:1
+  fingerprint:
+    sum: 177089.22977826797
+    mean: 0.00268072143097935
+    l2norm: 129.9350851398252
+    min: -0.10996262729167938
+    max: 0.13231757283210754
+    samples:
+    - 0.0
+    - 0.0
+    - -0.014430983923375607
+    - 0.003705760696902871
     - 0.031317003071308136
     - 0.02160739153623581
-    - 0.02539292722940445
-    - 0.014432303607463837
-    - -0.026705332100391388
+    - 0.0253929290920496
+    - 0.014432305470108986
+    - -0.026705333963036537
     - 0.013798089697957039
     - 0.0
     - 0.0
@@ -4372,77 +4521,6 @@ cells:
     padding_zero:
   platform: gpu
   mem_peaks_warmup_mb:
-  - 894.2
-  mem_peaks_trial_mb:
-  - 894.2
-  geometry: cone
-  op: vcd_nonconst
-  size: 512x448x384
-  recon_shape:
-  - 384
-  - 384
-  - 448
-  trials: 1
-  speedup: 1.0426279334931763
-- n_devices: 2
-  min_ms: 1724.0165090188384
-  mean_ms: 1724.0165090188384
-  std_ms: 0.0
-  mem_mb: 1361.9
-  gpu_health:
-  - index: 0
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 55
-    mem_temp_c: 47
-  - index: 1
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 46
-    mem_temp_c: 42
-  - index: 2
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
-  - index: 3
-    sm_mhz: 1980
-    mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
-  throttled: false
-  is_sharded: true
-  n_shard_devices: 2
-  devices:
-  - cuda:0
-  - cuda:1
-  fingerprint:
-    sum: 177089.2297786429
-    mean: 0.0026807214309850255
-    l2norm: 129.93508547204664
-    min: -0.10996263474225998
-    max: 0.13231757283210754
-    samples:
-    - 0.0
-    - 0.0
-    - -0.014430993236601353
-    - 0.0037057586014270782
-    - 0.031317006796598434
-    - 0.02160739153623581
-    - 0.025392932817339897
-    - 0.014432304538786411
-    - -0.026705335825681686
-    - 0.013798085041344166
-    - 0.0
-    - 0.0
-    shape:
-    - 384
-    - 384
-    - 448
-    dtype: float32
-    padding_zero:
-  platform: gpu
-  mem_peaks_warmup_mb:
   - 1361.9
   mem_peaks_trial_mb:
   - 1361.9
@@ -4454,55 +4532,58 @@ cells:
   - 384
   - 448
   trials: 1
-  speedup: 1.4286351697871849
+  speedup: 1.4425924051677403
+  new_records:
+  - min_ms
+  - speedup
 - n_devices: 1
-  min_ms: 2462.990618078038
-  mean_ms: 2462.990618078038
+  min_ms: 2459.2884810408577
+  mean_ms: 2459.2884810408577
   std_ms: 0.0
   mem_mb: 2201.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 57
-    mem_temp_c: 52
+    temp_c: 55
+    mem_temp_c: 51
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 40
+    temp_c: 38
+    mem_temp_c: 39
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 40
-    mem_temp_c: 42
+    temp_c: 39
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 177089.22981132512
-    mean: 0.0026807214314797587
-    l2norm: 129.93509236036962
+    sum: 177089.22981487005
+    mean: 0.0026807214315334206
+    l2norm: 129.93509235468687
     min: -0.10996261984109879
     max: 0.13231757283210754
     samples:
     - 0.0
     - 0.0
-    - -0.014430987648665905
-    - 0.00370574789121747
-    - 0.03131701052188873
-    - 0.02160739153623581
+    - -0.014430982992053032
+    - 0.0037057502195239067
+    - 0.031317003071308136
+    - 0.02160739339888096
     - 0.025392930954694748
-    - 0.014432312920689583
-    - -0.026705317199230194
-    - 0.013798082247376442
+    - 0.014432311989367008
+    - -0.02670532464981079
+    - 0.013798084110021591
     - 0.0
     - 0.0
     shape:
@@ -4526,42 +4607,42 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 2676.31856596563
-  mean_ms: 2676.31856596563
+  min_ms: 2672.362589975819
+  mean_ms: 2672.362589975819
   std_ms: 0.0
   mem_mb: 2218.9
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 57
+    temp_c: 55
     mem_temp_c: 51
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 38
+    temp_c: 35
+    mem_temp_c: 37
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 37
+    temp_c: 34
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
     temp_c: 38
-    mem_temp_c: 41
+    mem_temp_c: 40
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 177954.8576852196
-    mean: 0.002673880829387088
-    l2norm: 130.2456042957991
+    sum: 177954.8576625443
+    mean: 0.0026738808290463776
+    l2norm: 130.24560360524922
     min: -0.10280075669288635
-    max: 0.11405003070831299
+    max: 0.11405002325773239
     samples:
     - 0.0
     - 0.0
@@ -4596,15 +4677,15 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 4
-  min_ms: 17312.379893031903
-  mean_ms: 17312.379893031903
+  min_ms: 17601.898064021952
+  mean_ms: 17601.898064021952
   std_ms: 0.0
   mem_mb: 7007.8
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 66
+    temp_c: 64
     mem_temp_c: 61
   - index: 1
     sm_mhz: 345
@@ -4614,13 +4695,13 @@ cells:
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 57
-    mem_temp_c: 52
+    temp_c: 56
+    mem_temp_c: 50
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 63
-    mem_temp_c: 59
+    temp_c: 62
+    mem_temp_c: 57
   throttled: false
   is_sharded: true
   n_shard_devices: 4
@@ -4630,22 +4711,22 @@ cells:
   - cuda:2
   - cuda:3
   fingerprint:
-    sum: 1031295.8071228613
-    mean: 0.001039679248265096
-    l2norm: 279.7143912068537
+    sum: 1031295.8072771088
+    mean: 0.0010396792484205972
+    l2norm: 279.71439187132336
     min: -0.06753598898649216
-    max: 0.07250466197729111
+    max: 0.0725046694278717
     samples:
     - 0.0
     - 0.0
     - 0.012069974094629288
-    - 0.014028763398528099
-    - 0.0017355947056785226
+    - 0.014028764329850674
+    - 0.001735593774355948
     - 0.024246856570243835
     - 0.005556484684348106
-    - -0.021587736904621124
-    - 0.011489448137581348
-    - 0.004325916990637779
+    - -0.021587735041975975
+    - 0.011489447206258774
+    - 0.004325916524976492
     - 0.0
     - 0.0
     shape:
@@ -4667,33 +4748,33 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 3.3861244618143216
+  speedup: 3.330419649616177
 - n_devices: 2
-  min_ms: 30744.06822596211
-  mean_ms: 30744.06822596211
+  min_ms: 30755.21871598903
+  mean_ms: 30755.21871598903
   std_ms: 0.0
   mem_mb: 12767.0
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 76
+    temp_c: 75
     mem_temp_c: 70
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 62
-    mem_temp_c: 58
+    temp_c: 61
+    mem_temp_c: 57
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 43
-    mem_temp_c: 43
+    temp_c: 42
+    mem_temp_c: 42
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
     temp_c: 50
-    mem_temp_c: 52
+    mem_temp_c: 50
   throttled: false
   is_sharded: true
   n_shard_devices: 2
@@ -4701,22 +4782,22 @@ cells:
   - cuda:0
   - cuda:1
   fingerprint:
-    sum: 1031295.8072791325
-    mean: 0.0010396792484226374
-    l2norm: 279.7144042890773
+    sum: 1031295.8075380694
+    mean: 0.0010396792486836793
+    l2norm: 279.71441713559955
     min: -0.06753599643707275
-    max: 0.0725046694278717
+    max: 0.0725046768784523
     samples:
     - 0.0
     - 0.0
-    - 0.012069976888597012
+    - 0.012069975957274437
     - 0.014028762467205524
-    - 0.0017355962190777063
-    - 0.024246852844953537
-    - 0.005556486546993256
-    - -0.02158774435520172
-    - 0.011489447206258774
-    - 0.004325917921960354
+    - 0.0017355948220938444
+    - 0.024246850982308388
+    - 0.005556485615670681
+    - -0.021587742492556572
+    - 0.011489449068903923
+    - 0.004325916059315205
     - 0.0
     - 0.0
     shape:
@@ -4738,55 +4819,55 @@ cells:
   - 992
   - 1008
   trials: 1
-  speedup: 1.9067701976576397
+  speedup: 1.9060734935526042
 - n_devices: 1
-  min_ms: 58621.87304801773
-  mean_ms: 58621.87304801773
+  min_ms: 58621.70718295965
+  mean_ms: 58621.70718295965
   std_ms: 0.0
   mem_mb: 23502.8
   gpu_health:
   - index: 0
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 72
-    mem_temp_c: 66
+    temp_c: 71
+    mem_temp_c: 69
   - index: 1
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 46
+    temp_c: 44
     mem_temp_c: 46
   - index: 2
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 37
+    temp_c: 35
+    mem_temp_c: 36
   - index: 3
     sm_mhz: 1980
     mem_mhz: 2619
-    temp_c: 41
-    mem_temp_c: 43
+    temp_c: 40
+    mem_temp_c: 41
   throttled: false
   is_sharded: false
   n_shard_devices: 1
   devices:
   - cuda
   fingerprint:
-    sum: 1031295.807073196
-    mean: 0.001039679248215027
-    l2norm: 279.7143911922878
-    min: -0.06753598153591156
-    max: 0.0725046694278717
+    sum: 1031295.8071553304
+    mean: 0.001039679248297829
+    l2norm: 279.71439170500213
+    min: -0.06753599643707275
+    max: 0.0725046768784523
     samples:
     - 0.0
     - 0.0
     - 0.012069969438016415
-    - 0.014028766192495823
-    - 0.0017355970339849591
-    - 0.024246850982308388
-    - 0.00555648235604167
+    - 0.014028763398528099
+    - 0.001735597848892212
+    - 0.024246854707598686
+    - 0.0055564818903803825
     - -0.021587736904621124
-    - 0.011489449068903923
-    - 0.004325917921960354
+    - 0.0114894462749362
+    - 0.004325916059315205
     - 0.0
     - 0.0
     shape:
@@ -4810,31 +4891,1536 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 128.59552795998752
-  mean_ms: 128.59552795998752
+  min_ms: 0.6439549615606666
+  mean_ms: 0.7533270011966428
+  std_ms: 0.12319809159103158
+  mem_mb: 5.1
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 49
+    mem_temp_c: 52
+  - index: 1
+    sm_mhz: 420
+    mem_mhz: 2619
+    temp_c: 34
+    mem_temp_c: 36
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 780
+    mem_mhz: 2619
+    temp_c: 37
+    mem_temp_c: 39
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 0.08638827301564755
+    mean: 1.3631285682942414e-06
+    l2norm: 0.005784653075127667
+    min: -5.9725243772845715e-05
+    max: 6.379600381478667e-05
+    samples:
+    - 3.869658030453138e-05
+    - -3.3504038583487272e-06
+    - -6.929696155566489e-06
+    - -1.647527278691995e-05
+    - 2.3364687876892276e-05
+    - -4.0531296690460294e-05
+    - -3.2156913221115246e-05
+    - 3.816253229160793e-05
+    - 7.361836196650983e-06
+    - 1.9030412659049034e-05
+    - 8.386529657400387e-07
+    - -9.367387974634766e-06
+    shape:
+    - 15
+    - 65
+    - 65
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 5.1
+  mem_peaks_trial_mb:
+  - 5.1
+  - 5.1
+  - 5.1
+  geometry: translation
+  op: direct_filter
+  size: 15x65x65
+  recon_shape:
+  - 40
+  - 65
+  - 65
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.6763850580900908
+  mean_ms: 1.800798384162287
+  std_ms: 0.12127828462681464
+  mem_mb: 27.3
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 48
+    mem_temp_c: 51
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 37
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 0.41746259667940755
+    mean: 4.2466491361430617e-07
+    l2norm: 0.02267713595648368
+    min: -6.292954640230163e-05
+    max: 6.525964272441342e-05
+    samples:
+    - 3.852098234347067e-05
+    - 1.8928609279100783e-05
+    - 2.3454322217730805e-06
+    - 1.6098139894893392e-05
+    - 6.740371645719278e-06
+    - 3.0185117793735116e-05
+    - 4.815639726984954e-07
+    - -1.7435528206988237e-05
+    - -7.982554052432533e-06
+    - 1.0931141787295928e-06
+    - -1.1012275535904336e-05
+    - 2.0332274743850575e-06
+    shape:
+    - 15
+    - 256
+    - 256
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 27.3
+  mem_peaks_trial_mb:
+  - 27.3
+  - 27.3
+  - 27.3
+  geometry: translation
+  op: direct_filter
+  size: 15x256x256
+  recon_shape:
+  - 40
+  - 256
+  - 256
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.7198349814862013
+  mean_ms: 1.8859846362223227
+  std_ms: 0.19058817784307974
+  mem_mb: 29.9
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 47
+    mem_temp_c: 49
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 37
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 0.41946934081185805
+    mean: 4.2339206832488813e-07
+    l2norm: 0.022768733108844367
+    min: -6.282130198087543e-05
+    max: 6.421368016162887e-05
+    samples:
+    - 3.852021836792118e-05
+    - 1.643414725549519e-05
+    - -1.9117560441372916e-05
+    - -1.7209722500410862e-06
+    - 4.697001349995844e-05
+    - 5.7695669966051355e-06
+    - -2.9135420845705084e-05
+    - 1.2259886716492474e-05
+    - 1.6163592135853832e-06
+    - 1.4770194866287056e-05
+    - -5.3622687119059264e-05
+    - 4.054197415825910e-05
+    shape:
+    - 15
+    - 257
+    - 257
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 29.9
+  mem_peaks_trial_mb:
+  - 29.9
+  - 29.9
+  - 29.9
+  geometry: translation
+  op: direct_filter
+  size: 15x257x257
+  recon_shape:
+  - 40
+  - 257
+  - 257
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 0.6856860127300024
+  mean_ms: 0.7795396959409118
+  std_ms: 0.0665595158750181
+  mem_mb: 21.3
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 47
+    mem_temp_c: 49
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 36
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 37
+    mem_temp_c: 39
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 97699.23793891072
+    mean: 1.5416053323694
+    l2norm: 20608.96407951307
+    min: -579.006591796875
+    max: 559.8082275390625
+    samples:
+    - 0.0
+    - 0.0
+    - -144.89422607421875
+    - 0.0
+    - 95.8113784790039
+    - 0.0
+    - 0.0
+    - -59.7342414855957
+    - 0.0
+    - 92.62798309326172
+    - 0.0
+    - 0.0
+    shape:
+    - 15
+    - 65
+    - 65
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 21.3
+  mem_peaks_trial_mb:
+  - 21.3
+  - 21.3
+  - 21.3
+  geometry: translation
+  op: forward
+  size: 15x65x65
+  recon_shape:
+  - 40
+  - 65
+  - 65
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 2.0553950453177094
+  mean_ms: 2.102780699109038
+  std_ms: 0.04559735373578818
+  mem_mb: 316.2
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 45
+    mem_temp_c: 47
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 36
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 39
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 48833.44990413368
+    mean: 0.04967595408542245
+    l2norm: 87125.95877632764
+    min: -636.6860961914062
+    max: 622.7852172851562
+    samples:
+    - 0.0
+    - 0.0
+    - 42.218257904052734
+    - 0.0
+    - 0.0
+    - 39.21685028076172
+    - -131.61346435546875
+    - 0.0
+    - 0.0
+    - -37.748191833496094
+    - 0.0
+    - 0.0
+    shape:
+    - 15
+    - 256
+    - 256
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 316.2
+  mem_peaks_trial_mb:
+  - 316.2
+  - 316.2
+  - 316.2
+  geometry: translation
+  op: forward
+  size: 15x256x256
+  recon_shape:
+  - 40
+  - 256
+  - 256
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 2.9977919766679406
+  mean_ms: 3.057796973735094
+  std_ms: 0.06825709451260276
+  mem_mb: 316.5
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 43
+    mem_temp_c: 45
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 33
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 114734.37167519331
+    mean: 0.11580732655573217
+    l2norm: 79853.58759562779
+    min: -692.888671875
+    max: 603.73583984375
+    samples:
+    - 0.0
+    - 0.0
+    - 100.80733489990234
+    - 0.0
+    - 27.356691360473633
+    - 188.26805114746094
+    - 58.58194351196289
+    - 11.686612129211426
+    - 0.0
+    - -114.85540771484375
+    - 0.0
+    - 0.0
+    shape:
+    - 15
+    - 257
+    - 257
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 316.5
+  mem_peaks_trial_mb:
+  - 316.5
+  - 316.5
+  - 316.5
+  geometry: translation
+  op: forward
+  size: 15x257x257
+  recon_shape:
+  - 40
+  - 257
+  - 257
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 0.6926680216565728
+  mean_ms: 0.7140159917374452
+  std_ms: 0.016931109011780143
+  mem_mb: 50.9
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 42
+    mem_temp_c: 44
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 16246867.63091278
+    mean: 96.13531142551942
+    l2norm: 40337.55774297717
+    min: 38.450889587402344
+    max: 177.40969848632812
+    samples:
+    - 80.66667938232422
+    - 95.45442199707031
+    - 98.63374328613281
+    - 90.13165283203125
+    - 129.02069091796875
+    - 96.7220458984375
+    - 70.96923065185547
+    - 81.3892822265625
+    - 65.64471435546875
+    - 135.44406127929688
+    - 91.60091400146484
+    - 61.26029586791992
+    shape:
+    - 2600
+    - 65
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 50.9
+  mem_peaks_trial_mb:
+  - 50.9
+  - 50.9
+  - 50.9
+  geometry: translation
+  op: back
+  size: 15x65x65
+  recon_shape:
+  - 40
+  - 65
+  - 65
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.9910269184038043
+  mean_ms: 2.0596182827527323
+  std_ms: 0.05579166243488788
+  mem_mb: 765.0
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 41
+    mem_temp_c: 43
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 253505964.18899345
+    mean: 96.70485084113825
+    l2norm: 160235.30690552862
+    min: 10.5789213180542
+    max: 218.07968139648438
+    samples:
+    - 76.35193634033203
+    - 97.73069763183594
+    - 119.8492202758789
+    - 81.85250091552734
+    - 122.83621215820312
+    - 87.39353942871094
+    - 73.2011489868164
+    - 141.32821655273438
+    - 102.73989868164062
+    - 114.78605651855469
+    - 101.82894897460938
+    - 46.98972702026367
+    shape:
+    - 10240
+    - 256
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 765.0
+  mem_peaks_trial_mb:
+  - 765.0
+  - 765.0
+  - 765.0
+  geometry: translation
+  op: back
+  size: 15x256x256
+  recon_shape:
+  - 40
+  - 256
+  - 256
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.796104945242405
+  mean_ms: 1.8594196299090981
+  std_ms: 0.048711961739813785
+  mem_mb: 775.1
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 41
+    mem_temp_c: 43
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 255363178.76343346
+    mean: 96.65671651479714
+    l2norm: 160462.4114406874
+    min: 17.263063430786133
+    max: 231.97763061523438
+    samples:
+    - 77.43789672851562
+    - 103.39354705810547
+    - 118.19964599609375
+    - 109.14506530761719
+    - 107.79975891113281
+    - 82.261474609375
+    - 66.66336059570312
+    - 84.44915771484375
+    - 89.09174346923828
+    - 124.8065185546875
+    - 111.73947143554688
+    - 28.87003517150879
+    shape:
+    - 10280
+    - 257
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 775.1
+  mem_peaks_trial_mb:
+  - 775.1
+  - 775.1
+  - 775.1
+  geometry: translation
+  op: back
+  size: 15x257x257
+  recon_shape:
+  - 40
+  - 257
+  - 257
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.2308399891480803
+  mean_ms: 1.2562073534354568
+  std_ms: 0.03482724620240158
+  mem_mb: 16.4
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 42
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 123.07021359596973
+    mean: 8.703883437046337e-05
+    l2norm: 2.425036159202738
+    min: -0.005629722960293293
+    max: 0.005856444127857685
+    samples:
+    - 0.003432715777307749
+    - 0.0025218911468982697
+    - 0.00048497095122002065
+    - 0.0019614079501479864
+    - -0.0005479537649080157
+    - -0.003211044939234853
+    - -0.002756069879978895
+    - 0.002871438395231962
+    - 0.0026057010982185602
+    - -0.002549707656726241
+    - -0.0004611317999660969
+    - -3.585291779018007e-05
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 16.4
+  mem_peaks_trial_mb:
+  - 16.4
+  - 16.4
+  - 16.4
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 4.301742999814451
+  mean_ms: 4.325489707601567
+  std_ms: 0.01857426472528819
+  mem_mb: 97.5
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 268.29574917284265
+    mean: 2.436826335115366e-05
+    l2norm: 3.402468276253208
+    min: -0.0028694269713014364
+    max: 0.002981920260936022
+    samples:
+    - 0.0017281229374930263
+    - -0.0017739112954586744
+    - -0.0015351994661614299
+    - -0.0012839814880862832
+    - 0.001361105707474053
+    - 0.0005896330112591386
+    - 0.0008100428967736661
+    - 0.0005478400853462517
+    - 0.0014627897180616856
+    - 0.00023062378750182688
+    - 0.0006688821595162153
+    - 0.0002487964229658246
+    shape:
+    - 256
+    - 224
+    - 192
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 97.5
+  mem_peaks_trial_mb:
+  - 97.5
+  - 97.5
+  - 97.5
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 256x224x192
+  recon_shape:
+  - 192
+  - 192
+  - 224
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 15.089325024746358
+  mean_ms: 15.129538990246752
+  std_ms: 0.04255847693694135
+  mem_mb: 699.0
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 780
+    mem_mhz: 2619
+    temp_c: 36
+    mem_temp_c: 37
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 586.0817845896005
+    mean: 6.653942205674313e-06
+    l2norm: 4.805031435579752
+    min: -0.0014440936502069235
+    max: 0.0014916177606210113
+    samples:
+    - 0.0008636296261101961
+    - -8.450642781099304e-06
+    - -8.04736373538617e-06
+    - 0.00034855087869800627
+    - 0.0008012406760826707
+    - -0.0005728874239139259
+    - -4.3400250433478504e-05
+    - -0.00043180290958844125
+    - -0.00022349839855451137
+    - 0.00041896107723005116
+    - -0.0005423767725005746
+    - 0.0003572682326193899
+    shape:
+    - 512
+    - 448
+    - 384
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 699.0
+  mem_peaks_trial_mb:
+  - 699.0
+  - 699.0
+  - 699.0
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 512x448x384
+  recon_shape:
+  - 384
+  - 384
+  - 448
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 16.105677001178265
+  mean_ms: 16.134815329375368
+  std_ms: 0.031651864113137924
+  mem_mb: 708.1
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 32
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 587.6172774090905
+    mean: 6.626285150110553e-06
+    l2norm: 4.811942010772522
+    min: -0.0014406850095838308
+    max: 0.0014854451874271035
+    samples:
+    - 0.0008619459695182741
+    - -0.00014622460003010929
+    - 0.00011347365216352046
+    - 0.00012956828868482262
+    - -0.0006366187590174377
+    - -0.0004399624012876302
+    - -0.0007120064692571759
+    - -0.0006480225129052997
+    - -0.00030878116376698017
+    - -0.0005162610323168337
+    - -0.00042214395944029093
+    - 0.001266700797714293
+    shape:
+    - 513
+    - 449
+    - 385
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 708.1
+  mem_peaks_trial_mb:
+  - 708.1
+  - 708.1
+  - 708.1
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 513x449x385
+  recon_shape:
+  - 385
+  - 385
+  - 449
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 5.299528012983501
+  mean_ms: 5.354206659831107
+  std_ms: 0.07570331687495369
+  mem_mb: 56.3
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 70627.17176743988
+    mean: 0.04994958996091137
+    l2norm: 7058.330547488413
+    min: -32.815242767333984
+    max: 35.45724868774414
+    samples:
+    - 0.0
+    - 5.495395660400391
+    - -9.581578254699707
+    - -5.5931830406188965
+    - -7.497651100158691
+    - -3.27582049369812
+    - 2.017263650894165
+    - 5.113739490509033
+    - 12.639142990112305
+    - -7.235354900360107
+    - -4.919382095336914
+    - 0.0
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 56.3
+  mem_peaks_trial_mb:
+  - 56.3
+  - 56.3
+  - 56.3
+  geometry: multiaxis_parallel
+  op: forward
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 20.42806800454855
+  mean_ms: 20.49860901509722
+  std_ms: 0.06316991097313096
+  mem_mb: 204.7
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 402115.84107644315
+    mean: 0.03652262379568583
+    l2norm: 27755.68479778385
+    min: -47.64430236816406
+    max: 48.93749237060547
+    samples:
+    - 0.0
+    - -1.3557566404342651
+    - -8.486326217651367
+    - -10.306015014648438
+    - 3.1465530395507812
+    - 9.47536849975586
+    - -9.029501914978027
+    - -5.830515384674072
+    - -18.989883422851562
+    - -6.815290451049805
+    - 6.458271503448486
+    - 0.0
+    shape:
+    - 256
+    - 224
+    - 192
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 204.7
+  mem_peaks_trial_mb:
+  - 204.7
+  - 204.7
+  - 204.7
+  geometry: multiaxis_parallel
+  op: forward
+  size: 256x224x192
+  recon_shape:
+  - 192
+  - 192
+  - 224
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 306.69702601153404
+  mean_ms: 306.976839977627
+  std_ms: 0.20270042696273893
+  mem_mb: 987.1
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 48
+    mem_temp_c: 44
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 37
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: -772837.4920186881
+    mean: -0.008774229367786227
+    l2norm: 111318.06574762949
+    min: -85.49331665039062
+    max: 76.91898345947266
+    samples:
+    - 0.0
+    - -10.144124031066895
+    - -6.703797340393066
+    - -8.63521957397461
+    - -15.316242218017578
+    - -0.26799705624580383
+    - 6.5782318115234375
+    - 3.8907461166381836
+    - -5.807704448699951
+    - 3.464012861251831
+    - 9.858628273010254
+    - 0.0
+    shape:
+    - 512
+    - 448
+    - 384
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 987.1
+  mem_peaks_trial_mb:
+  - 987.1
+  - 987.1
+  - 987.1
+  geometry: multiaxis_parallel
+  op: forward
+  size: 512x448x384
+  recon_shape:
+  - 384
+  - 384
+  - 448
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1005.1134300883859
+  mean_ms: 1005.274701009815
+  std_ms: 0.11827840326172967
+  mem_mb: 996.7
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 46
+    mem_temp_c: 45
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 38
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: -964212.7325477257
+    mean: -0.010872975926438733
+    l2norm: 111780.53271206524
+    min: -78.93386840820312
+    max: 78.40969848632812
+    samples:
+    - 0.0
+    - -14.312356948852539
+    - 7.391784191131592
+    - 0.6056873798370361
+    - -7.1203999519348145
+    - -7.075185775756836
+    - -6.6453046798706055
+    - -7.845694065093994
+    - -3.1933512687683105
+    - 7.710699558258057
+    - 1.7692378759384155
+    - 0.0
+    shape:
+    - 513
+    - 449
+    - 385
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 996.7
+  mem_peaks_trial_mb:
+  - 996.7
+  - 996.7
+  - 996.7
+  geometry: multiaxis_parallel
+  op: forward
+  size: 513x449x385
+  recon_shape:
+  - 385
+  - 385
+  - 449
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.8116100691258907
+  mean_ms: 1.8386123313878973
+  std_ms: 0.03478589040865811
+  mem_mb: 60.9
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 40
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 33
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 37
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 50456201.24362278
+    mean: 61.90420840888658
+    l2norm: 56432.6322489985
+    min: 9.585827827453613
+    max: 75.21400451660156
+    samples:
+    - 38.01287841796875
+    - 67.08786010742188
+    - 62.94198226928711
+    - 63.204036712646484
+    - 65.52471923828125
+    - 67.25370025634766
+    - 58.60148620605469
+    - 66.82575225830078
+    - 66.66266632080078
+    - 62.459930419921875
+    - 63.92610168457031
+    - 37.32273864746094
+    shape:
+    - 7213
+    - 113
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 60.9
+  mem_peaks_trial_mb:
+  - 60.9
+  - 60.9
+  - 60.9
+  geometry: multiaxis_parallel
+  op: back
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 11.196178034879267
+  mean_ms: 11.241988007289669
+  std_ms: 0.0381137009607388
+  mem_mb: 201.1
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 39
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 36
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 786437835.5774345
+    mean: 122.75815365531882
+    l2norm: 313679.26657854207
+    min: 18.559553146362305
+    max: 143.2572479248047
+    samples:
+    - 65.81587219238281
+    - 75.63088989257812
+    - 41.492149353027344
+    - 122.43939208984375
+    - 135.1302947998047
+    - 126.72187805175781
+    - 33.283416748046875
+    - 89.1657943725586
+    - 35.79826354980469
+    - 117.3124771118164
+    - 80.53179168701172
+    - 70.21357727050781
+    shape:
+    - 28600
+    - 224
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 201.1
+  mem_peaks_trial_mb:
+  - 201.1
+  - 201.1
+  - 201.1
+  geometry: multiaxis_parallel
+  op: back
+  size: 256x224x192
+  recon_shape:
+  - 192
+  - 192
+  - 224
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 140.39781200699508
+  mean_ms: 140.5300460367774
+  std_ms: 0.1651893373616314
+  mem_mb: 1071.4
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 43
+    mem_temp_c: 41
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 37
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 12660314607.256767
+    mean: 245.38597842875873
+    l2norm: 1779231.270168242
+    min: 38.665916442871094
+    max: 281.79071044921875
+    samples:
+    - 143.95257568359375
+    - 258.5960693359375
+    - 253.96856689453125
+    - 254.47976684570312
+    - 250.55221557617188
+    - 259.0400390625
+    - 263.10498046875
+    - 258.0349426269531
+    - 257.96484375
+    - 260.8920593261719
+    - 254.54470825195312
+    - 141.47439575195312
+    shape:
+    - 115164
+    - 448
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 1071.4
+  mem_peaks_trial_mb:
+  - 1071.4
+  - 1071.4
+  - 1071.4
+  geometry: multiaxis_parallel
+  op: back
+  size: 512x448x384
+  recon_shape:
+  - 384
+  - 384
+  - 448
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 164.17029907461256
+  mean_ms: 164.41290701429048
+  std_ms: 0.17702292447754134
+  mem_mb: 1091.6
+  gpu_health:
+  - index: 0
+    sm_mhz: 1980
+    mem_mhz: 2619
+    temp_c: 49
+    mem_temp_c: 42
+  - index: 1
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 35
+  - index: 2
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 32
+    mem_temp_c: 34
+  - index: 3
+    sm_mhz: 345
+    mem_mhz: 2619
+    temp_c: 35
+    mem_temp_c: 37
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cuda
+  fingerprint:
+    sum: 12781021620.177338
+    mean: 245.8566344539557
+    l2norm: 1789413.7852260312
+    min: 37.939788818359375
+    max: 283.4166259765625
+    samples:
+    - 152.88088989257812
+    - 257.2372741699219
+    - 258.35223388671875
+    - 252.869384765625
+    - 250.28330993652344
+    - 262.5276184082031
+    - 254.58018493652344
+    - 252.71893310546875
+    - 254.95794677734375
+    - 248.55007934570312
+    - 260.7416076660156
+    - 152.2643585205078
+    shape:
+    - 115781
+    - 449
+    dtype: float32
+    padding_zero:
+  platform: gpu
+  mem_peaks_warmup_mb:
+  - 1091.6
+  mem_peaks_trial_mb:
+  - 1091.6
+  - 1091.6
+  - 1091.6
+  geometry: multiaxis_parallel
+  op: back
+  size: 513x449x385
+  recon_shape:
+  - 385
+  - 385
+  - 449
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 126.83858908712864
+  mean_ms: 126.83858908712864
   std_ms: 0.0
   mem_mb: 180.1
   gpu_health:
   - index: 0
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 50
+    temp_c: 40
+    mem_temp_c: 41
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 36
+    temp_c: 32
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 35
+    temp_c: 32
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 40
+    temp_c: 35
+    mem_temp_c: 37
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -4879,32 +6465,34 @@ cells:
   - 257
   trials: 1
   speedup: 1.0
+  new_records:
+  - min_ms
 - n_devices: 1
-  min_ms: 276.29767498001456
-  mean_ms: 276.29767498001456
+  min_ms: 272.4042690824717
+  mean_ms: 272.4042690824717
   std_ms: 0.0
   mem_mb: 1096.8
   gpu_health:
   - index: 0
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 49
-    mem_temp_c: 50
+    temp_c: 41
+    mem_temp_c: 43
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 35
-    mem_temp_c: 36
+    temp_c: 32
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 35
+    temp_c: 32
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 37
-    mem_temp_c: 40
+    temp_c: 35
+    mem_temp_c: 37
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -4950,31 +6538,31 @@ cells:
   trials: 1
   speedup: 1.0
 - n_devices: 1
-  min_ms: 2436.3931459374726
-  mean_ms: 2436.3931459374726
+  min_ms: 2430.5379670113325
+  mean_ms: 2430.5379670113325
   std_ms: 0.0
   mem_mb: 12458.5
   gpu_health:
   - index: 0
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 52
-    mem_temp_c: 54
+    temp_c: 46
+    mem_temp_c: 49
   - index: 1
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 34
-    mem_temp_c: 36
+    temp_c: 32
+    mem_temp_c: 35
   - index: 2
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 33
-    mem_temp_c: 35
+    temp_c: 32
+    mem_temp_c: 34
   - index: 3
     sm_mhz: 345
     mem_mhz: 2619
-    temp_c: 36
-    mem_temp_c: 40
+    temp_c: 35
+    mem_temp_c: 37
   throttled: false
   is_sharded: false
   n_shard_devices: 1
@@ -5059,8 +6647,50 @@ auto_choice:
   problems: []
   ok: true
 gate:
-  result: pass
+  result: warn
   hard: []
-  soft: []
+  soft:
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|back|129x113x97|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|back|256x224x192|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|back|512x448x384|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|back|513x449x385|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|direct_filter|129x113x97|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|direct_filter|256x224x192|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|direct_filter|512x448x384|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|direct_filter|513x449x385|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|forward|129x113x97|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|forward|256x224x192|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|forward|512x448x384|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): multiaxis_parallel|forward|513x449x385|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|back|15x256x256|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|back|15x257x257|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|back|15x65x65|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|direct_filter|15x256x256|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|direct_filter|15x257x257|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|direct_filter|15x65x65|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|forward|15x256x256|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|forward|15x257x257|1'
+  - '[prior:regression_gpu_20260822T184346Z_9825a43c.yaml] new cell, no baseline (not
+    gated): translation|forward|15x65x65|1'
   compared_to:
   - prior:regression_gpu_20260822T184346Z_9825a43c.yaml
