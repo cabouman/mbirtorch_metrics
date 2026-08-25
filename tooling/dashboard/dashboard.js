@@ -226,13 +226,76 @@ function fmtNum(v) { if (v == null) return ""; if (v >= 100) return v.toFixed(0)
 // Tooltip time: input is in MINUTES; show seconds when under a minute (a sub-minute run reads better as
 // "0.80 s" than "0.01 min"), minutes at or above one.  '—' for null.
 function fmtTime(min) { return min == null ? "—" : (min < 1 ? (min * 60).toFixed(2) + " s" : min.toFixed(2) + " min"); }
-// Log axes: label only exact powers of ten, blank the minor ticks (otherwise
-// uPlot tries to label every minor gridline, which reads as a stack of noise).
+// Log axes, WIDE range (a decade or more): label only exact powers of ten and blank the minor
+// ticks, because uPlot would otherwise label every minor gridline and that reads as a stack of
+// noise.  A NARROWER range is labelled differently; see logAxisValues.
 function logFmt(v) {
   if (v == null) return "";
   const l = Math.log10(v);
   if (Math.abs(l - Math.round(l)) > 1e-6) return "";
   return v >= 1 ? String(v) : v.toString();
+}
+// The decimals a tick step needs to print exactly: 0.005 -> 3, 2.5 -> 1, 5 -> 0.
+function stepDecimals(step) {
+  for (let d = 0; d <= 6; d++) {
+    const scaled = step * Math.pow(10, d);
+    if (Math.abs(scaled - Math.round(scaled)) < 1e-9) return d;
+  }
+  return 6;
+}
+// A log window is NARROW when the powers-of-ten rule would put fewer than two numbers on it: it
+// holds at most one exact power of ten.  Such a window gets tick marks it cannot label, which is
+// what makes it unreadable, so logTicks and logAxisValues both serve it differently.  The test is
+// the COUNT of powers of ten in the window rather than its ratio, because the ratio gets the
+// boundary wrong: the scaling panel's [0.076, 0.80] spans a ratio of 10.5 and still holds only
+// 0.1.
+function narrowLogWindow(mn, mx) {
+  if (!(mn > 0) || !(mx > 0) || !isFinite(mn) || !isFinite(mx) || mx <= mn) return false;
+  // Counted the way logTicks emits them, with the same comparison, so the predicate cannot
+  // disagree with what is drawn.  Comparing the logs instead misses by an ulp: a window whose top
+  // is the float just below 1e-5 reads as a full decade and is served as one, while the tick
+  // generator leaves 1e-5 out and the axis ends up with a single label.
+  let count = 0;
+  for (let e = Math.floor(Math.log10(mn)); e <= Math.ceil(Math.log10(mx)); e++) {
+    const v = Math.pow(10, e);
+    if (v >= mn && v <= mx) count++;
+  }
+  return count < 2;
+}
+// Log-axis tick labels.  On a wide range this is logFmt, unchanged.  On a narrow one logTicks has
+// switched to an evenly spaced grid and every tick on it is labelled.  The decimals come from the
+// grid's own step, so the labels read as one column.
+function logAxisValues(scale, splits) {
+  const narrow = scale && narrowLogWindow(scale.min, scale.max);
+  if (!narrow) return splits.map(logFmt);
+  const step = splits.length > 1 ? Math.abs(splits[1] - splits[0]) : 0;
+  const dec = stepDecimals(step > 0 ? step : (splits[0] || 1));
+  return splits.map((v) => (v == null ? "" : v.toFixed(dec)));
+}
+// Evenly spaced ticks across [mn, mx]: the SMALLEST step from the 1, 2, 2.5, 5 x 10^k ladder whose
+// tick count stays at or under NARROW_MAX_TICKS.  Ascending that ladder is what keeps the count
+// near the cap rather than far below it; dividing the span by a target count and rounding to a
+// nice number undershoots badly on some spans (0.0285 / 5 rounds up to a step of 0.01, which puts
+// two ticks on the axis, where this puts five).  The cap is 9 so that a window covering most of
+// one decade keeps the 1-9 x 10^k gridlines it already had and merely gains their labels.
+const NARROW_MAX_TICKS = 9;
+function evenTicks(mn, mx) {
+  const span = mx - mn;
+  if (!(span > 0) || !isFinite(span)) return [mn, mx];
+  const lo = Math.floor(Math.log10(span)) - 3, hi = Math.ceil(Math.log10(span)) + 1;
+  for (let e = lo; e <= hi; e++) {
+    for (const m of [1, 2, 2.5, 5]) {
+      const step = m * Math.pow(10, e);
+      const first = Math.ceil(mn / step - 1e-9);
+      const count = Math.floor(mx / step + 1e-9) - first + 1;
+      if (count > NARROW_MAX_TICKS) continue;
+      if (count < 1) return [mn, mx];
+      const dec = stepDecimals(step), out = [];
+      for (let k = first; out.length < count; k++) out.push(+((k * step).toFixed(dec + 2)));
+      return out;
+    }
+  }
+  return [mn, mx];
 }
 // Log-axis tick positions (1-9·10^k within [mn, mx]) that we hand to uPlot explicitly instead of
 // letting its built-in log splitter generate them.  On a TIGHT, log-padded scale whose bounds aren't
@@ -243,6 +306,12 @@ function logFmt(v) {
 // the exact powers of ten, so the look is unchanged (minor 2-9·10^k stay as faint unlabeled grid).
 function logTicks(mn, mx) {
   if (!(mn > 0) || !(mx > 0) || !isFinite(mn) || !isFinite(mx)) return [mn, mx];
+  // A NARROW window (see narrowLogWindow) cannot be served by the powers-of-ten labels, so it gets
+  // an evenly spaced grid whose every tick is labelled.  The denoiser History time panel is the
+  // case that found this: its 42 runs span 0.0316 to 0.0537 minutes, the padded scale is
+  // [0.0304, 0.0589], and the old grid offered exactly 0.04 and 0.05, neither of them labelled.
+  // Inside one decade a log axis is close to linear, so an even grid sits where the eye expects it.
+  if (narrowLogWindow(mn, mx)) return evenTicks(mn, mx);
   const out = [], hi = Math.ceil(Math.log10(mx));
   for (let e = Math.floor(Math.log10(mn)); e <= hi; e++) {
     const base = Math.pow(10, e);
@@ -260,6 +329,8 @@ function logTicks(mn, mx) {
 // top margin above dmax (so failed/OOM/dep marks are separated at a CONSISTENT height regardless of the
 // view's data).  bottomBand enlarges the bottom margin to FB_MARK and returns markBot at MK of it below
 // dmin, giving the dep marker's second (bottom) glyph the same headroom.  null if non-positive.
+// The seconds unit's axis label, defined once so the time panels cannot spell it differently.
+const SECONDS_LABEL = "sec";
 const HIST_Y_FB = 0.06, HIST_Y_FB_MARK = 0.14, HIST_Y_FT = 0.14, HIST_Y_MK = 0.5;
 function fixedLogYRange(dmin, dmax, bottomBand) {
   if (!(dmin > 0) || !(dmax > 0)) return null;
@@ -315,6 +386,20 @@ function linePlot(el, xs, specs, o) {
   // so failed/OOM/dep marks stay separated at a consistent top regardless of the view (fixes both the
   // "not separated" and the "not at the top for n=4" cases).
   if (yFixR) { markY = yFixR.mark; markYBot = yFixR.markBot; }
+  // TIME axes carry MINUTES, which reads badly below a minute: the denoiser history sat at 0.035 to
+  // 0.055 min where 2.1 to 3.3 s is the natural way to say it.  o.yMinutes lets such a panel display
+  // SECONDS instead.  The ticks are generated and formatted in the display unit and converted back to
+  // minutes for their positions, so the scale, the zoom windows, the markers and the tooltips all stay
+  // in minutes and only the axis changes.  The unit is chosen from the panel's DATA rather than from
+  // the current scale, so a drag-zoom cannot leave the label saying one unit and the numbers another.
+  let yMul = 1;
+  if (o.yMinutes) {   // SECONDS_LABEL is the one spelling every panel uses (see its definition)
+    let dmax = -Infinity;
+    if (o.yRange && o.yRange[1] != null) dmax = o.yRange[1];
+    else S.forEach((sp) => sp.ys.forEach((v) => { if (v != null && isFinite(v) && v > dmax) dmax = v; }));
+    if (dmax > 0 && dmax < 1) yMul = 60;
+  }
+  const yUnitLabel = yMul === 60 ? SECONDS_LABEL : o.yLabelText;
   const series = [{}, ...S.map((s) => ({
     stroke: s.color, width: s.width == null ? 2 : s.width, dash: s.dash || undefined,
     spanGaps: true,  // bridge null cells (e.g. a failed non-dividing size) so the curve stays connected
@@ -337,14 +422,15 @@ function linePlot(el, xs, specs, o) {
   const yAxis = { scale: "y", stroke: axc, grid: { stroke: grc, width: 1 }, ticks: { stroke: grc, size: 4 },
     font: "11px sans-serif", size: 52 };
   if (o.yLog) {
-    yAxis.values = (u, sp) => sp.map(logFmt);
+    yAxis.values = (u, sp) => logAxisValues(
+      { min: u.scales.y.min * yMul, max: u.scales.y.max * yMul }, sp.map((v) => v * yMul));
     // Generate the log ticks ourselves (see logTicks) so uPlot's built-in log splitter — which can
     // hang for seconds on unclean tight bounds — never runs.  Mirrors the custom x-splits above;
-    // filter:identity keeps every gridline (logFmt already blanks the minor labels).
-    yAxis.splits = (u, ai, mn, mx) => logTicks(mn, mx);
+    // filter:identity keeps every gridline (logAxisValues blanks the minor labels on a wide range).
+    yAxis.splits = (u, ai, mn, mx) => logTicks(mn * yMul, mx * yMul).map((v) => v / yMul);
     yAxis.filter = (u, sp) => sp;
   } else if (o.yfmt) yAxis.values = (u, sp) => sp.map((v) => v == null ? "" : o.yfmt(v));
-  if (o.yLabelText) yAxis.label = o.yLabelText;
+  if (yUnitLabel) yAxis.label = yUnitLabel;
   // uPlot's default log range snaps min/max OUT to the enclosing powers of 10.  On a drag-zoom that
   // expands the selection back out (a ~1-decade pick on the size axis snaps to the full 1e7..1e10
   // view), so you never get the region you dragged.  o.tightLog gives the log scales an identity
@@ -974,7 +1060,7 @@ function renderScaling() {
     return fails.length ? { x: xvol[i], tip: `<b>failed at ${s}</b><br>` + fails.map((c) => `n=${c.ndev} — <span class="bad">${c.oom ? "OOM" : "FAILED"}</span>${c.error ? " · " + c.error : ""}`).join("<br>") } : null;
   }).filter(Boolean);
   const timeSpecs = [...(gT ? [gT] : []), ...throttleSeries(run, geom, op, sizes, ndevs, "min_ms", 60000), ...refSeries(geom, op, sizes, ndevs, "min_ms", 60000), ...timeCurves, ...timeIdeal];
-  linePlot($("pTime"), xvol, timeSpecs, { width: w, xLog: true, yLog: true, tightLog: true, yPad: 0.06, xSplits: xticks, xLabels, xPad: 1.7, yLabelText: "minutes", tooltip: sizeTip(fmtTime, "time"), failMarks: sizeFailMk, depTopMul: 1.5 });
+  linePlot($("pTime"), xvol, timeSpecs, { width: w, xLog: true, yLog: true, tightLog: true, yPad: 0.06, xSplits: xticks, xLabels, xPad: 1.7, yLabelText: "minutes", yMinutes: true, tooltip: sizeTip(fmtTime, "time"), failMarks: sizeFailMk, depTopMul: 1.5 });
 
   // --- memory vs size (log-log, GB) ---  (same draw-order rule as the time panel)
   const memCurves = ndevs.map((nd) => ({ label: "n=" + nd, color: devColor(nd),
@@ -1364,7 +1450,7 @@ function renderHistory() {
   // no fixed y-range, so it stays x-only.)
   const opts = (yl) => ({ xTime: true, xRange: xr, xPadAdd: xpad, yLog: true, yLabelText: yl, yfmt: fmtNum, onPick: pickRun, tooltip: histTip, syncX: histGroup, onXChange: histOnX, showNow: true, depMarks: depMk, boxZoom: true });
   const yr = (M.hist_yranges || {})[group.id] || {};   // fixed per-(geom-group, metric) y-axis (build-time)
-  linePlot($("hVcd"), xs, specsFor("time"), { width: $("hVcd").clientWidth || 320, ...opts("min"), marks: allMarks("time"), failMarks: failMk, yRange: yr.time, yInit: histYWin.time, onYChange: (w) => { histYWin.time = w; } });
+  linePlot($("hVcd"), xs, specsFor("time"), { width: $("hVcd").clientWidth || 320, ...opts("min"), yMinutes: true, marks: allMarks("time"), failMarks: failMk, yRange: yr.time, yInit: histYWin.time, onYChange: (w) => { histYWin.time = w; } });
   linePlot($("hMem"), xs, specsFor("mem"), { width: $("hMem").clientWidth || 320, ...opts("GB"), marks: allMarks("mem"), failMarks: failMk, yRange: yr.mem, yInit: histYWin.mem, onYChange: (w) => { histYWin.mem = w; } });
   const gateSpecs = [];
   rowPlats.forEach((plat) => branches.forEach((b) => {
@@ -1528,7 +1614,7 @@ function renderPerOp() {
   const poGroup = [];
   const base = { xTime: true, xRange: xr, xPadAdd: xpad, yLog: true, yfmt: fmtNum, onPick: pickRun,
     tooltip: poTip, syncX: poGroup, onXChange: poOnX, showNow: true, depMarks: depMk, failMarks: failMk, boxZoom: true };
-  linePlot($("poTime"), xs, specsFor("time"), { width: $("poTime").clientWidth || 320, ...base, yLabelText: "min", yRange: yr.time });
+  linePlot($("poTime"), xs, specsFor("time"), { width: $("poTime").clientWidth || 320, ...base, yLabelText: "min", yMinutes: true, yRange: yr.time });
   linePlot($("poMem"), xs, specsFor("mem"), { width: $("poMem").clientWidth || 320, ...base, yLabelText: "GB", yRange: yr.mem });
   if (poXWindow && $("poTime")._u) $("poTime")._u.setScale("x", { min: poXWindow[0], max: poXWindow[1] });
 
