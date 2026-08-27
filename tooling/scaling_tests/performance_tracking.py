@@ -40,8 +40,8 @@ Env vars (set by tooling/regression/run_regression.sh):
   REG_DATE       (optional)  YYYYMMDD, resolved once by the wrapper
   REG_GATE       (optional)  '1' (default) to exit non-zero on a hard regression
   REG_RUN_TAG    (optional)  branch name recorded in the YAML
-  REG_DEVICE_COUNTS (optional)  space-separated, default '1'; n>1 applies only at the
-                                MULTI_DEVICE_SIZE_LABELS cells — every other cell stays n=1
+  REG_DEVICE_COUNTS (optional)  space-separated, default '1'; n>1 applies only at the cells
+                                MULTI_DEVICE_CELLS names — every other cell stays n=1
   REG_MEM_GATE_WINDOW (optional) rolling-min window in runs; default 1 (see build_config)
   REG_SKIP_TESTS (optional)  '1' when the wrapper owns the test step
   REG_SMOKE      (optional)  '1' -> a toy 1-cell sweep, for plumbing checks
@@ -115,11 +115,21 @@ class Config:
     geom_sizes: dict = field(default_factory=lambda: {
         "multiaxis_parallel": {
             "cpu": [(96, 80, 64), (128, 112, 96), (129, 113, 97)],
-            "gpu": [(129, 113, 97), (256, 224, 192), (512, 448, 384), (513, 449, 385)],
+            # The 1024 entry exists so the projectors stay above the timing floor even at n=4.
+            # Measured at n=1 on one H100: forward 306 ms and back 140 ms at 512, which fall to
+            # 83 ms and 49 ms at n=4.
+            "gpu": [(129, 113, 97), (256, 224, 192), (512, 448, 384), (513, 449, 385),
+                    (1024, 1008, 992)],
         },
         "translation": {
             "cpu": [(15, 64, 64), (15, 65, 65)],
-            "gpu": [(15, 65, 65), (15, 256, 256), (15, 257, 257)],
+            # Three GPU entries with three different jobs.  (15, 65, 65) is the shared cell the
+            # cross-platform correctness check needs.  (15, 257, 257) is the non-dividing shape that
+            # exercises padding.  (15, 2048, 2048) is the timing cell, and it is the only one big
+            # enough to time: at 40 recon rows every translation op ran under 3 ms, which is pure
+            # noise.  With TRANSLATION_RECON_ROWS below it measures forward 299 ms and back 471 ms
+            # at n=1, and stays above 100 ms at n=2 and n=4.
+            "gpu": [(15, 65, 65), (15, 257, 257), (15, 2048, 2048)],
         },
         "denoiser": {
             "cpu": [(128, 144, 160), (225, 241, 257)],
@@ -185,6 +195,14 @@ class Config:
     mem_gate_window: int = 1        # rolling-MIN window (runs) for the memory gate; see build_config
     speedup_warn_pct: float = 15.0  # speedup-ratio drop WARN threshold (%); soft on all platforms
     time_soft_pct: float = 25.0     # absolute-time WARN threshold (%)
+    # Below this duration a cell's timing is recorded but NOT gated.  Measured from two runs of
+    # one commit on the same node class (b8bbd8a0, 2026-08-21 against 2026-08-24): the run-to-run
+    # spread is 4.6% median and 12.4% worst below 10 ms, 3.4% median and 55.6% worst from 10 to
+    # 100 ms, then 1.1% median above 100 ms and 0.5% above 1 s.  The knee is sharp at 100 ms, and
+    # the worst sub-floor excursion is twice the 25% soft threshold, so small cells would warn on
+    # noise alone.  Memory and the correctness fingerprint keep gating at every size, because both
+    # are deterministic; a repeat ablation read 0.000% spread on the memory counter.
+    time_gate_min_ms: float = 100.0
     fp_rtol_single: float = 1e-5    # fingerprint robust-aggregate rel tol (single-shot ops)
     fp_rtol_iter: float = 1e-4      # ... for the iterated vcd and denoise
     k_sample_tol: int = 1           # allowed deviating fingerprint samples before a soft flag
@@ -213,26 +231,42 @@ CONE_RECON_SHAPE_PINS = {
     (1024, 1008, 992): (992, 992, 1008),
 }
 
+# Translation recon rows per sinogram size, where they differ from Config.tct_recon_rows.
+#
+# Recon rows are the axis perpendicular to the detector, and they are the cheapest way to buy work:
+# a sweep on one H100 found that going from 40 to 160 rows at a 1024 detector moved back projection
+# from 32 ms to 106 ms while peak memory FELL slightly, from 3.67 GB to 3.35 GB.  Detector size
+# buys work too but costs memory in proportion.
+#
+# The timing cell therefore grows both, to 320 rows at a 2048 detector.  That keeps the object a
+# slab, 6.4 to 1, which is the shape translation tomography is for, while reaching 299 ms forward
+# and 471 ms back at n=1.  Peak memory is 18.1 GB, below the 23.0 GB the largest cone cell already
+# uses.  The small cells keep 40 rows, so the shared cross-platform cell and the CPU cells do not
+# move.
+TRANSLATION_RECON_ROWS = {
+    (15, 2048, 2048): 320,
+}
+
 # Sizes that sweep MULTIPLE device counts (when REG_DEVICE_COUNTS asks for them).
-# The multi-GPU rows exist at the two sizes the torch campaign gates on, where multi-device
-# history is directly comparable to the campaign record.  The smaller sizes measure mostly
-# communication overhead at n>1 and stay single-device.  The denoiser stays single-device at
-# every size: QGGMRFDenoiser.denoise raises under any non-trivial placement, and the
-# device-policy work deliberately leaves it outside the widening.
-MULTI_DEVICE_SIZE_LABELS = {"512x448x384", "1024x1008x992"}
-
-# Geometries measured on a single device only.  The denoiser raises under any non-trivial
-# placement.  translation and multiaxis_parallel are projector baselines whose sizes stay small,
-# so a multi-device sweep would measure mostly communication; they join the sweep deliberately if
-# and when their own campaign asks for it.
-SINGLE_DEVICE_GEOMETRIES = ("denoiser", "translation", "multiaxis_parallel")
-
+# Which cells sweep more than one device, named per geometry rather than by size alone, because
+# the geometries do not share a size table.  A size absent from a geometry's set stays at n=1,
+# which is right for the small cells: they would measure mostly communication overhead.
+#
+# All five geometries pin and run at n=2 and n=4 on real hardware, verified 2026-08-24.  That
+# includes the denoiser, which an earlier note claimed raises under any non-trivial placement.  It
+# does not.  It does get SLOWER with more devices, reading 278 ms, 693 ms and 1243 ms at n=1, n=2
+# and n=4 for the 512 cell, which is worth recording rather than hiding.
+MULTI_DEVICE_CELLS = {
+    "parallel":           {"512x448x384", "1024x1008x992"},
+    "cone":               {"512x448x384", "1024x1008x992"},
+    "multiaxis_parallel": {"512x448x384", "513x449x385", "1024x1008x992"},
+    "translation":        {"15x2048x2048"},
+    "denoiser":           {"512x448x384", "1024x1008x992"},
+}
 
 def cell_device_counts(geometry, size_label, device_counts):
     """The device counts one (geometry, op, size) cell group sweeps."""
-    if geometry in SINGLE_DEVICE_GEOMETRIES:
-        return [1]
-    if size_label in MULTI_DEVICE_SIZE_LABELS:
+    if size_label in MULTI_DEVICE_CELLS.get(geometry, ()):
         return list(device_counts)
     return [1]
 
@@ -399,6 +433,8 @@ def make_model(config, geometry, size, platform_key):
         num_x, num_z = config.tct_num_x, config.tct_num_z
         delta_voxel = delta_det / (sdd / sid)
         cols, slices = n_channels, n_rows
+        recon_rows = TRANSLATION_RECON_ROWS.get(
+            (int(n_views), int(n_rows), int(n_channels)), config.tct_recon_rows)
         vectors = mbirtorch.gen_translation_vectors(num_x, num_z,
                                                     cols * delta_voxel / (num_x - 1),
                                                     slices * delta_voxel / (num_z - 1))
@@ -406,7 +442,7 @@ def make_model(config, geometry, size, platform_key):
                                            source_detector_dist=sdd, source_iso_dist=sid)
         model.set_params(delta_det_channel=delta_det, delta_det_row=delta_det,
                          delta_voxel=delta_voxel, voxel_row_aspect=1.0, voxel_slice_aspect=1.0,
-                         recon_shape=(config.tct_recon_rows, cols, slices), no_warning=True)
+                         recon_shape=(recon_rows, cols, slices), no_warning=True)
     elif geometry == "denoiser":
         model = mbirtorch.QGGMRFDenoiser(tuple(int(x) for x in size))
         model.set_params(sharpness=config.denoise_sharpness, no_warning=True)
@@ -1023,10 +1059,17 @@ def _gate_metrics(key, t, r, lab, plat, config, hard, soft):
     mem_mb is a device-side peak (see _memory_is_device_peak): peak_bytes_in_use / torch's
     max_memory_allocated are ~deterministic, and memory is what catches the gather-bug class —
     memory that fails to shard.  Where mem_mb is whole-process RSS (coarse) it is SOFT.
-    Speedup and absolute time are SOFT on every platform — both derive from timings, which are
-    noisy even on GPU (especially small runs).  Every delta shows the value vs expected with BOTH
-    the absolute and the percentage difference."""
+    Speedup and absolute time are SOFT on every platform, because both derive from timings, which
+    are noisy even on GPU.  Below ``Config.time_gate_min_ms`` they are not gated at all, because
+    the run-to-run spread there exceeds the threshold they would be tested against; see that
+    field for the measurement.  Memory and the fingerprint still gate at every size.  Every delta
+    shows the value vs expected with BOTH the absolute and the percentage difference."""
     pre = f"[{lab}] {key} "
+    # The timing floor uses the LARGER of the two runs, so a cell that grows out of the noise, for
+    # example from 50 ms to 500 ms, is still caught.  Only a cell small in BOTH runs is exempt.
+    floor = float(getattr(config, "time_gate_min_ms", 0.0) or 0.0)
+    _times = [x for x in (r.get("min_ms"), t.get("min_ms")) if x]
+    time_is_gated = (not floor) or (max(_times) >= floor if _times else True)
     # memory — HARD where mem_mb is a device peak, SOFT (coarse RSS) elsewhere.
     rm, tm = r.get("mem_mb"), t.get("mem_mb")
     if rm and tm is not None and (tm - rm) / rm * 100.0 > config.mem_hard_pct:
@@ -1038,11 +1081,12 @@ def _gate_metrics(key, t, r, lab, plat, config, hard, soft):
         bucket.append(pre + "memory " + _fmt_delta(tm, rm, " MB") + win_note + cpu_note)
     # speedup-ratio drop — SOFT everywhere (ratio of noisy timings).
     rsp, tsp = r.get("speedup"), t.get("speedup")
-    if t["n_devices"] > 1 and rsp and tsp is not None and (rsp - tsp) / rsp * 100.0 > config.speedup_warn_pct:
+    if (time_is_gated and t["n_devices"] > 1 and rsp and tsp is not None
+            and (rsp - tsp) / rsp * 100.0 > config.speedup_warn_pct):
         soft.append(pre + "speedup " + _fmt_delta(tsp, rsp))
-    # absolute time — SOFT everywhere.
+    # absolute time — SOFT everywhere, and only above the timing floor.
     rt, tt = r.get("min_ms"), t.get("min_ms")
-    if rt and tt is not None and (tt - rt) / rt * 100.0 > config.time_soft_pct:
+    if time_is_gated and rt and tt is not None and (tt - rt) / rt * 100.0 > config.time_soft_pct:
         soft.append(pre + "time " + _fmt_delta(tt, rt, " ms"))
     # structural — DIRECTION-AWARE.  Losing the sharded path (True->False) or the banded back path
     # (value->None), or a band-count change between two sharded runs, is a HARD regression.  GAINING
@@ -1347,8 +1391,8 @@ def run(config, platform_key):
         size_labels = [sc.size_label(s) for s in gs]
         for op in (config.geom_ops.get(geometry) or config.ops):
             for label in size_labels:
-                # Per-(geometry, size) counts: only the MULTI_DEVICE_SIZE_LABELS cells
-                # sweep n>1; everything else, and the whole denoiser, stays n=1.
+                # Per-(geometry, size) counts: only the cells MULTI_DEVICE_CELLS names sweep
+                # n>1, and everything else stays at one device.
                 gdc = cell_device_counts(geometry, label, device_counts)
                 swept_counts.update(gdc)
                 print(f"\n=== {geometry} | {op} | {label} @ n={gdc} ===")
@@ -1395,8 +1439,8 @@ def run(config, platform_key):
         "kind": "regression", "date": config.date, "platform": platform_key,
         # Which geometries were measured across more than one device.  This is not a capability
         # probe: it records the sweep, so the gate does not expect multi-device cells for a
-        # geometry this nightly deliberately holds at one device (SINGLE_DEVICE_GEOMETRIES).
-        "sharding_by_geom": {g: (g not in SINGLE_DEVICE_GEOMETRIES)
+        # geometry whose sizes all stay at n=1 (see MULTI_DEVICE_CELLS).
+        "sharding_by_geom": {g: bool(MULTI_DEVICE_CELLS.get(g))
                              for g in config.geometries},
         "device_label": setup["device_label"], **prov,
         "mbirtorch_version": f"mbirtorch {setup['mbirtorch_version']}",
