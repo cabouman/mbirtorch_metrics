@@ -13,8 +13,9 @@
 # guide (mbirtorch_plans/.claude/cluster_use.md, "The node preamble") explains what each line
 # resolves to.  The cuda/cudnn MODULES do not choose the CUDA the envs run on: torch and jax wheels
 # bundle their own CUDA-13 runtime and cuDNN as pip packages.  What must hold is that the DRIVER's
-# CUDA version (`nvidia-smi`) is at least the wheels' major.  Verified 2026-09-03 (job 15855388):
-# the envs behave identically with these modules, with no cuda/cudnn module, and with cuda/13.3.0.
+# CUDA version (`nvidia-smi`) is at least the wheels' major.  The cuda module is inert; the cudnn
+# module is NOT: its CUDA-12 cuDNN shadows the bundled one and breaks every cuDNN op in torch
+# (verified 2026-09-03 on h004 — the earlier matmul-only check, job 15855388, never touched cuDNN).
 
 # --- non-login bootstrap (added 2026-09-01) ---------------------------------
 # The `module` command is a shell function defined by /etc/profile.d/*.sh.  A
