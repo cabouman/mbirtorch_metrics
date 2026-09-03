@@ -1,4 +1,4 @@
-# cluster_preamble.sh.example — node preamble for the Purdue RCAC cluster.
+# cluster_preamble.sh.example — node preamble for the Purdue RCAC clusters (gautschi, gilbreth).
 #
 # Copy to the path regression.env expects (PREAMBLE_FILE, default below) on the cluster:
 #     cp tooling/regression/cluster_preamble.sh.example "$HOME/load_conda_cuda.sh"
@@ -8,11 +8,41 @@
 # proxy exports are what let git reach github from a compute node, and `module load conda` is what
 # puts conda on PATH.  Sourced, so the exported vars + PATH changes carry into the run (and through
 # the phase-2 re-exec).
+#
+# This is the working copy from the group's gautschi accounts as of 2026-09-03; the per-account
+# guide (mbirtorch_plans/.claude/cluster_use.md, "The node preamble") explains what each line
+# resolves to.  The cuda/cudnn MODULES do not choose the CUDA the envs run on: torch and jax wheels
+# bundle their own CUDA-13 runtime and cuDNN as pip packages.  What must hold is that the DRIVER's
+# CUDA version (`nvidia-smi`) is at least the wheels' major.  Verified 2026-09-03 (job 15855388):
+# the envs behave identically with these modules, with no cuda/cudnn module, and with cuda/13.3.0.
+
+# --- non-login bootstrap (added 2026-09-01) ---------------------------------
+# The `module` command is a shell function defined by /etc/profile.d/*.sh.  A
+# non-login shell does not source /etc/profile, so it does not have that
+# function, and every `module load` below then fails with
+# "module: command not found".  Two common cases are affected:
+# `sbatch --wrap "source ~/load_conda_cuda.sh && ..."` and `ssh host '<cmd>'`.
+# The block below sources /etc/profile when the function is missing.  A shell
+# that already has the function skips the block and is unchanged.  That
+# includes login shells and the scron nightly.
+#
+# /etc/profile reads variables that may be unset, such as HISTCONTROL.  Reading
+# an unset variable ends a shell that is running under `set -u`, and
+# run_regression.sh sources this file under `set -uo pipefail`.  So the block
+# saves the -e and -u flags, clears them across the source, and restores them.
+if ! command -v module >/dev/null 2>&1 && [ -r /etc/profile ]; then
+    __lcc_opts=$-
+    set +eu
+    . /etc/profile
+    case $__lcc_opts in *e*) set -e ;; esac
+    case $__lcc_opts in *u*) set -u ;; esac
+    unset __lcc_opts
+fi
+# ----------------------------------------------------------------------------
 
 module load conda
-module load modtree/gpu
-module load cuda/12.9.0
+module load modtree/gpu    # the GPU module tree; brings cuda/12.6.1 with it, so the next line is a no-op today
+module load cuda
 export HTTPS_PROXY=squid.rcac.purdue.edu:3128
 export HTTP_PROXY=squid.rcac.purdue.edu:3128
-module use /depot/bouman/apps/modules
-module load cudnn/9.12.0
+module load cudnn          # cudnn/9.2.0.82-12: unused by the envs (pip-bundled cuDNN); harmless, kept for nvcc-era tools
