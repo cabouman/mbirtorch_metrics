@@ -112,6 +112,47 @@ under different dependency sets do not collide, and the dashboard marks it as a 
 rather than a code change.  The canary's own bookkeeping lives in `state/<plat>/depgen`,
 `torch_seen`, `torch_seen_python`, and `last_full_refresh`.
 
+## The weekly cluster probe (`cluster_probe.sh`)
+
+The nightly proves the library; the probe watches the cluster underneath it.  It runs from a
+second managed scrontab block (`enable_probe.sh` / `disable_probe.sh`, markers
+`# mbirtorch-probe-BEGIN/END`) on one GPU, Monday 08:00 by default, and takes a few minutes.  It
+reads, never changes: driver and CUDA ceiling, the `ai` partition limits, each env's Python /
+torch / CUDA-build / triton versions plus a real GPU matmul, whether `~/load_conda_cuda.sh` still
+matches `cluster_preamble.sh.example` (comments aside), hollow conda envs left by the scratch
+purge, home / scratch-inode / depot quota usage, the `slist` balance and its weekly burn, the
+scrontab (no `#DISABLED:` entries, the nightly still installed), the nightly's newest log (age,
+clean last line, nothing unpushed in its metrics clone), and the public web root (readable,
+nothing world-writable, no data or source files, no symlinks escaping it).
+
+Every fact is `key=value` or `key=UNKNOWN:<reason>`; every UNKNOWN is a finding, and every
+threshold test passes only if the value parses and satisfies the rule.  Identity facts are
+compared with the previous run's file, which then advances, so a change mails once.  The facts,
+the previous facts, a one-line status and a dated history go to `PROBE_STATUS_DIR`
+(`/depot/bouman/data/cluster_status`, readable by the whole group); when that is not writable
+they go to `~/.mbirtorch/probe/` and that is itself a finding.  The report is mailed to `NOTIFY`
+on **every** run, so a Monday without a probe mail is the signal that the probe died; the job
+also carries `--mail-type=FAIL,TIME_LIMIT`, so a script that dies at line 1 still produces a
+Slurm mail.  Exit 1 on any finding.  Knobs: the `PROBE_*` block in `regression.env`; any of them
+can be overridden for one run with `sbatch --export=...`.  `status_nightly.sh` shows the block,
+warns on `#DISABLED:` entries, and prints the last verdict with its age.
+
+Trial runs, from the cluster checkout (no user environment, as under scron):
+
+```
+cd ~/.mbirtorch/regression
+P="bash $HOME/PycharmProjects/mbirtorch_metrics/tooling/regression/cluster_probe.sh"
+COMMON="-A bouman -p ai -N1 --gpus-per-node=1 -n 14 -t 0:15:00"
+sbatch --export=PROBE_MAIL=0 $COMMON -J probe-t2 -o probe-t2-%j.log --wrap "$P"        # expect PASS, exit 0
+sbatch --export=PROBE_MAIL=0,PROBE_HOME_PCT_MAX=1 $COMMON -J probe-t3 -o probe-t3-%j.log --wrap "$P"   # exit 1, one finding
+sbatch --export=PROBE_MAIL=0,PROBE_STATUS_DIR=/depot/nonexistent/x $COMMON -J probe-t4 -o probe-t4-%j.log --wrap "$P"   # exit 1, output in ~/.mbirtorch/probe
+```
+
+A live scheduled firing is the last step: `PROBE_SCHEDULE="<M> <H> * * *" ./enable_probe.sh`
+with a time a few minutes ahead, wait for the mail, then `./enable_probe.sh` again for the
+weekly schedule.  Note that `myquota` must run with the proxy variables unset (the probe does
+that): with `HTTPS_PROXY` set it prints only its header.
+
 ## Verify before scheduling
 
 

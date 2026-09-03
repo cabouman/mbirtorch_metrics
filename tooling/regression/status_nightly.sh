@@ -57,6 +57,18 @@ if [ "$(uname -s)" != "Darwin" ]; then
     if printf '%s\n' "$CUR" | grep -qF "# mbirjax-nightly-BEGIN"; then
       echo "  (an mbirjax-nightly block is also present — the two schedules coexist in one scrontab)"
     fi
+    # The weekly cluster probe keeps its own managed block (enable_probe.sh).
+    if printf '%s\n' "$CUR" | grep -qF "# mbirtorch-probe-BEGIN"; then
+      PL="$(printf '%s\n' "$CUR" | sed -n '/# mbirtorch-probe-BEGIN/,/# mbirtorch-probe-END/p' | grep -vE '^#' | head -1)"
+      echo "  probe:    INSTALLED — cron \"${PL%% bash *}\"  (weekly cluster probe, cluster_probe.sh)"
+    else
+      echo "  probe:    not installed  (run ./enable_probe.sh)"
+    fi
+    # Slurm comments out a scron entry that was cancelled or failed to submit; nothing else says so.
+    if printf '%s\n' "$CUR" | grep -q '^#DISABLED'; then
+      echo "  WARNING:  scrontab has #DISABLED: entries — a cancelled or failed scron job.  Re-run the"
+      echo "            matching enable script to restore it."
+    fi
     if command -v squeue >/dev/null 2>&1; then
       Q="$(squeue --me --name=mbirtorch-nightly -h 2>/dev/null)" || Q=""
       [ -n "$Q" ] && { echo "  in queue now:"; printf '%s\n' "$Q" | sed 's/^/    /'; }
@@ -134,6 +146,20 @@ if [ -n "${FIRED_LOG:-}" ] && [ -f "$FIRED_LOG" ]; then
   else
     echo "watchdog:  no watchdog line in that log — it runs on the cluster (gpu) nightly"
     echo "           only, and REG_NO_WATCHDOG=1 silences it."
+  fi
+fi
+
+# The weekly cluster probe's last verdict (cluster only).  A status older than eight days means the
+# probe itself stopped firing — its mail is the primary signal, this is the backstop.
+if [ "$(uname -s)" != "Darwin" ]; then
+  PSD="${PROBE_STATUS_DIR:-/depot/bouman/data/cluster_status}"; PST="$PSD/probe_status.txt"
+  [ -f "$PST" ] || PST="$HOME/.mbirtorch/probe/probe_status.txt"
+  if [ -f "$PST" ]; then
+    _age_d=$(( ( $(date +%s) - $(stat -c %Y "$PST") ) / 86400 ))
+    echo "probe:     $(cat "$PST")"
+    [ "$_age_d" -le 8 ] || echo "           WARNING: that status is ${_age_d} days old — the weekly probe may be dead (scrontab -l; ./enable_probe.sh)"
+  else
+    echo "probe:     no status file yet ($PSD/probe_status.txt) — the weekly probe has not run"
   fi
 fi
 
