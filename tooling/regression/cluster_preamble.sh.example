@@ -41,8 +41,13 @@ fi
 # ----------------------------------------------------------------------------
 
 module load conda
-module load modtree/gpu    # the GPU module tree; brings cuda/12.6.1 with it, so the next line is a no-op today
-module load cuda
+module load modtree/gpu
+# No `module load cuda` or `module load cudnn` here (removed 2026-09-03).  Torch and jax
+# bundle their own CUDA-13 runtime and cuDNN 9.20 as pip packages; only the driver matters.
+# A cudnn module (CUDA-12 builds of 9.2 / 9.12) goes first on LD_LIBRARY_PATH and makes
+# every cuDNN op in torch fail with "cuDNN version incompatibility" (verified on h004).
 export HTTPS_PROXY=squid.rcac.purdue.edu:3128
 export HTTP_PROXY=squid.rcac.purdue.edu:3128
-module load cudnn          # cudnn/9.2.0.82-12: unused by the envs (pip-bundled cuDNN); harmless, kept for nvcc-era tools
+export NO_PROXY=localhost,127.0.0.1,::1,.rcac.purdue.edu   # loopback must bypass squid: PyCharm Markdown preview, debugger, Jupyter, TensorBoard
+export no_proxy=$NO_PROXY                                   # curl/git read lowercase; Chromium/Java uppercase
+# module use /depot/bouman/apps/modules
