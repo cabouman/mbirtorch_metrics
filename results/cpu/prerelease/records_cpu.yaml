@@ -264,15 +264,15 @@ cone|vcd_nonconst|200x208x160|1:
     prev: 12996.6
 denoiser|denoise|128x144x160|1:
   min_ms:
-    value: 510.53104107268155
-    commit: 9825a43c019e5d72dd8a4ca872e8f9b69e4d6517
-    date: '20260823'
-    prev:
+    value: 492.91862500831485
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 510.53104107268155
   mem_mb:
-    value: 487.8
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 490.4
+    value: 483.1
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 487.8
 denoiser|denoise|225x241x257|1:
   min_ms:
     value: 1897.0968751236796
@@ -286,15 +286,15 @@ denoiser|denoise|225x241x257|1:
     prev:
 translation|direct_filter|15x64x64|1:
   min_ms:
-    value: 1.2574158608913422
-    commit: f63b13baae6065c7dad301bf5a21c6a800ca01fd
-    date: '20260827'
-    prev:
+    value: 1.2385002337396145
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 1.2574158608913422
   mem_mb:
-    value: 215.0
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 215.4
+    value: 213.8
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 215.0
 translation|direct_filter|15x65x65|1:
   min_ms:
     value: 5.266417050734162
@@ -330,10 +330,10 @@ translation|forward|15x65x65|1:
     prev: 404.2
 translation|back|15x64x64|1:
   min_ms:
-    value: 4.371083108708262
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 4.376458004117012
+    value: 4.272333811968565
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 4.371083108708262
   mem_mb:
     value: 416.9
     commit: f63b13baae6065c7dad301bf5a21c6a800ca01fd
@@ -341,10 +341,10 @@ translation|back|15x64x64|1:
     prev:
 translation|back|15x65x65|1:
   min_ms:
-    value: 4.122917074710131
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 4.308584146201611
+    value: 4.112000111490488
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 4.122917074710131
   mem_mb:
     value: 419.0
     commit: f63b13baae6065c7dad301bf5a21c6a800ca01fd
@@ -363,10 +363,10 @@ multiaxis_parallel|direct_filter|96x80x64|1:
     prev: 233.3
 multiaxis_parallel|direct_filter|128x112x96|1:
   min_ms:
-    value: 15.051791910082102
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 15.190791105851531
+    value: 14.78933310136199
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 15.051791910082102
   mem_mb:
     value: 250.1
     commit: f63b13baae6065c7dad301bf5a21c6a800ca01fd
@@ -423,16 +423,16 @@ multiaxis_parallel|back|96x80x64|1:
     date: '20260827'
     prev:
   mem_mb:
-    value: 735.0
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 739.9
+    value: 732.9
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 735.0
 multiaxis_parallel|back|128x112x96|1:
   min_ms:
-    value: 131.78887497633696
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 167.9386249743402
+    value: 127.52012489363551
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 131.78887497633696
   mem_mb:
     value: 1226.4
     commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
@@ -440,12 +440,12 @@ multiaxis_parallel|back|128x112x96|1:
     prev: 1245.8
 multiaxis_parallel|back|129x113x97|1:
   min_ms:
-    value: 160.53562494926155
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 233.77504106611013
+    value: 155.27987480163574
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 160.53562494926155
   mem_mb:
-    value: 1274.5
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 1302.2
+    value: 1265.3
+    commit: 39a9eff54588607b1d79276e2f186970fa24d404
+    date: '20260905'
+    prev: 1274.5
