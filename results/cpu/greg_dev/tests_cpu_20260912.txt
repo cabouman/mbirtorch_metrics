@@ -1,0 +1,613 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 8/8 workers
+8 workers [0 items]
+
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting tests/test_adjoint.py ____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_adjoint.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_adjoint.py:8: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_____________________ ERROR collecting tests/test_cone.py ______________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_cone.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_cone.py:12: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_demo_data.py ___________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_demo_data.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_demo_data.py:15: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_denoiser.py ____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_denoiser.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_denoiser.py:11: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_________________ ERROR collecting tests/test_device_policy.py _________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_device_policy.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_device_policy.py:17: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_____________ ERROR collecting tests/test_geometry_calibration.py ______________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_geometry_calibration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_geometry_calibration.py:22: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+__________________ ERROR collecting tests/test_hdf5_family.py __________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_hdf5_family.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_hdf5_family.py:15: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_hsnt_vcls.py ___________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_hsnt_vcls.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_hsnt_vcls.py:17: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________________ ERROR collecting tests/test_kernels_sharded.py ________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_kernels_sharded.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_kernels_sharded.py:45: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+____________________ ERROR collecting tests/test_logging.py ____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_logging.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_logging.py:12: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_________________ ERROR collecting tests/test_memory_ledger.py _________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_memory_ledger.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_memory_ledger.py:15: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_multiaxis.py ___________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_multiaxis.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_multiaxis.py:33: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_______________ ERROR collecting tests/test_params_and_paths.py ________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_params_and_paths.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_params_and_paths.py:10: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+____________________ ERROR collecting tests/test_phantom.py ____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_phantom.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_phantom.py:26: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+____________ ERROR collecting tests/test_preprocess_entry_forms.py _____________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_preprocess_entry_forms.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_preprocess_entry_forms.py:24: in <module>
+    import mbirtorch.preprocess as mtp
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+______________ ERROR collecting tests/test_preprocess_loaders.py _______________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_preprocess_loaders.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_preprocess_loaders.py:12: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________________ ERROR collecting tests/test_preprocess_mar.py _________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_preprocess_mar.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_preprocess_mar.py:22: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________ ERROR collecting tests/test_preprocess_stripe_segmentation.py _________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_preprocess_stripe_segmentation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_preprocess_stripe_segmentation.py:15: in <module>
+    import mbirtorch.preprocess as mtp
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_____________ ERROR collecting tests/test_preprocess_utilities.py ______________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_preprocess_utilities.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_preprocess_utilities.py:23: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_prox_map.py ____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_prox_map.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_prox_map.py:6: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+______________ ERROR collecting tests/test_reader_det_rotation.py ______________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_reader_det_rotation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_reader_det_rotation.py:13: in <module>
+    from mbirtorch.preprocess import zeiss, zeiss_tct
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________________ ERROR collecting tests/test_recon_geometry.py _________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_recon_geometry.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_recon_geometry.py:14: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_________________ ERROR collecting tests/test_recon_simple.py __________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_recon_simple.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_recon_simple.py:18: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+__________________ ERROR collecting tests/test_recon_smoke.py __________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_recon_smoke.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_recon_smoke.py:6: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_______________ ERROR collecting tests/test_sharded_pipeline.py ________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharded_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_sharded_pipeline.py:14: in <module>
+    import mbirtorch.preprocess as mtp
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_____________ ERROR collecting tests/test_sharded_segmentation.py ______________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharded_segmentation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_sharded_segmentation.py:16: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_sharding.py ____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_sharding.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_sharding.py:12: in <module>
+    from mbirtorch._sharding import (Placement, Shards, device_pool,
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_____________________ ERROR collecting tests/test_smoke.py _____________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_smoke.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_smoke.py:6: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+__________________ ERROR collecting tests/test_split_sino.py ___________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_split_sino.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_split_sino.py:24: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+__________________ ERROR collecting tests/test_translation.py __________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_translation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_translation.py:12: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+__________________ ERROR collecting tests/test_triton_cone.py __________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_triton_cone.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_triton_cone.py:34: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_______________ ERROR collecting tests/test_triton_multiaxis.py ________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_triton_multiaxis.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_triton_multiaxis.py:74: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________________ ERROR collecting tests/test_triton_parallel.py ________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_triton_parallel.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_triton_parallel.py:45: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+___________________ ERROR collecting tests/test_utilities.py ___________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_utilities.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_utilities.py:27: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_________________ ERROR collecting tests/test_view_batching.py _________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_view_batching.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_view_batching.py:36: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_______________ ERROR collecting tests/test_viewer_controller.py _______________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_viewer_controller.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_viewer_controller.py:19: in <module>
+    from mbirtorch.viewer import (Mode, SliceViewer, VolumeStack, _save_data_hdf5,
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+_________________ ERROR collecting tests/test_viewer_model.py __________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_viewer_model.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_viewer_model.py:13: in <module>
+    from mbirtorch.viewer import VolumeStack, PLACEHOLDER_SHAPE
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________________ ERROR collecting tests/test_viewer_wrapper.py _________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_viewer_wrapper.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_viewer_wrapper.py:18: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+__________________ ERROR collecting tests/test_vs_goldens.py ___________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_vs_goldens.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_vs_goldens.py:19: in <module>
+    import mbirtorch
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+________________ ERROR collecting tests/test_widening_floors.py ________________
+ImportError while importing test module '/Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/tests/test_widening_floors.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../../../../miniforge3/envs/mbirtorch_regression/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../tests/test_widening_floors.py:30: in <module>
+    from mbirtorch import _widening_floors as wf
+../mbirtorch/__init__.py:39: in <module>
+    from .parallel_beam import ParallelBeamModel, recon_simple_parallel
+../mbirtorch/parallel_beam.py:16: in <module>
+    from .geometry_rules import channel_index, pixel_xy, rotate_about_z
+E   ModuleNotFoundError: No module named 'mbirtorch.geometry_rules'
+=========================== short test summary info ============================
+ERROR ../tests/test_adjoint.py - ImportError while importing test module '/Us...
+ERROR ../tests/test_cone.py - ImportError while importing test module '/Users...
+ERROR ../tests/test_demo_data.py - ImportError while importing test module '/...
+ERROR ../tests/test_denoiser.py - ImportError while importing test module '/U...
+ERROR ../tests/test_device_policy.py - ImportError while importing test modul...
+ERROR ../tests/test_geometry_calibration.py - ImportError while importing tes...
+ERROR ../tests/test_hdf5_family.py - ImportError while importing test module ...
+ERROR ../tests/test_hsnt_vcls.py - ImportError while importing test module '/...
+ERROR ../tests/test_kernels_sharded.py - ImportError while importing test mod...
+ERROR ../tests/test_logging.py - ImportError while importing test module '/Us...
+ERROR ../tests/test_memory_ledger.py - ImportError while importing test modul...
+ERROR ../tests/test_multiaxis.py - ImportError while importing test module '/...
+ERROR ../tests/test_params_and_paths.py - ImportError while importing test mo...
+ERROR ../tests/test_phantom.py - ImportError while importing test module '/Us...
+ERROR ../tests/test_preprocess_entry_forms.py - ImportError while importing t...
+ERROR ../tests/test_preprocess_loaders.py - ImportError while importing test ...
+ERROR ../tests/test_preprocess_mar.py - ImportError while importing test modu...
+ERROR ../tests/test_preprocess_stripe_segmentation.py - ImportError while imp...
+ERROR ../tests/test_preprocess_utilities.py - ImportError while importing tes...
+ERROR ../tests/test_prox_map.py - ImportError while importing test module '/U...
+ERROR ../tests/test_reader_det_rotation.py - ImportError while importing test...
+ERROR ../tests/test_recon_geometry.py - ImportError while importing test modu...
+ERROR ../tests/test_recon_simple.py - ImportError while importing test module...
+ERROR ../tests/test_recon_smoke.py - ImportError while importing test module ...
+ERROR ../tests/test_sharded_pipeline.py - ImportError while importing test mo...
+ERROR ../tests/test_sharded_segmentation.py - ImportError while importing tes...
+ERROR ../tests/test_sharding.py - ImportError while importing test module '/U...
+ERROR ../tests/test_smoke.py - ImportError while importing test module '/User...
+ERROR ../tests/test_split_sino.py - ImportError while importing test module '...
+ERROR ../tests/test_translation.py - ImportError while importing test module ...
+ERROR ../tests/test_triton_cone.py - ImportError while importing test module ...
+ERROR ../tests/test_triton_multiaxis.py - ImportError while importing test mo...
+ERROR ../tests/test_triton_parallel.py - ImportError while importing test mod...
+ERROR ../tests/test_utilities.py - ImportError while importing test module '/...
+ERROR ../tests/test_view_batching.py - ImportError while importing test modul...
+ERROR ../tests/test_viewer_controller.py - ImportError while importing test m...
+ERROR ../tests/test_viewer_model.py - ImportError while importing test module...
+ERROR ../tests/test_viewer_wrapper.py - ImportError while importing test modu...
+ERROR ../tests/test_vs_goldens.py - ImportError while importing test module '...
+ERROR ../tests/test_widening_floors.py - ImportError while importing test mod...
+============================== 40 errors in 3.63s ==============================
