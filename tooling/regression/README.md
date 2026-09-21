@@ -117,17 +117,29 @@ rather than a code change.  The canary's own bookkeeping lives in `state/<plat>/
 The nightly proves the library; the probe watches the cluster underneath it.  It runs from a
 second managed scrontab block (`enable_probe.sh` / `disable_probe.sh`, markers
 `# mbirtorch-probe-BEGIN/END`) on one GPU, Monday 08:00 by default, and takes a few minutes.  It
-reads, never changes: driver and CUDA ceiling, the `ai` partition limits, each env's Python /
-torch / CUDA-build / triton versions plus a real GPU matmul, whether `~/load_conda_cuda.sh` still
-matches `cluster_preamble.sh.example` (comments aside), hollow conda envs left by the scratch
-purge, home / scratch-inode / depot quota usage, the `slist` balance and its weekly burn, the
-scrontab (no `#DISABLED:` entries, the nightly still installed), the nightly's newest log (age,
-clean last line, nothing unpushed in its metrics clone), and the public web root (readable,
-nothing world-writable, no data or source files, no symlinks escaping it).
+reads, never changes: the Slurm version, driver and CUDA ceiling, the `ai` partition limits, each
+env's Python / torch / CUDA-build / triton versions plus a real GPU matmul, whether
+`~/load_conda_cuda.sh` still matches `cluster_preamble.sh.example` (comments aside; the copy in
+the nightly's metrics clone, which the nightly refreshes on every wake — nothing updates the
+checkout the probe runs from, and its stale example once reported a correct preamble as wrong
+for two weeks), hollow conda envs left by the scratch purge, home / scratch-inode / depot quota
+usage, the `slist` balance and its weekly burn, the scrontab (no `#DISABLED:` entries, the
+nightly still installed), the nightly's queue entry (not held: a scron job that Slurm requeued
+and held after a failed launch stays PENDING forever, passes the `#DISABLED:` scan, and cannot
+be released with `scontrol` — only re-registering the scrontab, i.e. re-running
+`enable_nightly.sh`, replaces it), the nightly's newest log (age, clean last line, nothing
+unpushed in its metrics clone), and the public web root (readable, nothing world-writable, no
+data or source files, no symlinks escaping it).
 
 Every fact is `key=value` or `key=UNKNOWN:<reason>`; every UNKNOWN is a finding, and every
 threshold test passes only if the value parses and satisfies the rule.  Identity facts are
-compared with the previous run's file, which then advances, so a change mails once.  The facts,
+compared with the previous run's file, which then advances, so a change mails once.  The report
+(stdout, the mail body, `history/report-<date>.txt`) has four parts, and each fact appears in
+exactly one of them: the findings, each with a hint saying what it means and what to do; a
+`checks` table with every rule and its `ok` / `FAIL` / `UNKNOWN` / `skip`; the identity facts
+with changes marked; and the informational rest.  The raw `key=value` list is the facts file
+only.  Fact names avoid a `www.` prefix (the web-root facts are `web.*`): Outlook rewrites
+anything that looks like a hostname into a Safe Links URL.  The facts,
 the previous facts, a one-line status and a dated history go to `PROBE_STATUS_DIR`
 (`/depot/bouman/data/cluster_status`, readable by the whole group); when that is not writable
 they go to `~/.mbirtorch/probe/` and that is itself a finding.  The report is mailed to `NOTIFY`
