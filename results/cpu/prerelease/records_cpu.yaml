@@ -38,10 +38,10 @@ parallel|forward|128x112x96|1:
     date: '20260913'
     prev: 83.81549990735948
   mem_mb:
-    value: 431.8
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260829'
-    prev: 435.9
+    value: 431.0
+    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
+    date: '20260921'
+    prev: 431.8
 parallel|forward|129x113x97|1:
   min_ms:
     value: 80.22774988785386
@@ -104,10 +104,10 @@ parallel|vcd_nonconst|128x112x96|1:
     date: '20260829'
     prev: 1135.5614578351378
   mem_mb:
-    value: 599.1
-    commit: 23da49bd9007d40688a8095b52d6f4ac4c5979c3
-    date: '20260919'
-    prev: 612.0
+    value: 599.0
+    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
+    date: '20260921'
+    prev: 599.1
 parallel|vcd_nonconst|129x113x97|1:
   min_ms:
     value: 1182.0029590744525
@@ -264,10 +264,10 @@ cone|vcd_nonconst|200x208x160|1:
     prev: 12158.3
 denoiser|denoise|128x144x160|1:
   min_ms:
-    value: 490.1597499992931
-    commit: 41fca864d38144c4cf3dd14a6c0ac04cbab8cb20
-    date: '20260913'
-    prev: 492.91862500831485
+    value: 482.47508401982486
+    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
+    date: '20260921'
+    prev: 490.1597499992931
   mem_mb:
     value: 468.3
     commit: 23da49bd9007d40688a8095b52d6f4ac4c5979c3
@@ -286,10 +286,10 @@ denoiser|denoise|225x241x257|1:
     prev: 746.5
 translation|direct_filter|15x64x64|1:
   min_ms:
-    value: 1.090749996365048
-    commit: 41fca864d38144c4cf3dd14a6c0ac04cbab8cb20
-    date: '20260913'
-    prev: 1.2385002337396145
+    value: 1.079041976481676
+    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
+    date: '20260921'
+    prev: 1.090749996365048
   mem_mb:
     value: 213.0
     commit: 41fca864d38144c4cf3dd14a6c0ac04cbab8cb20
@@ -319,10 +319,10 @@ translation|forward|15x64x64|1:
     prev: 398.0
 translation|forward|15x65x65|1:
   min_ms:
-    value: 9.729041950777173
-    commit: f63b13baae6065c7dad301bf5a21c6a800ca01fd
-    date: '20260827'
-    prev:
+    value: 9.595792042091489
+    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
+    date: '20260921'
+    prev: 9.729041950777173
   mem_mb:
     value: 390.0
     commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
@@ -379,10 +379,10 @@ multiaxis_parallel|direct_filter|129x113x97|1:
     date: '20260913'
     prev: 16.61141705699265
   mem_mb:
-    value: 252.0
-    commit: 23da49bd9007d40688a8095b52d6f4ac4c5979c3
-    date: '20260919'
-    prev: 253.2
+    value: 251.3
+    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
+    date: '20260921'
+    prev: 252.0
 multiaxis_parallel|forward|96x80x64|1:
   min_ms:
     value: 58.91954198887106
