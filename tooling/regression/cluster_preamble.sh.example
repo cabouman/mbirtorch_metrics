@@ -43,6 +43,10 @@ fi
 
 module load conda
 module load modtree/gpu
+# The conda module sets OMP_NUM_THREADS=1 and MKL_NUM_THREADS=1, and torch follows both, so
+# every host tensor operation would run on one core.  Unset them: torch then uses the cores
+# of the allocation.  A job that wants a fixed count sets both variables after this line.
+unset OMP_NUM_THREADS MKL_NUM_THREADS
 # No `module load cuda` or `module load cudnn` here (removed 2026-09-03).  Torch and jax
 # bundle their own CUDA-13 runtime and cuDNN 9.20 as pip packages; only the driver matters.
 # A cudnn module (CUDA-12 builds of 9.2 / 9.12) goes first on LD_LIBRARY_PATH and makes
