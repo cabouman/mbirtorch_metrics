@@ -115,10 +115,10 @@ parallel|vcd_nonconst|129x113x97|1:
     date: '20260924'
     prev: 1164.3899999908172
   mem_mb:
-    value: 609.7
-    commit: 98f79fc853583dbc50d3f1a44f2123d4e836a72c
-    date: '20260825'
-    prev: 638.125
+    value: 608.1
+    commit: 63207f76d1f4410116f0bbdf6a0a4e285da85970
+    date: '20260925'
+    prev: 609.7
 parallel|vcd_nonconst|200x208x160|1:
   min_ms:
     value: 7378.250041976571
@@ -126,10 +126,10 @@ parallel|vcd_nonconst|200x208x160|1:
     date: '20260823'
     prev: 8030.964916979428
   mem_mb:
-    value: 862.5
-    commit: 8eef2f9d217e989c0c17ef4cb1d78b8f0dc7e114
-    date: '20260919'
-    prev: 867.6
+    value: 835.1
+    commit: 63207f76d1f4410116f0bbdf6a0a4e285da85970
+    date: '20260925'
+    prev: 862.5
 cone|direct_filter|128x112x96|1:
   min_ms:
     value: 17.35970890149474
@@ -247,10 +247,10 @@ cone|vcd_nonconst|129x113x97|1:
     date: '20260924'
     prev: 4813.80341690965
   mem_mb:
-    value: 2945.3
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260828'
-    prev: 2953.9
+    value: 2943.2
+    commit: 63207f76d1f4410116f0bbdf6a0a4e285da85970
+    date: '20260925'
+    prev: 2945.3
 cone|vcd_nonconst|200x208x160|1:
   min_ms:
     value: 33387.01374991797
@@ -280,10 +280,10 @@ denoiser|denoise|225x241x257|1:
     date: '20260924'
     prev: 1914.93225004524
   mem_mb:
-    value: 741.4
-    commit: 37c41e676468d592e09202555bacb3b403fd1700
-    date: '20260922'
-    prev: 743.0
+    value: 734.9
+    commit: 63207f76d1f4410116f0bbdf6a0a4e285da85970
+    date: '20260925'
+    prev: 741.4
 translation|direct_filter|15x64x64|1:
   min_ms:
     value: 0.9626249666325748
