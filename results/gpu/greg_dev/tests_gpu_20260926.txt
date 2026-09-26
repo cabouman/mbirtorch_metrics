@@ -1,0 +1,36 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/buzzard/.mbirtorch/regression/lib_greg_dev
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 4/4 workers
+4 workers [277 items]
+
+........................................................................ [ 25%]
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+.............................................................            [100%]
+=============================== warnings summary ===============================
+tests/test_denoiser.py: 14 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_device_policy.py: 28 warnings
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 1 warning
+tests/test_sharding.py: 10 warnings
+tests/test_translation.py: 2 warnings
+tests/test_mace4d.py: 60 warnings
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/vcd_utils.py:166: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_geometry_calibration.py::test_estimate_det_rotation_recovers_a_rotation[parallel]
+tests/test_geometry_calibration.py::test_estimate_det_rotation_recovers_a_rotation[cone]
+  /home/buzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/preprocess/geometry_calibration.py:1295: UserWarning: estimate_det_rotation: the estimate displaces the edge channels by 0.00 pixels, below the one pixel at which it is reliable.  Prefer a vendor tilt when the reader supplies one, and check the slices far from the central plane before applying it.
+    warnings.warn(f'estimate_det_rotation: {note}.')
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================ 277 passed, 131 warnings in 623.15s (0:10:23) =================
