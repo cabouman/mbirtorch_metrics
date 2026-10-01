@@ -379,10 +379,10 @@ multiaxis_parallel|direct_filter|129x113x97|1:
     date: '20260904'
     prev: 16.505958046764135
   mem_mb:
-    value: 250.6
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260828'
-    prev: 257.0
+    value: 248.7
+    commit: 44da2e9dc7dd97e0790d8f9a6a39db2575385dd8
+    date: '20261001'
+    prev: 250.6
 multiaxis_parallel|forward|96x80x64|1:
   min_ms:
     value: 58.329290986876

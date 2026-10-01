@@ -258,10 +258,10 @@ cone|vcd_nonconst|200x208x160|1:
     date: '20260823'
     prev:
   mem_mb:
-    value: 12158.1
-    commit: 41fca864d38144c4cf3dd14a6c0ac04cbab8cb20
-    date: '20260913'
-    prev: 12158.3
+    value: 12151.5
+    commit: aa06a44c5833363a4aa7c0a61730af071bd10fab
+    date: '20261001'
+    prev: 12158.1
 denoiser|denoise|128x144x160|1:
   min_ms:
     value: 477.81224991194904

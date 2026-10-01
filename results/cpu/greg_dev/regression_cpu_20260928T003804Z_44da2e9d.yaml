@@ -1,0 +1,2382 @@
+kind: regression
+date: '20261001'
+platform: cpu
+sharding_by_geom:
+  parallel: true
+  cone: true
+  translation: true
+  multiaxis_parallel: true
+  denoiser: true
+device_label: CPU (arm)
+git_commit: 44da2e9dc7dd97e0790d8f9a6a39db2575385dd8
+git_commit_date: '2026-09-27T20:38:04-04:00'
+git_branch: greg_dev
+git_dirty: false
+git_dirty_files: []
+git_dirty_code: false
+mbirtorch_version: mbirtorch 0.1.1
+toolchain:
+  torch: 2.13.0
+  torch_cuda:
+  python: 3.12.13
+  executable: /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/bin/python
+  loaded_modules:
+  triton:
+packages:
+  beautifulsoup4: 4.15.0
+  certifi: 2026.7.22
+  charset-normalizer: 3.4.9
+  contourpy: 1.3.3
+  cycler: 0.12.1
+  execnet: 2.1.2
+  filelock: 3.32.2
+  fonttools: 4.63.0
+  fsspec: 2026.7.0
+  gdown: 6.1.0
+  h5py: 3.16.0
+  idna: '3.18'
+  iniconfig: 2.3.0
+  jinja2: 3.1.6
+  joblib: 1.5.3
+  kiwisolver: 1.5.0
+  markupsafe: 3.0.3
+  matplotlib: 3.11.1
+  mbirtorch: 0.1.1
+  mpmath: 1.3.0
+  narwhals: 2.24.0
+  networkx: 3.6.1
+  numpy: 2.5.1
+  olefile: '0.47'
+  opencv-python: 5.0.0.93
+  osqp: 1.1.3
+  packaging: '26.3'
+  pillow: 12.3.0
+  pip: 26.2.1
+  pluggy: 1.6.0
+  psutil: 7.2.2
+  pygments: 2.20.0
+  pyparsing: 3.3.2
+  pysocks: 1.7.1
+  pytest: 9.1.1
+  pytest-xdist: 3.8.0
+  python-dateutil: 2.9.0.post0
+  pywavelets: 1.9.0
+  pyyaml: 6.0.3
+  requests: 2.34.2
+  ruamel.yaml: 0.19.1
+  scikit-learn: 1.9.0
+  scipy: 1.18.0
+  setuptools: 83.0.0
+  six: 1.17.0
+  soupsieve: 2.9.2
+  sympy: 1.14.0
+  threadpoolctl: 3.6.0
+  tifffile: 2026.7.31
+  torch: 2.13.0
+  tqdm: 4.70.0
+  typing_extensions: 4.16.0
+  urllib3: 2.7.0
+  wheel: 0.47.0
+kernels:
+  triton_available: false
+  reason: not a CUDA platform (torch.cuda is unavailable)
+  disable_env:
+mem_kind: cpu_rss
+dep_gen: 0
+run_reason: commit
+torch_available:
+measured_at: '2026-10-01T10:18:03-04:00'
+config:
+  geometries:
+  - parallel
+  - cone
+  - translation
+  - multiaxis_parallel
+  - denoiser
+  ops:
+  - direct_filter
+  - forward
+  - back
+  - vcd_nonconst
+  geom_ops:
+    translation:
+    - direct_filter
+    - forward
+    - back
+    multiaxis_parallel:
+    - direct_filter
+    - forward
+    - back
+    denoiser:
+    - denoise
+  device_counts:
+  - 1
+  - 2
+  - 4
+  sizes:
+    cpu:
+    - - 128
+      - 112
+      - 96
+    - - 129
+      - 113
+      - 97
+    - - 200
+      - 208
+      - 160
+    gpu:
+    - - 200
+      - 208
+      - 160
+    - - 512
+      - 448
+      - 384
+    - - 513
+      - 449
+      - 385
+    - - 1024
+      - 1008
+      - 992
+  geom_sizes:
+    multiaxis_parallel:
+      cpu:
+      - - 96
+        - 80
+        - 64
+      - - 128
+        - 112
+        - 96
+      - - 129
+        - 113
+        - 97
+      gpu:
+      - - 129
+        - 113
+        - 97
+      - - 256
+        - 224
+        - 192
+      - - 512
+        - 448
+        - 384
+      - - 513
+        - 449
+        - 385
+      - - 1024
+        - 1008
+        - 992
+    translation:
+      cpu:
+      - - 15
+        - 64
+        - 64
+      - - 15
+        - 65
+        - 65
+      gpu:
+      - - 15
+        - 65
+        - 65
+      - - 15
+        - 257
+        - 257
+      - - 15
+        - 2048
+        - 2048
+    denoiser:
+      cpu:
+      - - 128
+        - 144
+        - 160
+      - - 225
+        - 241
+        - 257
+      gpu:
+      - - 225
+        - 241
+        - 257
+      - - 512
+        - 448
+        - 384
+      - - 1024
+        - 1008
+        - 992
+  single_trial_sizes:
+  - 1024x1008x992
+  vcd_iterations: 3
+  weight_mode: nonconstant
+  weight_seed: 13
+  denoise_iterations: 20
+  denoise_sigma: 0.1
+  denoise_sharpness: 0.0
+  warmup: 1
+  trials_by_op:
+    direct_filter: 3
+    forward: 3
+    back: 3
+    vcd_nonconst: 1
+    denoise: 1
+  cone_sdd_over_channels: 4.0
+  multiaxis_elevation_deg: 25.0
+  tct_sdd: 190000.0
+  tct_sid: 70000.0
+  tct_delta_det: 75.0
+  tct_num_x: 5
+  tct_num_z: 3
+  tct_recon_rows: 40
+  input_seed: 0
+  measure_seed: 7
+  out_dir: /Users/gbuzzard/.mbirtorch/regression/metrics/results/cpu/greg_dev
+  date: '20261001'
+  run_tag: greg_dev
+  dep_gen: 0
+  run_reason: commit
+  torch_available: ''
+  lib_root: /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev
+  gate: true
+  compare_to_prior: true
+  mem_hard_pct: 8.0
+  mem_gate_window: 1
+  speedup_warn_pct: 15.0
+  time_soft_pct: 25.0
+  time_gate_min_ms: 100.0
+  fp_rtol_single: 1e-05
+  fp_rtol_iter: 0.0001
+  k_sample_tol: 1
+  backend: torch
+device_counts:
+- 1
+cells:
+- n_devices: 1
+  min_ms: 15.327875036746264
+  mean_ms: 15.71000002635022
+  std_ms: 0.38936441171347247
+  mem_mb: 254.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 121.67041437850756
+    mean: 8.840681848326732e-05
+    l2norm: 2.411304062827065
+    min: -0.005639122799038887
+    max: 0.005898566916584969
+    samples:
+    - 0.0034595339093357325
+    - -0.0029358051251620054
+    - -0.003781904699280858
+    - 0.00018731986347120255
+    - -0.00426776148378849
+    - -0.0015429793857038021
+    - -0.0033891235943883657
+    - 3.4082600905094295e-05
+    - 0.0007429931429214776
+    - 0.0032440773211419582
+    - -0.0024153832346200943
+    - -0.0014064167626202106
+    shape:
+    - 128
+    - 112
+    - 96
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 238.6
+  mem_peaks_trial_mb:
+  - 248.3
+  - 248.4
+  - 254.7
+  geometry: parallel
+  op: direct_filter
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 16.97066705673933
+  mean_ms: 17.145097410927217
+  std_ms: 0.16075596420489244
+  mem_mb: 250.2
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 123.07026884429982
+    mean: 8.703887344368923e-05
+    l2norm: 2.425036355437873
+    min: -0.005629724822938442
+    max: 0.00585644505918026
+    samples:
+    - 0.0034327164757996798
+    - 0.0025218906812369823
+    - 0.000484970718389377
+    - 0.0019614079501479864
+    - -0.0005479540559463203
+    - -0.003211044939234853
+    - -0.002756069414317608
+    - 0.002871439093723893
+    - 0.0026057022623717785
+    - -0.0025497074238955975
+    - -0.0004611321783158928
+    - -3.585260856198146e-05
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 240.0
+  mem_peaks_trial_mb:
+  - 246.6
+  - 248.9
+  - 250.2
+  geometry: parallel
+  op: direct_filter
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 224.5511671062559
+  mean_ms: 224.813139376541
+  std_ms: 0.2887836213129743
+  mem_mb: 313.8
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 243.12058383651652
+    mean: 3.6526530023515103e-05
+    l2norm: 3.3877316510190614
+    min: -0.0036670754197984934
+    max: 0.0037722557317465544
+    samples:
+    - 0.00221255817450583
+    - 0.0014452870236709714
+    - -0.0025227507576346397
+    - 0.003153252648189664
+    - -0.0010805769124999642
+    - -0.00022114986495580524
+    - -0.00034414694528095424
+    - -0.001699943793937564
+    - 0.0005036760703660548
+    - 0.0023297639563679695
+    - -0.001011702581308782
+    - 0.0009685881668701768
+    shape:
+    - 200
+    - 208
+    - 160
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 304.2
+  mem_peaks_trial_mb:
+  - 311.9
+  - 313.8
+  - 313.8
+  geometry: parallel
+  op: direct_filter
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 89.65450013056397
+  mean_ms: 90.71984739663701
+  std_ms: 0.7645435933870666
+  mem_mb: 440.4
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 67208.72268622613
+    mean: 0.04883446298234204
+    l2norm: 8480.540633183446
+    min: -37.287410736083984
+    max: 37.35995864868164
+    samples:
+    - 0.0
+    - 4.149536609649658
+    - 13.904651641845703
+    - 5.792361259460449
+    - -4.903990268707275
+    - 5.743357181549072
+    - -8.297246932983398
+    - 4.763447284698486
+    - 7.409765243530273
+    - -8.66161823272705
+    - -12.315804481506348
+    - -0.42526987195014954
+    shape:
+    - 128
+    - 112
+    - 96
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 406.3
+  mem_peaks_trial_mb:
+  - 419.4
+  - 440.3
+  - 440.4
+  geometry: parallel
+  op: forward
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 84.35954200103879
+  mean_ms: 86.39320839817326
+  std_ms: 1.4787548261326158
+  mem_mb: 451.3
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 81957.82705973001
+    mean: 0.057962958918993286
+    l2norm: 8630.744729713786
+    min: -43.268131256103516
+    max: 36.662322998046875
+    samples:
+    - -1.5963298082351685
+    - 12.304085731506348
+    - -1.6964762210845947
+    - -6.703130722045898
+    - 2.9179704189300537
+    - -8.643877983093262
+    - 4.651131629943848
+    - 6.854498863220215
+    - 3.4091787338256836
+    - 6.6724162101745605
+    - 6.187674045562744
+    - -0.11367745697498322
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 413.7
+  mem_peaks_trial_mb:
+  - 424.6
+  - 446.0
+  - 451.3
+  geometry: parallel
+  op: forward
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1321.885084034875
+  mean_ms: 1663.2154307638605
+  std_ms: 242.0396111953033
+  mem_mb: 579.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 358686.9755956908
+    mean: 0.05388926917002566
+    l2norm: 24087.359881476626
+    min: -52.23190689086914
+    max: 53.04945373535156
+    samples:
+    - 0.0
+    - -7.771563529968262
+    - -10.209135055541992
+    - 4.163428783416748
+    - 17.50635528564453
+    - -9.257892608642578
+    - -2.231802225112915
+    - -14.055249214172363
+    - -7.573142051696777
+    - -3.212557792663574
+    - 5.3824357986450195
+    - 0.10079687833786011
+    shape:
+    - 200
+    - 208
+    - 160
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 503.7
+  mem_peaks_trial_mb:
+  - 535.9
+  - 565.1
+  - 579.7
+  geometry: parallel
+  op: forward
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 47.437749803066254
+  mean_ms: 49.54912466928363
+  std_ms: 1.5011311452566434
+  mem_mb: 443.9
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 50797810.68860245
+    mean: 64.06100016218025
+    l2norm: 57097.18888120484
+    min: 51.68199920654297
+    max: 77.01338195800781
+    samples:
+    - 63.85456466674805
+    - 59.26615905761719
+    - 64.08452606201172
+    - 62.654693603515625
+    - 62.96388626098633
+    - 67.53361511230469
+    - 61.34062957763672
+    - 60.091209411621094
+    - 67.61042785644531
+    - 62.277225494384766
+    - 63.25444030761719
+    - 64.54105377197266
+    shape:
+    - 7080
+    - 112
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 412.2
+  mem_peaks_trial_mb:
+  - 426.5
+  - 440.8
+  - 443.9
+  geometry: parallel
+  op: back
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 47.36716696061194
+  mean_ms: 48.79044461995363
+  std_ms: 1.0607005774353362
+  mem_mb: 462.8
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 52604358.44628143
+    mean: 64.53976098499813
+    l2norm: 58319.917492707515
+    min: 51.51283264160156
+    max: 76.95695495605469
+    samples:
+    - 63.50739288330078
+    - 60.03049850463867
+    - 63.51271057128906
+    - 61.71931076049805
+    - 66.30990600585938
+    - 65.98217010498047
+    - 63.27376937866211
+    - 65.61688995361328
+    - 64.51998138427734
+    - 66.10014343261719
+    - 62.32749557495117
+    - 65.65550231933594
+    shape:
+    - 7213
+    - 113
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 418.2
+  mem_peaks_trial_mb:
+  - 433.4
+  - 462.8
+  - 462.8
+  geometry: parallel
+  op: back
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 475.3045830875635
+  mean_ms: 774.0826250519603
+  std_ms: 225.70748103870142
+  mem_mb: 596.4
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 413043846.7648773
+    mean: 100.00945431260783
+    l2norm: 203363.35889784942
+    min: 82.79073333740234
+    max: 117.6526107788086
+    samples:
+    - 104.37152862548828
+    - 100.2989273071289
+    - 94.13728332519531
+    - 99.29058837890625
+    - 96.4194564819336
+    - 99.93585968017578
+    - 101.01951599121094
+    - 106.16950988769531
+    - 103.24796295166016
+    - 101.75662994384766
+    - 101.75853729248047
+    - 100.40339660644531
+    shape:
+    - 19856
+    - 208
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 518.9
+  mem_peaks_trial_mb:
+  - 552.2
+  - 566.9
+  - 596.4
+  geometry: parallel
+  op: back
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1413.8623338658363
+  mean_ms: 1413.8623338658363
+  std_ms: 0.0
+  mem_mb: 633.0
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 5328.499974266337
+    mean: 0.0051623147382137595
+    l2norm: 24.974963357816318
+    min: -0.14084264636039734
+    max: 0.16941645741462708
+    samples:
+    - 0.0
+    - -0.026347896084189415
+    - 0.011289230547845364
+    - 0.0527370385825634
+    - 0.03545643761754036
+    - -0.007546451408416033
+    - 0.03584940731525421
+    - 0.06321509927511215
+    - 0.029002780094742775
+    - -0.02923683077096939
+    - -0.011281405575573444
+    - 0.0
+    shape:
+    - 96
+    - 96
+    - 112
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 581.3
+  mem_peaks_trial_mb:
+  - 633.0
+  geometry: parallel
+  op: vcd_nonconst
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1443.0806250311434
+  mean_ms: 1443.0806250311434
+  std_ms: 0.0
+  mem_mb: 647.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 5422.294378365041
+    mean: 0.005099894356810548
+    l2norm: 25.205175522004364
+    min: -0.132944256067276
+    max: 0.17779093980789185
+    samples:
+    - 0.0
+    - 0.0
+    - -0.035566359758377075
+    - 0.06715556234121323
+    - -0.004783586133271456
+    - 0.01595495082437992
+    - 0.02278623729944229
+    - -0.02660500258207321
+    - 0.042678773403167725
+    - 0.002813369734212756
+    - 0.0
+    - 0.0
+    shape:
+    - 97
+    - 97
+    - 113
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 586.7
+  mem_peaks_trial_mb:
+  - 647.7
+  geometry: parallel
+  op: vcd_nonconst
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 18718.46641600132
+  mean_ms: 18718.46641600132
+  std_ms: 0.0
+  mem_mb: 924.1
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 16547.403615287356
+    mean: 0.003107610354433473
+    l2norm: 40.69118657115311
+    min: -0.09801913797855377
+    max: 0.1304902732372284
+    samples:
+    - 0.0
+    - 0.03941093385219574
+    - 0.0
+    - -0.01661594770848751
+    - -0.02119668386876583
+    - 0.029179338365793228
+    - 0.01706971786916256
+    - -0.018610535189509392
+    - 0.018079282715916634
+    - 0.0
+    - 0.02779543772339821
+    - 0.0
+    shape:
+    - 160
+    - 160
+    - 208
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 831.9
+  mem_peaks_trial_mb:
+  - 924.1
+  geometry: parallel
+  op: vcd_nonconst
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 18.667292082682252
+  mean_ms: 19.344792002812028
+  std_ms: 0.49867355090425936
+  mem_mb: 263.6
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 482.33960451405085
+    mean: 0.0003504722991318845
+    l2norm: 9.586233427461929
+    min: -0.02237529307603836
+    max: 0.023413220420479774
+    samples:
+    - 0.013590614311397076
+    - -0.011714939959347248
+    - -0.01509273611009121
+    - 0.0007414607098326087
+    - -0.016980662941932678
+    - -0.006140764802694321
+    - -0.013491482473909855
+    - 0.0001348732184851542
+    - 0.002943055471405387
+    - 0.012947470881044865
+    - -0.009640243835747242
+    - -0.0055303084664046764
+    shape:
+    - 128
+    - 112
+    - 96
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 248.5
+  mem_peaks_trial_mb:
+  - 256.1
+  - 257.2
+  - 263.6
+  geometry: cone
+  op: direct_filter
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 20.09049989283085
+  mean_ms: 20.384499880795676
+  std_ms: 0.28968605372163153
+  mem_mb: 265.8
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 487.8953323500533
+    mean: 0.0003450537687531009
+    l2norm: 9.640894890830578
+    min: -0.022372093051671982
+    max: 0.02324509620666504
+    samples:
+    - 0.013485646806657314
+    - 0.01003422774374485
+    - 0.0019396374700590968
+    - 0.007812264375388622
+    - -0.0021734023466706276
+    - -0.01277144718915224
+    - -0.010958698578178883
+    - 0.011385380290448666
+    - 0.010377992875874043
+    - -0.010191660374403
+    - -0.001834465772844851
+    - -0.00014594022650271654
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 246.6
+  mem_peaks_trial_mb:
+  - 255.8
+  - 265.7
+  - 265.8
+  geometry: cone
+  op: direct_filter
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 228.10199996456504
+  mean_ms: 230.56706964659193
+  std_ms: 2.4159513755697417
+  mem_mb: 327.5
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 962.8486741141074
+    mean: 0.00014465875512531662
+    l2norm: 13.45714125311959
+    min: -0.01450834795832634
+    max: 0.01493605226278305
+    samples:
+    - 0.008670194074511528
+    - 0.0057318187318742275
+    - -0.010075041092932224
+    - 0.012611000798642635
+    - -0.004303318448364735
+    - -0.0008721741032786667
+    - -0.001358283800072968
+    - -0.0067708054557442665
+    - 0.002014654455706477
+    - 0.009304319508373737
+    - -0.0040129004046320915
+    - 0.0037943325005471706
+    shape:
+    - 200
+    - 208
+    - 160
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 315.9
+  mem_peaks_trial_mb:
+  - 321.7
+  - 323.6
+  - 327.5
+  geometry: cone
+  op: direct_filter
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 478.47316693514585
+  mean_ms: 551.6370416153222
+  std_ms: 60.57350357595472
+  mem_mb: 1030.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 42379.819865178986
+    mean: 0.030793558658548253
+    l2norm: 3472.383072487169
+    min: -17.822933197021484
+    max: 15.570069313049316
+    samples:
+    - 0.21529915928840637
+    - 1.1534035205841064
+    - 0.07773526757955551
+    - -3.5483546257019043
+    - -1.9736552238464355
+    - 4.497021675109863
+    - -2.0835392475128174
+    - 0.3159801959991455
+    - -2.3477416038513184
+    - 0.670971691608429
+    - -1.9331951141357422
+    - 2.235539197921753
+    shape:
+    - 128
+    - 112
+    - 96
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 992.5
+  mem_peaks_trial_mb:
+  - 1006.7
+  - 1016.7
+  - 1030.7
+  geometry: cone
+  op: forward
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 503.26120806857944
+  mean_ms: 577.18694396317
+  std_ms: 59.91505016276843
+  mem_mb: 1074.9
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 25964.167277942404
+    mean: 0.018362614228418308
+    l2norm: 3548.989352962111
+    min: -15.12788200378418
+    max: 16.64324951171875
+    samples:
+    - -0.33891043066978455
+    - 1.7455933094024658
+    - -1.0191171169281006
+    - 1.5984166860580444
+    - -2.8377678394317627
+    - -3.280189275741577
+    - -1.9439728260040283
+    - -1.1326625347137451
+    - 2.4237353801727295
+    - 7.314553260803223
+    - 0.10571840405464172
+    - -0.15015938878059387
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 1018.0
+  mem_peaks_trial_mb:
+  - 1047.2
+  - 1063.8
+  - 1074.9
+  geometry: cone
+  op: forward
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 7307.955292053521
+  mean_ms: 7459.792569357281
+  std_ms: 107.64210997952817
+  mem_mb: 4005.4
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 161093.8398245594
+    mean: 0.024202800454410967
+    l2norm: 9882.157888915766
+    min: -21.954984664916992
+    max: 21.88182258605957
+    samples:
+    - -2.079191207885742
+    - -1.7245458364486694
+    - -3.409766912460327
+    - -4.844095706939697
+    - -0.2988525331020355
+    - -0.8684096932411194
+    - -2.4351210594177246
+    - 7.129531383514404
+    - 0.08168408274650574
+    - 6.2298383712768555
+    - -4.6224541664123535
+    - 1.7313125133514404
+    shape:
+    - 200
+    - 208
+    - 160
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 3511.7
+  mem_peaks_trial_mb:
+  - 3961.1
+  - 3990.7
+  - 4005.4
+  geometry: cone
+  op: forward
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 439.9357079528272
+  mean_ms: 499.0073609321068
+  std_ms: 48.40639004801673
+  mem_mb: 2170.6
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 25046750.908170402
+    mean: 31.58639894593725
+    l2norm: 28440.487228247443
+    min: 0.987285315990448
+    max: 42.65837097167969
+    samples:
+    - 16.630958557128906
+    - 30.458206176757812
+    - 29.139511108398438
+    - 33.91450500488281
+    - 34.12013244628906
+    - 33.10068130493164
+    - 31.38414192199707
+    - 28.92513084411621
+    - 30.7357177734375
+    - 37.398719787597656
+    - 31.9783992767334
+    - 12.310405731201172
+    shape:
+    - 7080
+    - 112
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 2108.8
+  mem_peaks_trial_mb:
+  - 2129.2
+  - 2156.2
+  - 2170.6
+  geometry: cone
+  op: back
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 501.99583312496543
+  mean_ms: 587.4634170128653
+  std_ms: 71.33586318957651
+  mem_mb: 2216.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 25938964.10728556
+    mean: 31.824255501418357
+    l2norm: 29050.112901032673
+    min: 0.8685690760612488
+    max: 43.13724899291992
+    samples:
+    - 14.478303909301758
+    - 32.77091979980469
+    - 30.803892135620117
+    - 34.561344146728516
+    - 31.270383834838867
+    - 28.60062599182129
+    - 35.58345413208008
+    - 36.038665771484375
+    - 30.001184463500977
+    - 35.028480529785156
+    - 31.837125778198242
+    - 15.912734985351562
+    shape:
+    - 7213
+    - 113
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 2180.2
+  mem_peaks_trial_mb:
+  - 2192.7
+  - 2213.6
+  - 2216.7
+  geometry: cone
+  op: back
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 6825.971708865836
+  mean_ms: 6895.131319295615
+  std_ms: 52.71350655046333
+  mem_mb: 9987.3
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 203791047.80095762
+    mean: 49.34350588684626
+    l2norm: 101390.24044907055
+    min: 0.7517614364624023
+    max: 66.4329605102539
+    samples:
+    - 26.209585189819336
+    - 55.65580368041992
+    - 46.64952850341797
+    - 55.724708557128906
+    - 54.18227767944336
+    - 44.75184631347656
+    - 53.150245666503906
+    - 46.69232940673828
+    - 42.6616325378418
+    - 56.33146667480469
+    - 48.08192825317383
+    - 20.778244018554688
+    shape:
+    - 19856
+    - 208
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 9323.5
+  mem_peaks_trial_mb:
+  - 9943.5
+  - 9972.7
+  - 9987.3
+  geometry: cone
+  op: back
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 8756.346832960844
+  mean_ms: 8756.346832960844
+  std_ms: 0.0
+  mem_mb: 2989.9
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 11031.68444807508
+    mean: 0.010687628317285041
+    l2norm: 51.464650919300674
+    min: -0.28651702404022217
+    max: 0.3957740068435669
+    samples:
+    - 0.0
+    - -0.1115868091583252
+    - -0.018943317234516144
+    - -0.012712116353213787
+    - 0.08181843161582947
+    - -0.000845479778945446
+    - 0.03423110768198967
+    - -0.001220352714881301
+    - -0.02276534214615822
+    - 0.03239164873957634
+    - 0.03748545050621033
+    - 0.0
+    shape:
+    - 96
+    - 96
+    - 112
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 2941.1
+  mem_peaks_trial_mb:
+  - 2989.9
+  geometry: cone
+  op: vcd_nonconst
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 9014.74279188551
+  mean_ms: 9014.74279188551
+  std_ms: 0.0
+  mem_mb: 3100.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 11234.373494730138
+    mean: 0.010566397541358102
+    l2norm: 52.0168241346135
+    min: -0.2620253562927246
+    max: 0.47785210609436035
+    samples:
+    - 0.0
+    - 0.0
+    - 0.015331769362092018
+    - -0.09260167181491852
+    - 0.02331625111401081
+    - 0.08351849019527435
+    - 0.06101487576961517
+    - 0.03240448608994484
+    - -0.015737896785140038
+    - -0.03248801827430725
+    - 0.0
+    - 0.0
+    shape:
+    - 97
+    - 97
+    - 113
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 3008.3
+  mem_peaks_trial_mb:
+  - 3100.7
+  geometry: cone
+  op: vcd_nonconst
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 66313.29749990255
+  mean_ms: 66313.29749990255
+  std_ms: 0.0
+  mem_mb: 12171.1
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 34186.68199196663
+    mean: 0.006420275313996137
+    l2norm: 79.63418062651212
+    min: -0.21131041646003723
+    max: 0.2713756859302521
+    samples:
+    - 0.0
+    - -0.06621032953262329
+    - 0.0
+    - 0.03229428827762604
+    - 0.012708388268947601
+    - -0.01737934537231922
+    - 0.031955499202013016
+    - -0.044905126094818115
+    - 0.033433981239795685
+    - 0.0
+    - -0.038918305188417435
+    - 0.0
+    shape:
+    - 160
+    - 160
+    - 208
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 10087.8
+  mem_peaks_trial_mb:
+  - 12171.1
+  geometry: cone
+  op: vcd_nonconst
+  size: 200x208x160
+  recon_shape:
+  - 160
+  - 160
+  - 208
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 1.1071250773966312
+  mean_ms: 1.2266389870395262
+  std_ms: 0.09199567308985448
+  mem_mb: 215.1
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 0.08612137207935006
+    mean: 1.401715040354004e-06
+    l2norm: 0.00569881874265495
+    min: -5.978844637866131e-05
+    max: 6.580487388418987e-05
+    samples:
+    - 3.8696773117408156e-05
+    - -1.7783451767172664e-05
+    - 8.074297511484473e-06
+    - 2.2432497644331306e-05
+    - -5.292431524139828e-06
+    - -5.641812549583846e-06
+    - -1.047335535986348e-05
+    - 3.073266998399049e-05
+    - -1.4163214473228435e-05
+    - 2.773406231426633e-05
+    - -1.185897781397216e-05
+    - 1.4917270164005458e-05
+    shape:
+    - 15
+    - 64
+    - 64
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 210.5
+  mem_peaks_trial_mb:
+  - 211.8
+  - 214.4
+  - 215.1
+  geometry: translation
+  op: direct_filter
+  size: 15x64x64
+  recon_shape:
+  - 40
+  - 64
+  - 64
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 5.448542069643736
+  mean_ms: 5.60709733205537
+  std_ms: 0.1508366905066249
+  mem_mb: 215.6
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 0.0863881158751112
+    mean: 1.363126088759151e-06
+    l2norm: 0.005784654756582054
+    min: -5.972527287667617e-05
+    max: 6.37960183667019e-05
+    samples:
+    - 3.869658030453138e-05
+    - -3.3504074963275343e-06
+    - -6.929702067282050e-06
+    - -1.6475261872983537e-05
+    - 2.3364696971839293e-05
+    - -4.0531307604396715e-05
+    - -3.215692049707286e-05
+    - 3.816254684352315e-05
+    - 7.361830739682773e-06
+    - 1.9030414478038437e-05
+    - 8.386523404624313e-07
+    - -9.367387065140064e-06
+    shape:
+    - 15
+    - 65
+    - 65
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 209.9
+  mem_peaks_trial_mb:
+  - 211.8
+  - 213.4
+  - 215.6
+  geometry: translation
+  op: direct_filter
+  size: 15x65x65
+  recon_shape:
+  - 40
+  - 65
+  - 65
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 9.932042099535465
+  mean_ms: 10.031555701668063
+  std_ms: 0.13917516037925748
+  mem_mb: 396.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 102674.47223725278
+    mean: 1.6711339882365361
+    l2norm: 26264.49699386827
+    min: -582.5796508789062
+    max: 592.513427734375
+    samples:
+    - 0.0
+    - 0.0
+    - -176.96324157714844
+    - 0.0
+    - 0.0
+    - -14.461578369140625
+    - 235.38973999023438
+    - 0.0
+    - 0.0
+    - 192.23289489746094
+    - 0.0
+    - 0.0
+    shape:
+    - 15
+    - 64
+    - 64
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 396.6
+  mem_peaks_trial_mb:
+  - 396.7
+  - 396.7
+  - 396.7
+  geometry: translation
+  op: forward
+  size: 15x64x64
+  recon_shape:
+  - 40
+  - 64
+  - 64
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 11.747333919629455
+  mean_ms: 12.411264004185796
+  std_ms: 0.4889988123179994
+  mem_mb: 405.3
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 97699.32044681907
+    mean: 1.5416066342693344
+    l2norm: 20608.970400820075
+    min: -579.0067749023438
+    max: 559.8085327148438
+    samples:
+    - 0.0
+    - 0.0
+    - -144.89422607421875
+    - 0.0
+    - 95.8108139038086
+    - 0.0
+    - 0.0
+    - -59.733985900878906
+    - 0.0
+    - 92.62716674804688
+    - 0.0
+    - 0.0
+    shape:
+    - 15
+    - 65
+    - 65
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 404.8
+  mem_peaks_trial_mb:
+  - 404.8
+  - 405.3
+  - 405.3
+  geometry: translation
+  op: forward
+  size: 15x65x65
+  recon_shape:
+  - 40
+  - 65
+  - 65
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 4.2515830136835575
+  mean_ms: 5.021875025704503
+  std_ms: 0.7295969782446495
+  mem_mb: 423.1
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 15764929.013345718
+    mean: 96.22149055997143
+    l2norm: 40035.973057763615
+    min: 18.909534454345703
+    max: 185.021240234375
+    samples:
+    - 84.6591796875
+    - 113.69725036621094
+    - 114.35407257080078
+    - 62.4815673828125
+    - 111.38785552978516
+    - 81.14835357666016
+    - 68.43412017822266
+    - 71.60429382324219
+    - 88.44705200195312
+    - 97.67245483398438
+    - 114.70085906982422
+    - 70.40672302246094
+    shape:
+    - 2560
+    - 64
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 422.8
+  mem_peaks_trial_mb:
+  - 422.8
+  - 422.8
+  - 423.1
+  geometry: translation
+  op: back
+  size: 15x64x64
+  recon_shape:
+  - 40
+  - 64
+  - 64
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 4.313749959692359
+  mean_ms: 4.818513989448547
+  std_ms: 0.407431400537237
+  mem_mb: 423.9
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 16246866.602005005
+    mean: 96.13530533730773
+    l2norm: 40337.55541624374
+    min: 38.450931549072266
+    max: 177.40982055664062
+    samples:
+    - 80.66666412353516
+    - 95.45442199707031
+    - 98.63375854492188
+    - 90.13163757324219
+    - 129.0206298828125
+    - 96.72210693359375
+    - 70.96923828125
+    - 81.38932800292969
+    - 65.64476013183594
+    - 135.444091796875
+    - 91.6009292602539
+    - 61.260108947753906
+    shape:
+    - 2600
+    - 65
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 419.4
+  mem_peaks_trial_mb:
+  - 421.9
+  - 423.9
+  - 423.9
+  geometry: translation
+  op: back
+  size: 15x65x65
+  recon_shape:
+  - 40
+  - 65
+  - 65
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 6.202999968081713
+  mean_ms: 6.39420833128194
+  std_ms: 0.17411024768207392
+  mem_mb: 234.8
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 81.8961159216808
+    mean: 0.00016661807438493002
+    l2norm: 1.925926334426446
+    min: -0.007425807882100344
+    max: 0.007851040922105312
+    samples:
+    - 0.004617161583155394
+    - 6.468813808169215e-05
+    - 0.0022769272327423096
+    - -0.0015824547735974193
+    - 0.000315257377224043
+    - 0.0030303827952593565
+    - 0.0021105697378516197
+    - -0.003926572389900684
+    - 0.0008459180826321244
+    - -0.002102514961734414
+    - 0.0036801593378186226
+    - 0.0005778675549663603
+    shape:
+    - 96
+    - 80
+    - 64
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 224.9
+  mem_peaks_trial_mb:
+  - 229.0
+  - 229.0
+  - 234.8
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 96x80x64
+  recon_shape:
+  - 64
+  - 64
+  - 80
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 15.621291007846594
+  mean_ms: 15.794875022644797
+  std_ms: 0.17977633515168384
+  mem_mb: 256.4
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 121.67041437850756
+    mean: 8.840681848326732e-05
+    l2norm: 2.411304062827065
+    min: -0.005639122799038887
+    max: 0.005898566916584969
+    samples:
+    - 0.0034595339093357325
+    - -0.0029358051251620054
+    - -0.003781904699280858
+    - 0.00018731986347120255
+    - -0.00426776148378849
+    - -0.0015429793857038021
+    - -0.0033891235943883657
+    - 3.4082600905094295e-05
+    - 0.0007429931429214776
+    - 0.0032440773211419582
+    - -0.0024153832346200943
+    - -0.0014064167626202106
+    shape:
+    - 128
+    - 112
+    - 96
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 244.7
+  mem_peaks_trial_mb:
+  - 250.0
+  - 255.3
+  - 256.4
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 16.805750085040927
+  mean_ms: 17.04473599481086
+  std_ms: 0.16901538474598923
+  mem_mb: 248.7
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 123.07026884429982
+    mean: 8.703887344368923e-05
+    l2norm: 2.425036355437873
+    min: -0.005629724822938442
+    max: 0.00585644505918026
+    samples:
+    - 0.0034327164757996798
+    - 0.0025218906812369823
+    - 0.000484970718389377
+    - 0.0019614079501479864
+    - -0.0005479540559463203
+    - -0.003211044939234853
+    - -0.002756069414317608
+    - 0.002871439093723893
+    - 0.0026057022623717785
+    - -0.0025497074238955975
+    - -0.0004611321783158928
+    - -3.585260856198146e-05
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 238.2
+  mem_peaks_trial_mb:
+  - 245.9
+  - 248.4
+  - 248.7
+  geometry: multiaxis_parallel
+  op: direct_filter
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+  new_records:
+  - mem_mb
+- n_devices: 1
+  min_ms: 64.55912510864437
+  mean_ms: 65.63913907545309
+  std_ms: 1.3457473030084859
+  mem_mb: 1097.6
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 32549.00283196936
+    mean: 0.06622111578769808
+    l2norm: 3353.1063789035074
+    min: -27.643526077270508
+    max: 25.707231521606445
+    samples:
+    - 0.0
+    - 4.566473007202148
+    - 9.079026222229004
+    - 3.841174602508545
+    - 3.290588855743408
+    - -0.8152673244476318
+    - -0.2440330982208252
+    - -13.749368667602539
+    - -5.1424880027771
+    - -4.002791404724121
+    - -5.351408958435059
+    - 0.0
+    shape:
+    - 96
+    - 80
+    - 64
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 1088.9
+  mem_peaks_trial_mb:
+  - 1092.6
+  - 1094.6
+  - 1097.6
+  geometry: multiaxis_parallel
+  op: forward
+  size: 96x80x64
+  recon_shape:
+  - 64
+  - 64
+  - 80
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 273.43008294701576
+  mean_ms: 282.18637499958277
+  std_ms: 8.518761627658261
+  mem_mb: 2383.1
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 72678.50321863759
+    mean: 0.05280885476149611
+    l2norm: 6891.560512202536
+    min: -34.04985046386719
+    max: 32.13727951049805
+    samples:
+    - 0.0
+    - 1.1898255348205566
+    - 1.9841912984848022
+    - 4.499131202697754
+    - 3.631610870361328
+    - 1.563098669052124
+    - 9.041364669799805
+    - 2.1518657207489014
+    - -4.904719829559326
+    - -4.460355758666992
+    - 2.7394003868103027
+    - 0.0
+    shape:
+    - 128
+    - 112
+    - 96
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 2344.5
+  mem_peaks_trial_mb:
+  - 2363.7
+  - 2374.4
+  - 2383.1
+  geometry: multiaxis_parallel
+  op: forward
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 290.77937500551343
+  mean_ms: 299.0235000227888
+  std_ms: 6.483235807788195
+  mem_mb: 2558.3
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 70627.16663773476
+    mean: 0.04994958633303471
+    l2norm: 7058.329935749438
+    min: -32.81513214111328
+    max: 35.45733642578125
+    samples:
+    - 0.0
+    - 5.495319843292236
+    - -9.581562995910645
+    - -5.593166351318359
+    - -7.497615814208984
+    - -3.2758407592773438
+    - 2.0172581672668457
+    - 5.113753318786621
+    - 12.63913631439209
+    - -7.235347747802734
+    - -4.91933012008667
+    - 0.0
+    shape:
+    - 129
+    - 113
+    - 97
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 2441.3
+  mem_peaks_trial_mb:
+  - 2480.4
+  - 2519.5
+  - 2558.3
+  geometry: multiaxis_parallel
+  op: forward
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 34.279749961569905
+  mean_ms: 34.30954203940928
+  std_ms: 0.02774002143652538
+  mem_mb: 749.1
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 11477312.858537674
+    mean: 46.33927995210624
+    l2norm: 23261.617648336112
+    min: 8.030990600585938
+    max: 57.291831970214844
+    samples:
+    - 23.819358825683594
+    - 46.84787368774414
+    - 48.20337677001953
+    - 46.535648345947266
+    - 49.292823791503906
+    - 47.950138092041016
+    - 47.405029296875
+    - 45.79509353637695
+    - 43.51222229003906
+    - 46.80250549316406
+    - 48.5014762878418
+    - 26.30425262451172
+    shape:
+    - 3096
+    - 80
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 733.7
+  mem_peaks_trial_mb:
+  - 738.8
+  - 744.0
+  - 749.1
+  geometry: multiaxis_parallel
+  op: back
+  size: 96x80x64
+  recon_shape:
+  - 64
+  - 64
+  - 80
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 132.14200013317168
+  mean_ms: 132.65820840994516
+  std_ms: 0.5267596095365485
+  mem_mb: 1245.9
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 48728561.46719742
+    mean: 61.45147481234541
+    l2norm: 55256.39682545215
+    min: 9.164831161499023
+    max: 74.68516540527344
+    samples:
+    - 33.284629821777344
+    - 66.2386474609375
+    - 65.69422912597656
+    - 62.37995529174805
+    - 65.22406005859375
+    - 66.29621124267578
+    - 63.104148864746094
+    - 66.97966003417969
+    - 61.72150802612305
+    - 65.9136962890625
+    - 63.57557678222656
+    - 35.001991271972656
+    shape:
+    - 7080
+    - 112
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 1192.0
+  mem_peaks_trial_mb:
+  - 1203.0
+  - 1231.5
+  - 1245.9
+  geometry: multiaxis_parallel
+  op: back
+  size: 128x112x96
+  recon_shape:
+  - 96
+  - 96
+  - 112
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 155.2909160964191
+  mean_ms: 160.83008338076374
+  std_ms: 5.1324003858603175
+  mem_mb: 1292.3
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 50456196.45944595
+    mean: 61.90420253922791
+    l2norm: 56432.626569042055
+    min: 9.58582878112793
+    max: 75.21392822265625
+    samples:
+    - 38.01287078857422
+    - 67.08786010742188
+    - 62.94196701049805
+    - 63.20402908325195
+    - 65.52477264404297
+    - 67.25369262695312
+    - 58.60150909423828
+    - 66.82572174072266
+    - 66.66265869140625
+    - 62.45992660522461
+    - 63.926109313964844
+    - 37.3227424621582
+    shape:
+    - 7213
+    - 113
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 1219.8
+  mem_peaks_trial_mb:
+  - 1247.0
+  - 1261.6
+  - 1292.3
+  geometry: multiaxis_parallel
+  op: back
+  size: 129x113x97
+  recon_shape:
+  - 97
+  - 97
+  - 113
+  trials: 3
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 532.8192501328886
+  mean_ms: 532.8192501328886
+  std_ms: 0.0
+  mem_mb: 480.0
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 603.8306519428322
+    mean: 0.0002047494343881674
+    l2norm: 1667.1594365624471
+    min: -4.918859004974365
+    max: 4.815142631530762
+    samples:
+    - 1.0983034372329712
+    - -0.9373772144317627
+    - -0.003119997214525938
+    - 0.6353048086166382
+    - -0.14361469447612762
+    - -1.173021674156189
+    - -0.23195286095142365
+    - -1.6153775453567505
+    - -0.032930705696344376
+    - 0.8794552683830261
+    - 0.7834681868553162
+    - 1.2659612894058228
+    shape:
+    - 128
+    - 144
+    - 160
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 468.7
+  mem_peaks_trial_mb:
+  - 480.0
+  geometry: denoiser
+  op: denoise
+  size: 128x144x160
+  recon_shape:
+  - 128
+  - 144
+  - 160
+  trials: 1
+  speedup: 1.0
+- n_devices: 1
+  min_ms: 2677.400166867301
+  mean_ms: 2677.400166867301
+  std_ms: 0.0
+  mem_mb: 735.8
+  gpu_health: []
+  throttled: false
+  is_sharded: false
+  n_shard_devices: 1
+  devices:
+  - cpu
+  fingerprint:
+    sum: 448.3077364077694
+    mean: 3.216944360364524e-05
+    l2norm: 3621.3767079159747
+    min: -5.907472610473633
+    max: 5.176125526428223
+    samples:
+    - 1.0874701738357544
+    - -1.618007779121399
+    - -0.37684404850006104
+    - -1.8027170896530151
+    - 0.62480229139328
+    - 2.5526366233825684
+    - -0.21210722625255585
+    - 0.22053152322769165
+    - 0.305836021900177
+    - 0.9717842936515808
+    - -0.555781364440918
+    - 0.891822099685669
+    shape:
+    - 225
+    - 241
+    - 257
+    dtype: float32
+    padding_zero:
+  platform: cpu
+  mem_peaks_warmup_mb:
+  - 722.5
+  mem_peaks_trial_mb:
+  - 735.8
+  geometry: denoiser
+  op: denoise
+  size: 225x241x257
+  recon_shape:
+  - 225
+  - 241
+  - 257
+  trials: 1
+  speedup: 1.0
+policy: {}
+auto_choice:
+  kind: auto_choice
+  skipped: 'cpu platform: the automatic choice is a CUDA path'
+gate:
+  result: warn
+  hard: []
+  soft:
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] cone|back|200x208x160|1
+    time 6825.97 ms vs 5218.27 ms expected (+1607.7 ms, +30.8%)'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] cone|forward|200x208x160|1
+    time 7307.96 ms vs 5061.52 ms expected (+2246.43 ms, +44.4%)'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] cone|vcd_nonconst|128x112x96|1
+    time 8756.35 ms vs 6197.07 ms expected (+2559.28 ms, +41.3%)'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] cone|vcd_nonconst|129x113x97|1
+    time 9014.74 ms vs 6475.2 ms expected (+2539.54 ms, +39.2%)'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] cone|vcd_nonconst|200x208x160|1
+    time 66313.3 ms vs 47208.3 ms expected (+19105 ms, +40.5%)'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] parallel|forward|200x208x160|1
+    time 1321.89 ms vs 904.313 ms expected (+417.572 ms, +46.2%)'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] parallel|vcd_nonconst|200x208x160|1
+    memory 924.1 MB vs 835.1 MB expected (+89 MB, +10.7%) [CPU RSS, coarse]'
+  - '[prior:regression_cpu_20260925T110058Z_63207f76.yaml] parallel|vcd_nonconst|200x208x160|1
+    time 18718.5 ms vs 10272.4 ms expected (+8446.04 ms, +82.2%)'
+  compared_to:
+  - prior:regression_cpu_20260925T110058Z_63207f76.yaml
