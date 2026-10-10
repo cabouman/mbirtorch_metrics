@@ -280,10 +280,10 @@ denoiser|denoise|225x241x257|1:
     date: '20261009'
     prev: 1897.0968751236796
   mem_mb:
-    value: 737.1
-    commit: d52f0636f63f338089a73ed6c3f6d84d3905c9e1
-    date: '20260927'
-    prev: 742.2
+    value: 731.3
+    commit: d560d7b71ff02801b278f6ec45840b009772f2a0
+    date: '20261010'
+    prev: 737.1
 translation|direct_filter|15x64x64|1:
   min_ms:
     value: 1.079041976481676

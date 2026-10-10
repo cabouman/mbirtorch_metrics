@@ -1,0 +1,83 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gbuzzard/.mbirtorch/regression/lib_main
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 8/8 workers
+8 workers [407 items]
+
+...............................................s................s.s..... [ 17%]
+................s....s..............................s................... [ 35%]
+...........................s...s.............ssssssssssssssssssssss.sss. [ 53%]
+sssssssssssssssssss......ssssssssssssssssssssssssssssssssssssssssss..... [ 70%]
+..............s....s...s....s.s.....s...s..............s..s............. [ 88%]
+............s..s.....ssss......................                          [100%]
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 28 warnings
+tests/test_cone.py: 14 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_denoiser.py: 14 warnings
+tests/test_prox_map.py: 14 warnings
+tests/test_hyper_sinogram.py: 14 warnings
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 1 warning
+tests/test_sharding.py: 10 warnings
+tests/test_translation.py: 2 warnings
+tests/test_mace4d.py: 60 warnings
+  /Users/gbuzzard/.mbirtorch/regression/lib_main/mbirtorch/vcd_utils.py:166: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_hsnt_solvers.py::test_rank_estimate_finds_the_rank_with_pooling_and_near_max_rank[cpu]
+  /Users/gbuzzard/.mbirtorch/regression/lib_main/mbirtorch/hsnt/rank.py:145: UserWarning: the rank was estimated at full resolution only (51.2 counts per bin): the data have no image axes, so neighboring pixels could not be pooled, and at this count the full-resolution test can miss components. Pass the data with its image axes, (views, rows, cols, bins) or (rows, cols, bins), or give the number of components
+    warnings.warn(f"the rank was estimated at full resolution only ({dose:.3g} counts per bin): the data have no "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hsnt_solvers.py:338: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:352: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:208: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:282: needs CUDA
+SKIPPED [3] tests/test_kernels_sharded.py:162: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [1] tests/test_hsnt_solvers.py:304: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:85: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_sharding.py:76: needs a CUDA device
+SKIPPED [6] tests/test_triton_cone.py:92: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_cone.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_cone.py:184: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:207: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_cone.py:233: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:255: the hand-written Triton kernels need a CUDA device
+SKIPPED [10] tests/test_triton_multiaxis.py:168: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_multiaxis.py:192: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_multiaxis.py:274: the hand-written Triton kernels need a CUDA device
+SKIPPED [5] tests/test_triton_multiaxis.py:397: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_multiaxis.py:419: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:453: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:501: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:551: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_parallel.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [8] tests/test_triton_parallel.py:136: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:201: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:227: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:249: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:281: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:312: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:349: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_hsnt_solvers.py:97: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:136: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:156: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:177: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:396: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:439: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:189: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:451: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:469: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:320: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:481: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [2] tests/test_kernels_sharded.py:125: the kernel-times-sharding gate needs at least two CUDA devices
+========== 298 passed, 109 skipped, 172 warnings in 71.81s (0:01:11) ===========

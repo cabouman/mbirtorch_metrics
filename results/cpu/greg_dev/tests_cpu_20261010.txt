@@ -1,0 +1,798 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 8/8 workers
+8 workers [416 items]
+
+.....................................................s.........s........ [ 17%]
+..........................s..s.....s.s.......s.......s.s.............F.. [ 34%]
+...............F.................s........s....sssss.................sss [ 51%]
+sssssssssssssssssssssssssssssssssssss......sssssssssssssssssssssssssssss [ 69%]
+sssss.ssssssssF......................................................... [ 86%]
+..............ssss.....s......s.s.......s....s...s.s....                 [100%]
+=================================== FAILURES ===================================
+____________ test_denoise_stack_equals_a_loop_of_denoise_calls[cpu] ____________
+[gw2] darwin -- Python 3.12.13 /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/bin/python
+
+device = 'cpu'
+
+    def test_denoise_stack_equals_a_loop_of_denoise_calls(device):
+        """The stack sweep gives each volume its own step size and its own
+        stopping test, so it must reproduce a loop of single-volume denoise calls
+        with the same parameters and the same seeded partition, volume by volume,
+        including the iteration count at which each volume stops.  The noise
+        amplitude differs per volume so that the counts differ.
+    
+        Auto-regularization is on, so the sweep also sets sigma_x from the stack.
+        That value is checked against the method that computes it, and the loop is
+        pinned to it: the parameter moved and the sweep did not.
+    
+        The gate is a relative maximum difference of 1e-6, not equality: the
+        line-search sums are reductions, and a reduction over one axis of a 3D
+        tensor need not accumulate in the order of a full reduction of a 2D one.
+        The difference seen is printed."""
+        shape = (8, 10, 12)
+        num_volumes = 6
+        sigma_noise = 0.1
+        threshold = 0.03
+        stack = _ramp_stack(num_volumes, shape)
+    
+        auto = mbirtorch.QGGMRFDenoiser(shape)
+        auto.configure_devices(devices=[device])
+        auto.set_params(no_warning=True, verbose=0)
+        np.random.seed(0)
+        denoised, info = auto.denoise_stack(stack, sigma_noise=sigma_noise,
+                                            stop_threshold=threshold)
+    
+        # The parameter moved: the reported sigma_x is the method's own value.
+        reported = info['regularization_params']['sigma_x']
+        from_method = _auto_denoiser(shape, device, sigma_noise) \
+            .auto_set_regularization_params_from_stack(stack)['sigma_x']
+        rel_param = _rel(reported, from_method)
+        assert rel_param < 1e-6
+    
+        # And the sweep did not: it is the loop of single-volume calls with
+        # sigma_x pinned to that value on the same seeded partition.
+        reference = np.empty_like(stack)
+        reference_counts = []
+        reference_statistics = []
+        single = _pinned_denoiser(shape, device, sigma_x=reported)
+        for volume in range(num_volumes):
+            np.random.seed(0)     # the same partition for every volume
+            out, out_dict = single.denoise(stack[volume], sigma_noise=sigma_noise,
+                                           stop_threshold=threshold,
+                                           logfile_path=None, print_logs=False)
+            reference[volume] = out
+            reference_counts.append(int(out_dict['recon_params']['num_iterations']))
+            reference_statistics.append(out_dict['recon_params']['gradient_statistic'])
+    
+        rel = _rel_max(denoised, reference)
+        counts = [int(n) for n in info['num_iterations']]
+        print(f"denoise_stack vs loop of denoise on {device}: sigma_x {reported:.8g} "
+              f"(rel {rel_param:.2e}), rel_max = {rel:.2e}, iteration counts {counts}")
+        assert denoised.shape == stack.shape and denoised.dtype == np.float32
+>       assert rel < 1e-6
+E       assert 0.005706486653854653 < 1e-06
+
+tests/test_denoiser.py:317: AssertionError
+----------------------------- Captured stdout call -----------------------------
+denoise_stack vs loop of denoise on cpu: sigma_x 0.015036823 (rel 0.00e+00), rel_max = 5.71e-03, iteration counts [66, 64, 62, 60, 59, 58]
+------------------------------ Captured log call -------------------------------
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:5400 
+DEBUG    torch.__trace:convert_frame.py:303 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:structured.py:28 
+DEBUG    torch.__trace:structured.py:28 
+DEBUG    torch.__trace:structured.py:28 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:structured.py:28 
+DEBUG    torch.__trace:structured.py:28 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:output_graph.py:2841 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:autograd_cache.py:1130 
+DEBUG    torch.__trace:compile_fx.py:2625 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2656 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:graph_capture.py:426 
+DEBUG    torch.__trace:graph_capture.py:444 
+DEBUG    torch.__trace:graph_compile.py:381 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2448 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2474 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:codecache.py:1996 
+DEBUG    torch.__trace:codecache.py:2004 
+DEBUG    torch.__trace:codecache.py:2008 
+DEBUG    torch.__trace:codecache.py:2016 
+DEBUG    torch.__trace:codecache.py:2024 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:compile_fx.py:1149 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:subclass_codegen.py:333 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:4552 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2009 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:5400 
+DEBUG    torch.__trace:convert_frame.py:303 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:structured.py:28 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:output_graph.py:2841 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:autograd_cache.py:1130 
+DEBUG    torch.__trace:compile_fx.py:2625 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2656 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:graph_capture.py:426 
+DEBUG    torch.__trace:graph_capture.py:444 
+DEBUG    torch.__trace:graph_compile.py:381 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2448 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2474 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:codecache.py:1996 
+DEBUG    torch.__trace:codecache.py:2004 
+DEBUG    torch.__trace:codecache.py:2008 
+DEBUG    torch.__trace:codecache.py:2016 
+DEBUG    torch.__trace:codecache.py:2024 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:compile_fx.py:1149 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:subclass_codegen.py:333 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:4552 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2009 
+DEBUG    torch.__trace:utils.py:2350
+____________ test_denoise_stack_equals_a_loop_of_denoise_calls[mps] ____________
+[gw2] darwin -- Python 3.12.13 /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/bin/python
+
+device = 'mps'
+
+    def test_denoise_stack_equals_a_loop_of_denoise_calls(device):
+        """The stack sweep gives each volume its own step size and its own
+        stopping test, so it must reproduce a loop of single-volume denoise calls
+        with the same parameters and the same seeded partition, volume by volume,
+        including the iteration count at which each volume stops.  The noise
+        amplitude differs per volume so that the counts differ.
+    
+        Auto-regularization is on, so the sweep also sets sigma_x from the stack.
+        That value is checked against the method that computes it, and the loop is
+        pinned to it: the parameter moved and the sweep did not.
+    
+        The gate is a relative maximum difference of 1e-6, not equality: the
+        line-search sums are reductions, and a reduction over one axis of a 3D
+        tensor need not accumulate in the order of a full reduction of a 2D one.
+        The difference seen is printed."""
+        shape = (8, 10, 12)
+        num_volumes = 6
+        sigma_noise = 0.1
+        threshold = 0.03
+        stack = _ramp_stack(num_volumes, shape)
+    
+        auto = mbirtorch.QGGMRFDenoiser(shape)
+        auto.configure_devices(devices=[device])
+        auto.set_params(no_warning=True, verbose=0)
+        np.random.seed(0)
+        denoised, info = auto.denoise_stack(stack, sigma_noise=sigma_noise,
+                                            stop_threshold=threshold)
+    
+        # The parameter moved: the reported sigma_x is the method's own value.
+        reported = info['regularization_params']['sigma_x']
+        from_method = _auto_denoiser(shape, device, sigma_noise) \
+            .auto_set_regularization_params_from_stack(stack)['sigma_x']
+        rel_param = _rel(reported, from_method)
+        assert rel_param < 1e-6
+    
+        # And the sweep did not: it is the loop of single-volume calls with
+        # sigma_x pinned to that value on the same seeded partition.
+        reference = np.empty_like(stack)
+        reference_counts = []
+        reference_statistics = []
+        single = _pinned_denoiser(shape, device, sigma_x=reported)
+        for volume in range(num_volumes):
+            np.random.seed(0)     # the same partition for every volume
+            out, out_dict = single.denoise(stack[volume], sigma_noise=sigma_noise,
+                                           stop_threshold=threshold,
+                                           logfile_path=None, print_logs=False)
+            reference[volume] = out
+            reference_counts.append(int(out_dict['recon_params']['num_iterations']))
+            reference_statistics.append(out_dict['recon_params']['gradient_statistic'])
+    
+        rel = _rel_max(denoised, reference)
+        counts = [int(n) for n in info['num_iterations']]
+        print(f"denoise_stack vs loop of denoise on {device}: sigma_x {reported:.8g} "
+              f"(rel {rel_param:.2e}), rel_max = {rel:.2e}, iteration counts {counts}")
+        assert denoised.shape == stack.shape and denoised.dtype == np.float32
+>       assert rel < 1e-6
+E       assert 0.005706549987362516 < 1e-06
+
+tests/test_denoiser.py:317: AssertionError
+----------------------------- Captured stdout call -----------------------------
+denoise_stack vs loop of denoise on mps: sigma_x 0.015036823 (rel 0.00e+00), rel_max = 5.71e-03, iteration counts [66, 64, 62, 60, 59, 58]
+------------------------------ Captured log call -------------------------------
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:5400 
+DEBUG    torch.__trace:convert_frame.py:303 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:output_graph.py:2841 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:autograd_cache.py:1130 
+DEBUG    torch.__trace:compile_fx.py:2625 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2656 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:graph_capture.py:426 
+DEBUG    torch.__trace:graph_capture.py:444 
+DEBUG    torch.__trace:graph_compile.py:381 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2448 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2474 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:codecache.py:1996 
+DEBUG    torch.__trace:codecache.py:2004 
+DEBUG    torch.__trace:codecache.py:2008 
+DEBUG    torch.__trace:codecache.py:2016 
+DEBUG    torch.__trace:codecache.py:2024 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:compile_fx.py:1149 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:subclass_codegen.py:333 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:4552 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2009 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:5400 
+DEBUG    torch.__trace:convert_frame.py:303 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:symbolic_shapes.py:5754 
+DEBUG    torch.__trace:meta_utils.py:276 
+DEBUG    torch.__trace:meta_utils.py:514 
+DEBUG    torch.__trace:meta_utils.py:2271 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:output_graph.py:2841 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:autograd_cache.py:1130 
+DEBUG    torch.__trace:compile_fx.py:2625 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2656 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:graph_capture.py:426 
+DEBUG    torch.__trace:graph_capture.py:444 
+DEBUG    torch.__trace:graph_compile.py:381 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2448 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:compile_fx.py:2474 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:symbolic_shapes.py:8058 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:codecache.py:1996 
+DEBUG    torch.__trace:codecache.py:2004 
+DEBUG    torch.__trace:codecache.py:2008 
+DEBUG    torch.__trace:codecache.py:2016 
+DEBUG    torch.__trace:codecache.py:2024 
+DEBUG    torch.__trace:utils.py:2389 
+DEBUG    torch.__trace:compile_fx.py:1149 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:subclass_codegen.py:333 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:guards.py:4552 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2350 
+DEBUG    torch.__trace:utils.py:2009 
+DEBUG    torch.__trace:utils.py:2350
+_______________ test_recon_warns_when_the_direction_is_too_short _______________
+[gw4] darwin -- Python 3.12.13 /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/bin/python
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x36bf96c60>
+
+    def test_recon_warns_when_the_direction_is_too_short(monkeypatch):
+        """When the update direction is divided by c, the line search computes
+        about c times the step size alpha.  recon must warn when, in more than
+        half of the subsets of an iteration, alpha before the clamp is above 10.
+    
+        Here the update direction is divided by 1000, and alpha before the clamp
+        is above 300 in every subset.  The same recon with the direction unchanged
+        gives an alpha of at most about 1 and must not warn."""
+>       _, sinogram, params = mbirtorch.generate_demo_data(
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            model_type='parallel', object_type='shepp-logan', num_views=24,
+            num_det_rows=8, num_det_channels=32)
+
+tests/test_recon_smoke.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'generate_demo_data'
+
+    def __getattr__(name):
+        import importlib
+        if name in _VIEWER_EXPORTS:
+            from . import view_utils
+            value = getattr(view_utils, name)
+            globals()[name] = value  # Later accesses skip this hook.
+            return value
+        if name in _LAZY_MODULES:
+            value = importlib.import_module('.' + name, __name__)
+            globals()[name] = value
+            return value
+        if name in _LAZY_NAMES:
+            module = importlib.import_module('.' + _LAZY_NAMES[name], __name__)
+            value = getattr(module, name)
+            globals()[name] = value
+            return value
+>       raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+E       AttributeError: module 'mbirtorch' has no attribute 'generate_demo_data'. Did you mean: 'gen_demo_data'?
+
+mbirtorch/__init__.py:151: AttributeError
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 28 warnings
+tests/test_adjoint.py: 14 warnings
+tests/test_cone.py: 14 warnings
+tests/test_denoiser.py: 14 warnings
+tests/test_params_and_paths.py: 14 warnings
+tests/test_mace.py: 14 warnings
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 1 warning
+tests/test_translation.py: 2 warnings
+tests/test_sharding.py: 10 warnings
+tests/test_mace4d.py: 60 warnings
+  /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/vcd_utils.py:166: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_hsnt_solvers.py::test_rank_estimate_finds_the_rank_with_pooling_and_near_max_rank[cpu]
+  /Users/gbuzzard/.mbirtorch/regression/lib_greg_dev/mbirtorch/hsnt/rank.py:145: UserWarning: the rank was estimated at full resolution only (51.2 counts per bin): the data have no image axes, so neighboring pixels could not be pooled, and at this count the full-resolution test can miss components. Pass the data with its image axes, (views, rows, cols, bins) or (rows, cols, bins), or give the number of components
+    warnings.warn(f"the rank was estimated at full resolution only ({dose:.3g} counts per bin): the data have no "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hsnt_solvers.py:208: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:282: needs CUDA
+SKIPPED [1] tests/test_hsnt_solvers.py:97: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:304: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:136: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:156: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:177: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:85: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:189: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_sharding.py:76: needs a CUDA device
+SKIPPED [1] tests/test_hsnt_solvers.py:481: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [2] tests/test_kernels_sharded.py:125: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [3] tests/test_kernels_sharded.py:162: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [6] tests/test_triton_cone.py:92: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_cone.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_cone.py:184: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:207: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_cone.py:233: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:255: the hand-written Triton kernels need a CUDA device
+SKIPPED [10] tests/test_triton_multiaxis.py:168: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_multiaxis.py:192: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_multiaxis.py:274: the hand-written Triton kernels need a CUDA device
+SKIPPED [5] tests/test_triton_multiaxis.py:397: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_multiaxis.py:419: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:453: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:501: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:551: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_parallel.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [8] tests/test_triton_parallel.py:136: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:201: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:227: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:249: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:281: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:312: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:349: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_hsnt_solvers.py:320: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:338: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:352: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:396: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:439: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:451: the hsnt solvers accumulate in float64, which MPS does not support
+SKIPPED [1] tests/test_hsnt_solvers.py:469: the hsnt solvers accumulate in float64, which MPS does not support
+FAILED tests/test_denoiser.py::test_denoise_stack_equals_a_loop_of_denoise_calls[cpu]
+FAILED tests/test_denoiser.py::test_denoise_stack_equals_a_loop_of_denoise_calls[mps]
+FAILED tests/test_recon_smoke.py::test_recon_warns_when_the_direction_is_too_short
+===== 3 failed, 304 passed, 109 skipped, 172 warnings in 94.61s (0:01:34) ======
