@@ -1,9 +1,9 @@
 parallel|direct_filter|128x112x96|1:
   min_ms:
-    value: 14.391457894816995
-    commit: d52f0636f63f338089a73ed6c3f6d84d3905c9e1
-    date: '20260927'
-    prev: 14.573041116818786
+    value: 14.302959199994802
+    commit: 11ff658ef11f482067b3825e318e7001f4f57019
+    date: '20261011'
+    prev: 14.391457894816995
   mem_mb:
     value: 241.3
     commit: 9825a43c019e5d72dd8a4ca872e8f9b69e4d6517
@@ -335,10 +335,10 @@ translation|back|15x64x64|1:
     date: '20260928'
     prev: 4.268208984285593
   mem_mb:
-    value: 414.4
-    commit: da7fc90d9a36307a378526a4823109529cdedac8
-    date: '20261002'
-    prev: 415.4
+    value: 413.1
+    commit: 11ff658ef11f482067b3825e318e7001f4f57019
+    date: '20261011'
+    prev: 414.4
 translation|back|15x65x65|1:
   min_ms:
     value: 4.112000111490488
@@ -379,10 +379,10 @@ multiaxis_parallel|direct_filter|129x113x97|1:
     date: '20260913'
     prev: 16.61141705699265
   mem_mb:
-    value: 251.3
-    commit: 498294d8e959cd66a4cb72e0c004aa0bf156d75a
-    date: '20260921'
-    prev: 252.0
+    value: 250.4
+    commit: 11ff658ef11f482067b3825e318e7001f4f57019
+    date: '20261011'
+    prev: 251.3
 multiaxis_parallel|forward|96x80x64|1:
   min_ms:
     value: 58.91954198887106
@@ -423,10 +423,10 @@ multiaxis_parallel|back|96x80x64|1:
     date: '20260913'
     prev: 30.74979200027883
   mem_mb:
-    value: 728.0
-    commit: 23da49bd9007d40688a8095b52d6f4ac4c5979c3
-    date: '20260919'
-    prev: 732.9
+    value: 727.8
+    commit: 11ff658ef11f482067b3825e318e7001f4f57019
+    date: '20261011'
+    prev: 728.0
 multiaxis_parallel|back|128x112x96|1:
   min_ms:
     value: 120.19404199963901
@@ -434,10 +434,10 @@ multiaxis_parallel|back|128x112x96|1:
     date: '20260913'
     prev: 127.52012489363551
   mem_mb:
-    value: 1201.8
-    commit: 9f140be1e275c4ec577db0e1067745c157bbb2a6
-    date: '20261009'
-    prev: 1201.9
+    value: 1194.7
+    commit: 11ff658ef11f482067b3825e318e7001f4f57019
+    date: '20261011'
+    prev: 1201.8
 multiaxis_parallel|back|129x113x97|1:
   min_ms:
     value: 145.48424999520648
