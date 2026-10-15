@@ -563,8 +563,11 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
        python "$HARNESS_DIR/scaling_tests/performance_tracking.py" 2>&1 | tee "$GLOG"
   engine_rc="${PIPESTATUS[0]}"
   # The engine can in principle print an abort yet exit 0, so catch CUDA and setup markers from
-  # the output too.  A no-record night must be loud, not silently green.
-  if grep -qaE "produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED" "$GLOG" 2>/dev/null; then engine_aborted=1; else engine_aborted=0; fi
+  # the output too.  A no-record night must be loud, not silently green.  The setup marker names
+  # the setup worker: a failed automatic-device-choice check prints "the auto-choice worker
+  # produced no result", but that run still writes its record, so it is a gate failure (exit 1),
+  # not an abort.
+  if grep -qaE "setup worker produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED" "$GLOG" 2>/dev/null; then engine_aborted=1; else engine_aborted=0; fi
   if [ "$engine_rc" -eq 0 ] && [ "$engine_aborted" -eq 0 ]; then
     log "$BR: engine ok."
   elif [ "$engine_rc" -eq 1 ] && [ "$engine_aborted" -eq 0 ]; then
@@ -576,7 +579,7 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
     TEST_FAIL=1
     log "$BR: ENGINE ABORTED (rc=$engine_rc) — no usable record; emailed."
     { echo "### $BR @ ${SHA:0:8} — TORCH ENGINE ABORTED (rc=$engine_rc; no record -> no dashboard entry)"
-      grep -aE "produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED|Traceback" "$GLOG" | sort -u | head -6
+      grep -aE "setup worker produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED|Traceback" "$GLOG" | sort -u | head -6
       echo; } >>"$ALERT_BODY"
   fi
   rm -f "$GLOG"
