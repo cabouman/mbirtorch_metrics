@@ -258,10 +258,10 @@ cone|vcd_nonconst|200x208x160|1:
     date: '20260823'
     prev:
   mem_mb:
-    value: 12151.5
-    commit: aa06a44c5833363a4aa7c0a61730af071bd10fab
-    date: '20261001'
-    prev: 12158.1
+    value: 12138.9
+    commit: b46d414b5ef65dfb789be8f98cfd26b406b16bef
+    date: '20261015'
+    prev: 12151.5
 denoiser|denoise|128x144x160|1:
   min_ms:
     value: 477.81224991194904
@@ -308,10 +308,10 @@ translation|direct_filter|15x65x65|1:
     prev: 215.0
 translation|forward|15x64x64|1:
   min_ms:
-    value: 9.068917017430067
-    commit: d52f0636f63f338089a73ed6c3f6d84d3905c9e1
-    date: '20260927'
-    prev: 9.10908286459744
+    value: 9.062832687050104
+    commit: b46d414b5ef65dfb789be8f98cfd26b406b16bef
+    date: '20261015'
+    prev: 9.068917017430067
   mem_mb:
     value: 391.0
     commit: da7fc90d9a36307a378526a4823109529cdedac8
@@ -335,10 +335,10 @@ translation|back|15x64x64|1:
     date: '20260928'
     prev: 4.268208984285593
   mem_mb:
-    value: 413.1
-    commit: 11ff658ef11f482067b3825e318e7001f4f57019
-    date: '20261011'
-    prev: 414.4
+    value: 410.8
+    commit: b46d414b5ef65dfb789be8f98cfd26b406b16bef
+    date: '20261015'
+    prev: 413.1
 translation|back|15x65x65|1:
   min_ms:
     value: 4.112000111490488
@@ -390,10 +390,10 @@ multiaxis_parallel|forward|96x80x64|1:
     date: '20260913'
     prev: 62.15558294206858
   mem_mb:
-    value: 1091.5
-    commit: 44da2e9dc7dd97e0790d8f9a6a39db2575385dd8
-    date: '20260928'
-    prev: 1095.0
+    value: 1091.4
+    commit: b46d414b5ef65dfb789be8f98cfd26b406b16bef
+    date: '20261015'
+    prev: 1091.5
 multiaxis_parallel|forward|128x112x96|1:
   min_ms:
     value: 250.98308399901725
@@ -401,10 +401,10 @@ multiaxis_parallel|forward|128x112x96|1:
     date: '20260913'
     prev: 263.1294159218669
   mem_mb:
-    value: 2361.2
-    commit: 02f34980685fb6e1a0deb1f561ee0bd50709dc5c
-    date: '20260925'
-    prev: 2367.5
+    value: 2348.6
+    commit: b46d414b5ef65dfb789be8f98cfd26b406b16bef
+    date: '20261015'
+    prev: 2361.2
 multiaxis_parallel|forward|129x113x97|1:
   min_ms:
     value: 251.2116660072934
