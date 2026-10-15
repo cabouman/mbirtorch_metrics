@@ -270,10 +270,10 @@ parallel|back|512x448x384|1:
     prev: 959.0
 parallel|back|513x449x385|1:
   min_ms:
-    value: 30.17090680077672
-    commit: 26bd0ea988bd83e99e8e4cbe2fa8223ac4d104d2
-    date: '20260830'
-    prev: 30.328684952110052
+    value: 29.483236372470856
+    commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
+    date: '20261015'
+    prev: 30.17090680077672
   mem_mb:
     value: 859.7
     commit: f27ed09feb42aca5df4a5a6faf8377804741919b
@@ -729,10 +729,10 @@ cone|back|1024x1008x992|4:
     prev:
 cone|back|1024x1008x992|2:
   min_ms:
-    value: 2329.5674009714276
-    commit: f27ed09feb42aca5df4a5a6faf8377804741919b
-    date: '20261012'
-    prev: 2345.7784780766815
+    value: 2318.670056760311
+    commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
+    date: '20261015'
+    prev: 2329.5674009714276
   mem_mb:
     value: 6663.9
     commit: f27ed09feb42aca5df4a5a6faf8377804741919b
@@ -745,10 +745,10 @@ cone|back|1024x1008x992|2:
     prev: 1.9376728891516235
 cone|back|1024x1008x992|1:
   min_ms:
-    value: 4499.44599205628
-    commit: 44da2e9dc7dd97e0790d8f9a6a39db2575385dd8
-    date: '20260928'
-    prev: 4516.466258093715
+    value: 4499.239378143102
+    commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
+    date: '20261015'
+    prev: 4499.44599205628
   mem_mb:
     value: 8592.8
     commit: f27ed09feb42aca5df4a5a6faf8377804741919b
@@ -1518,10 +1518,10 @@ multiaxis_parallel|back|1024x1008x992|4:
     prev: 3.7130543832952685
 multiaxis_parallel|back|1024x1008x992|2:
   min_ms:
-    value: 2156.2703191302717
-    commit: f63b13baae6065c7dad301bf5a21c6a800ca01fd
-    date: '20260829'
-    prev:
+    value: 2151.8118400126696
+    commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
+    date: '20261015'
+    prev: 2156.2703191302717
   mem_mb:
     value: 7240.5
     commit: f27ed09feb42aca5df4a5a6faf8377804741919b
@@ -1587,10 +1587,10 @@ denoiser|denoise|1024x1008x992|4:
     date: '20260829'
     prev:
   speedup:
-    value: 1.3963126925773057
+    value: 1.4148951954498385
     commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
-    date: '20261013'
-    prev: 1.369215071731304
+    date: '20261015'
+    prev: 1.3963126925773057
 denoiser|denoise|1024x1008x992|2:
   min_ms:
     value: 2186.316000064835
@@ -1603,7 +1603,7 @@ denoiser|denoise|1024x1008x992|2:
     date: '20260829'
     prev:
   speedup:
-    value: 1.9293134616110919
+    value: 1.969517947469101
     commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
-    date: '20261013'
-    prev: 1.9189972875521804
+    date: '20261015'
+    prev: 1.9293134616110919
