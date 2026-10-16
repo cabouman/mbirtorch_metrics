@@ -109,10 +109,10 @@ def main(argv):
     if latest is None:
         return 0   # offline or proxy hiccup: stay silent, never fail the nightly
     if _is_newer(latest, reviewed):
-        print(f"[torch-watch] NEW torch on PyPI: {latest}  (last reviewed: {reviewed}).  Re-test it "
-              f"with tooling/scaling_tests/measure_one_cell.py.  If it is good, bump "
-              f"TORCH_LAST_REVIEWED in run_configs.env.  If it regresses, pin torch in mbirtorch's "
-              f"pyproject and bump TORCH_LAST_REVIEWED anyway.")
+        print(f"[torch-watch] NEW torch on PyPI: {latest}  (ledger newest: {reviewed}).  The dependency "
+              f"canary validates it on its next run and records the verdict in "
+              f"state/<plat>/torch_ledger.txt; a release the pinned wheel index cannot serve shows up "
+              f"there as 'unavailable' (then TORCH_INDEX_URL_<plat> may need to move).")
     return 0
 
 

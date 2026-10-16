@@ -94,6 +94,7 @@ HARNESS_DIR="$METRICS_REPO/tooling"
 # existing venv for trial runs (see lib_env.sh).
 # shellcheck disable=SC1091
 source "$HARNESS_DIR/regression/lib_env.sh"
+source "$HARNESS_DIR/regression/lib_ledger.sh"
 reg_activate_env || exit $?
 
 # Platform DECLARATION (nvidia-smi signal, no torch import).  The engine VERIFIES this claim
@@ -105,6 +106,21 @@ PLAT="$(reg_plat)"
 RES="$METRICS_REPO/results/$PLAT"; STATE="$METRICS_REPO/state/$PLAT"
 mkdir -p "$RES" "$STATE"
 log "platform=$PLAT env=${REG_VENV:-$CONDA_ENV} metrics=$METRICS_REPO"
+LEDGER="$STATE/torch_ledger.txt"
+CANARY_ON=0
+case " ${DEP_CANARY_PLATFORMS:-gpu} " in *" $PLAT "*) [ "${DEP_CANARY_ENABLED:-0}" = "1" ] && CANARY_ON=1 ;; esac
+# ── torch invariant: the env runs the ledger's newest validated torch, or the night does not run ─
+# A restore that failed last night (rejection, walltime kill) is repaired here, and a repair that
+# fails refuses to measure, so the env can never sit on a rejected torch unnoticed.
+RUNS_ON="$(ledger_runs_on "$LEDGER")"
+if [ -n "$RUNS_ON" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+  _inst="$(reg_installed_torch)"
+  if [ "$_inst" != "$RUNS_ON" ]; then
+    log "torch invariant: env has torch '${_inst:-none}', the ledger says $RUNS_ON — re-pinning."
+    if reg_pin_torch "$RUNS_ON" >"$WORK_DIR/pin_torch.log" 2>&1; then log "torch invariant: restored torch $RUNS_ON."
+    else log "FATAL: could not restore torch $RUNS_ON (see $WORK_DIR/pin_torch.log) — refusing to measure."; exit 2; fi
+  fi
+fi
 
 # Credential for unattended push (cluster), scoped to this repository only.
 # GIT_TERMINAL_PROMPT=0 makes a missing credential fail fast instead of hanging the job.
@@ -216,6 +232,10 @@ watchdog_line() {
       f_div="UNKNOWN — the checker exited $rc (${why:-no output})"
     elif [ -n "$br" ]; then
       f_div="DUE on branch $br (torch ${torch_v:-?}; $detail)"
+    elif printf '%s\n' "$out" | grep -q '^dependency-watch: verdict UNKNOWN'; then
+      # The checker read the index and the matrix but not the torch ledger: the Python part is
+      # checked, the torch floor and exclusions are not.  Not "no divergence".
+      f_div="UNKNOWN — $(printf '%s\n' "$out" | sed -n 's/^dependency-watch: verdict UNKNOWN *//p' | head -1)"
     elif printf '%s\n' "$out" | grep -q '^dependency-watch: verdict none'; then
       f_div="none (torch ${torch_v:-?}; the matrix and both floors match)"
     else
@@ -337,6 +357,9 @@ fi
 # This block sits BEFORE the no-change exit, so it fires regardless of branch activity.
 ENV_PY="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || echo "")"
 TORCHWATCH=""; HEADROOM=""
+# TORCH_LAST_REVIEWED left empty means "the ledger's newest version" (validated, rejected or
+# unavailable alike), so the line quiets itself once the canary has reacted to a release.
+[ -n "${TORCH_LAST_REVIEWED:-}" ] || TORCH_LAST_REVIEWED="$(ledger_newest "$LEDGER")"
 if [ -n "${TORCH_LAST_REVIEWED:-}" ] && [ -f "$HERE/check_torch_release.py" ]; then
   TORCHWATCH="$(python "$HERE/check_torch_release.py" "$TORCH_LAST_REVIEWED" 2>/dev/null || true)"
   # Diagnose headroom ONLY when a newer torch exists, so bumping TORCH_LAST_REVIEWED quiets both
@@ -376,51 +399,74 @@ for BR in ${TRACKED_BRANCHES[@]+"${TRACKED_BRANCHES[@]}"}; do
 done
 
 # ── Dependency canary: a NEW torch counts as a change ─────────────────────────────────────────
-# Guarded by DEP_CANARY_ENABLED, which defaults to 0, so this whole feature is inert and the
-# nightly is unchanged.  When it is on and PyPI's latest torch differs from state/<plat>/torch_seen,
-# bump the dependency-generation counter and make sure the canary branch is measured even if its
-# tip did not move, so the new torch is re-measured against fixed code and attributed.
-# Two triggers: a NEW torch, and a periodic full refresh every DEP_FULL_REFRESH_DAYS days that
-# eager-upgrades every dependency and re-measures the canary branch.
-NEW_TORCH=0; FULL_REFRESH=0; DEP_GEN=""; FULL_GEN=""; RAN_TORCH_STEP=0; PYPI_TORCH=""
-CANARY=""; CANARY_PREV=""; CANARY_TIP=""
-if [ "${DEP_CANARY_ENABLED:-0}" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
+# Guarded by DEP_CANARY_ENABLED and DEP_CANARY_PLATFORMS.  The candidate is what the PINNED WHEEL
+# INDEX would install; PyPI's newest matters only when the index lags it, which becomes an
+# `unavailable` ledger line and a mail.  A candidate is NEW while its latest ledger line is neither
+# `validated` nor `rejected` (missing, candidate, unavailable all re-fire, so a night killed between
+# the candidate line and the verdict is retried; the old torch_seen files are retired).  The env is
+# upgraded FIRST, the release counts only when the installed torch IS the candidate, and the verdict
+# run further down decides BEFORE any other branch is measured.  Design record: the plans repo's
+# plans/mbirtorch_metrics/torch_version_policy_plan.md.
+NEW_TORCH=0; TORCH_EFFECTIVE=0; FULL_REFRESH=0; DEP_GEN=""; FULL_GEN=""; RAN_TORCH_STEP=0
+PYPI_TORCH=""; IDX_TORCH=""; CANDIDATE=""; CANARY=""; CANARY_PREV=""; CANARY_TIP=""; CANARY_ADDED=0
+LEDGER_DIRTY=0; LEDGER_ALERT=""
+_newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | _ledger_vsort_desc | head -1)" = "$1" ]; }
+if [ "$CANARY_ON" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
   CANARY="${DEP_CANARY_BRANCH:-main}"; _g="$(cat "$STATE/depgen" 2>/dev/null || echo 0)"
   PYPI_TORCH="$(python "$HERE/check_torch_release.py" --print-latest 2>/dev/null || true)"
-  SEEN="$(cat "$STATE/torch_seen" 2>/dev/null || true)"
-  # torch_seen records the PyPI latest already reacted to, so a held-back release does not re-fire
-  # the canary every night.  If the env Python changed since then, a release the OLD floor held
-  # back could now install, so treat torch_seen as stale and re-evaluate.
-  SEEN_PY="$(cat "$STATE/torch_seen_python" 2>/dev/null || true)"
-  if [ -n "$SEEN" ] && [ -n "$SEEN_PY" ] && [ -n "$ENV_PY" ] && [ "$SEEN_PY" != "$ENV_PY" ]; then
-    log "dep-canary: env Python changed ($SEEN_PY -> $ENV_PY) — invalidating torch_seen ('$SEEN')."
-    SEEN=""
+  IDX_TORCH="$(reg_index_newest_torch)"
+  CANDIDATE="${IDX_TORCH:-$PYPI_TORCH}"
+  if [ -n "$PYPI_TORCH" ] && [ -n "$IDX_TORCH" ] && _newer "$PYPI_TORCH" "$IDX_TORCH"; then
+    if ledger_append "$LEDGER" "$PYPI_TORCH" unavailable "index=$(reg_torch_index) index-newest=$IDX_TORCH python=$ENV_PY"; then
+      LEDGER_DIRTY=1
+      LEDGER_ALERT="torch $PYPI_TORCH is on PyPI but the pinned wheel index ($(reg_torch_index)) stops at $IDX_TORCH: TORCH_INDEX_URL_$PLAT in run_configs.env may need to move (check the driver's CUDA ceiling in the cluster probe's facts first).  Ledger: $LEDGER"
+    fi
   fi
-  [ -n "$PYPI_TORCH" ] && [ "$PYPI_TORCH" != "$SEEN" ] && NEW_TORCH=1
+  _st="$(ledger_state "$LEDGER" "$CANDIDATE")"
+  if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "$RUNS_ON" ] && [ "$_st" != "validated" ] && [ "$_st" != "rejected" ]; then NEW_TORCH=1; fi
   _last="$(cat "$STATE/last_full_refresh" 2>/dev/null || echo 0)"
   _now="$(date +%s)"
   _days="${DEP_FULL_REFRESH_DAYS:-14}"
   [ "$(( (_now - _last) / 86400 ))" -ge "$_days" ] && FULL_REFRESH=1
-  if [ "$NEW_TORCH" = "1" ] || [ "$FULL_REFRESH" = "1" ]; then
+  if [ "$NEW_TORCH" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+    log "dep-canary: torch $CANDIDATE is the index's newest (ledger: ${_st:-none}; PyPI ${PYPI_TORCH:-?}) — upgrading in ${REG_VENV:-$CONDA_ENV} ..."
+    if reg_upgrade_torch >"$WORK_DIR/upgrade_torch.log" 2>&1 && [ "$(reg_installed_torch)" = "$CANDIDATE" ]; then
+      TORCH_EFFECTIVE=1
+      ledger_append "$LEDGER" "$CANDIDATE" candidate "index python=$ENV_PY" && LEDGER_DIRTY=1
+      log "dep-canary: env now runs torch $CANDIDATE (candidate); the verdict run decides tonight."
+    else
+      _inst="$(reg_installed_torch)"
+      log "dep-canary: the upgrade did not land torch $CANDIDATE (env has ${_inst:-none}; see $WORK_DIR/upgrade_torch.log) — no verdict tonight, retry tomorrow."
+      if [ -n "$RUNS_ON" ] && [ "${_inst:-}" != "$RUNS_ON" ]; then   # hold the invariant
+        if reg_pin_torch "$RUNS_ON" >>"$WORK_DIR/upgrade_torch.log" 2>&1; then log "dep-canary: env held at torch $RUNS_ON."
+        else log "FATAL: env left on torch ${_inst:-none} and could not restore $RUNS_ON — refusing to measure."; exit 2; fi
+      fi
+    fi
+  fi
+  if [ "$TORCH_EFFECTIVE" = "1" ] || [ "$FULL_REFRESH" = "1" ]; then
     DEP_GEN="$(( _g + 1 ))"; FULL_GEN="$DEP_GEN"
     CANARY_TIP="$(git ls-remote "$MBIRTORCH_URL" "refs/heads/$CANARY" 2>/dev/null | awk '{print $1}')"
     CANARY_PREV="$(cat "$STATE/${CANARY//\//_}" 2>/dev/null || true)"
-    # Both changed: a new torch AND a moved canary tip.  Measuring the PREVIOUS tip under the new
-    # torch isolates the dependency, and the ordinary loop then measures the new tip as the code step.
-    [ "$NEW_TORCH" = "1" ] && [ -n "$CANARY_PREV" ] && [ -n "$CANARY_TIP" ] && \
+    # Both changed: a new torch AND a moved canary tip.  The verdict run measures the PREVIOUS tip
+    # under the new torch, which isolates the dependency; the loop then measures the new tip.
+    [ "$TORCH_EFFECTIVE" = "1" ] && [ -n "$CANARY_PREV" ] && [ -n "$CANARY_TIP" ] && \
       [ "$CANARY_PREV" != "$CANARY_TIP" ] && RAN_TORCH_STEP=1
-    log "dep-canary: NEW_TORCH=$NEW_TORCH FULL=$FULL_REFRESH  gen=$DEP_GEN  prev=${CANARY_PREV:0:8} tip=${CANARY_TIP:0:8}"
-    if [ "$NEW_TORCH" = "1" ]; then   # measure the canary even if its tip did not move
+    log "dep-canary: TORCH_EFFECTIVE=$TORCH_EFFECTIVE FULL=$FULL_REFRESH  gen=$DEP_GEN  prev=${CANARY_PREV:0:8} tip=${CANARY_TIP:0:8}"
+    if [ "$TORCH_EFFECTIVE" = "1" ]; then   # keep the night alive for the verdict run
       _in=0; for _b in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do [ "$_b" = "$CANARY" ] && _in=1; done
-      [ "$_in" = "0" ] && [ -n "$CANARY_TIP" ] && { CHANGED_BR+=("$CANARY"); \
-        log "dep-canary: added $CANARY @ ${CANARY_TIP:0:8} (tip unchanged) for the torch re-measure."; }
+      [ "$_in" = "0" ] && [ -n "$CANARY_TIP" ] && { CHANGED_BR+=("$CANARY"); CANARY_ADDED=1; }
     fi
   fi
 fi
 
-# Proceed when a branch changed OR the canary has a step to run.
+# Proceed when a branch changed, the canary has a step to run, or the ledger gained a line that
+# must be published — an `unavailable` written on a quiet night would otherwise never be committed.
 if [ "${#CHANGED_BR[@]}" -eq 0 ] && [ "$FULL_REFRESH" != "1" ]; then
-  log "no tracked branch changed — done."; exit 0
+  if [ "$LEDGER_DIRTY" = "1" ]; then
+    log "no tracked branch changed — publishing the ledger only."
+  else
+    log "no tracked branch changed — done."; exit 0
+  fi
 fi
 
 DATE="$(date '+%Y%m%d')"
@@ -438,9 +484,10 @@ MAIL_TO="${REG_MAIL_TO:-buzzard@purdue.edu}"
 # sha into a throwaway directory, fetching it directly when it is older than the tip, installs it,
 # runs the engine, and cleans up.  It runs no tests and writes no branch state; the caller owns
 # those.  It returns the engine's exit code.
-measure_commit() {   # $1=branch $2=sha $3=outdir $4=dep_gen $5=reason $6=upgrade(none|full)
-  local _br="$1" _sha="$2" _out="$3" _dg="$4" _reason="$5" _upg="${6:-none}" _rc=0
+measure_commit() {   # $1=branch $2=sha $3=outdir $4=dep_gen $5=reason $6=upgrade(none|full) [$7=tests 0|1] [$8=engine log]
+  local _br="$1" _sha="$2" _out="$3" _dg="$4" _reason="$5" _upg="${6:-none}" _tests="${7:-0}" _elog="${8:-}" _rc=0
   local _wt="$WORK_DIR/canary_${_br//\//_}_${_sha:0:8}"; rm -rf "$_wt"
+  MC_ENGINE_RC=""; MC_ABORTED=0; MC_WARN=0; MC_WARN_PERF=0; MC_TESTS_OK=""; MC_RUN=""   # the step's outcome
   if ! git clone --quiet --depth 1 --branch "$_br" --single-branch "$MBIRTORCH_URL" "$_wt"; then
     log "  dep-canary: clone of $_br failed — skip step."; rm -rf "$_wt"; return 2; fi
   if [ "$(git -C "$_wt" rev-parse HEAD)" != "$_sha" ]; then   # older than the tip -> fetch that commit
@@ -449,31 +496,118 @@ measure_commit() {   # $1=branch $2=sha $3=outdir $4=dep_gen $5=reason $6=upgrad
   fi
   local _ilog="$WORK_DIR/install_canary_${_br//\//_}.log"
   if [ "$_upg" = "full" ]; then
-    reg_upgrade_all "$_wt" >"$_ilog" 2>&1 || log "  dep-canary: WARN full upgrade issue (see $_ilog)."
+    reg_upgrade_all "$_wt" "$(reg_installed_torch)" >"$_ilog" 2>&1 || log "  dep-canary: WARN full upgrade issue (see $_ilog)."
   elif ! reg_install_lib "$_wt" >"$_ilog" 2>&1; then
     log "  dep-canary: install of ${_sha:0:8} failed (see $_ilog) — skip step."; rm -rf "$_wt"; return 2; fi
   mkdir -p "$_out"
+  if [ "$_tests" = "1" ] && [ "${RUN_TESTS:-0}" = "1" ]; then
+    if canary_run_suite "$_wt" "$_out/tests_${PLAT}_${DATE}_${_reason}.txt" "$_br @ ${_sha:0:8} ($_reason, torch $(reg_installed_torch))"; then MC_TESTS_OK=1; else MC_TESTS_OK=0; fi
+  fi
+  [ -n "$_elog" ] || _elog="$(mktemp)"
   REG_LIB_ROOT="$_wt" REG_OUT_DIR="$_out" REG_DATE="$DATE" REG_GATE=1 REG_RUN_TAG="$_br" \
     REG_PLATFORM="$PLAT" REG_SKIP_TESTS=1 REG_DEP_GEN="$_dg" REG_RUN_REASON="$_reason" \
     REG_TORCH_AVAILABLE="$PYPI_TORCH" REG_DEVICE_COUNTS="${DEVICE_COUNTS:-1}" \
     REG_MEM_GATE_WINDOW="${MEM_GATE_WINDOW:-}" \
-    python "$HARNESS_DIR/scaling_tests/performance_tracking.py" || _rc=$?
+    python "$HARNESS_DIR/scaling_tests/performance_tracking.py" 2>&1 | tee "$_elog"
+  _rc="${PIPESTATUS[0]}"
+  MC_ENGINE_RC="$_rc"
+  grep -qaE "produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED" "$_elog" 2>/dev/null && MC_ABORTED=1
+  grep -qa "GATE: WARN" "$_elog" 2>/dev/null && MC_WARN=1
+  # A WARN counts against the release only when a soft line reports a PERFORMANCE change (time,
+  # speedup, memory) against the prior.  "new cell, no baseline" and "gained sharding" notes are
+  # informational: the trial of 2026-09-03 rejected torch 2.14.0 on eighteen new-cell notes left
+  # by a widened sweep, which is exactly the false rejection this distinction prevents.
+  MC_WARN_PERF=0
+  if grep -aE '^[[:space:]]*warn[[:space:]]' "$_elog" 2>/dev/null | grep -avE 'new cell|no baseline|gained sharding|gained banding' \
+       | grep -qaE '[[:space:]](time|speedup|mem)[[:space:]]'; then MC_WARN_PERF=1; fi
+  MC_RUN="$(ls -t "$_out"/regression_${PLAT}_*.yaml 2>/dev/null | grep -v '_table\.yaml$' | head -1 || true)"
   rm -rf "$_wt"; return "$_rc"
 }
 
-# dep-canary: force torch to the newest the pinned index serves, in the shared env, BEFORE the
-# branch loop, so every branch measured tonight sees the new torch.  Non-fatal, and skipped in smoke.
-if [ "$NEW_TORCH" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
-  log "dep-canary: upgrading torch to the newest available in ${REG_VENV:-$CONDA_ENV} ..."
-  reg_upgrade_torch >/dev/null 2>&1 || log "dep-canary: WARN torch upgrade failed — using the current torch."
-fi
+# canary_run_suite WT LOG LABEL : the mbirtorch suite for a canary step, by the loop's rules (crash
+# markers count as failure); appends to ALERT_BODY; returns 0 ok, 1 failures, 2 crashed.
+canary_run_suite() {
+  local _wt="$1" _tlog="$2" _label="$3" _trc _crashed _np
+  _np=$([ "$PLAT" = "gpu" ] && echo 4 || echo 8)
+  log "dep-canary: running the mbirtorch suite for $_label (xdist -n $_np) -> $(basename "$_tlog") ..."
+  if [ -f "$_wt/dev_scripts/run_tests.sh" ]; then
+    ( cd "$_wt/dev_scripts" && PYTEST_NPROC="$_np" bash run_tests.sh ) 2>&1 | tee "$_tlog"
+  else
+    ( cd "$_wt" && python -m pytest tests -ra -n "$_np" ) 2>&1 | tee "$_tlog"
+  fi
+  _trc="${PIPESTATUS[0]}"
+  if grep -qaE "maximum crashed workers reached|Fatal Python error|INTERNALERROR|node down" "$_tlog" 2>/dev/null; then _crashed=1; else _crashed=0; fi
+  if [ "$_trc" -eq 0 ] && [ "$_crashed" -eq 0 ]; then log "dep-canary: tests done."; return 0; fi
+  TEST_FAIL=1
+  { echo "### dep-canary $_label — $([ "$_crashed" = 1 ] && echo 'TEST RUN CRASHED' || echo 'TEST FAILURES')"
+    grep -aE "^FAILED |[0-9]+ (failed|error)|maximum crashed workers reached|Fatal Python error|node down|INTERNALERROR" "$_tlog" | sort -u | tail -20
+    echo; } >>"$ALERT_BODY"
+  if [ "$_crashed" = 1 ]; then return 2; else return 1; fi
+}
 
-# dep-canary torch step: re-measure the PREVIOUS canary tip under the new torch, which isolates the
-# dependency.  The loop below then measures the new tip as the code step.
-if [ "$RAN_TORCH_STEP" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
-  log "dep-canary: torch step — re-measuring $CANARY @ ${CANARY_PREV:0:8} under the new torch (gen $DEP_GEN)."
-  measure_commit "$CANARY" "$CANARY_PREV" "$RES/${CANARY//\//_}" "$DEP_GEN" "torch-step" none \
-    || log "dep-canary: torch step returned non-zero (gate or setup) — continuing."
+# (The torch upgrade happened in the canary block above, BEFORE the decision to measure.)
+# ── dep-canary: the verdict run, BEFORE the branch loop ─────────────────────────────────────
+# One measurement of the canary branch under the candidate torch decides.  With an unmoved tip it
+# IS the tip under the new torch (torch-step); with a moved tip it is the PREVIOUS tip, so the
+# dependency is isolated and the loop below measures the new tip as the code step.  Rejection (or
+# no outcome) restores the ledger's torch, sets the verdict run aside, and untags the night, so no
+# other branch is ever measured under a torch the ledger does not hold as validated.
+CANARY_ELOG="$WORK_DIR/canary_engine.log"
+if [ "$TORCH_EFFECTIVE" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
+  _sha="$CANARY_TIP"; _reason="torch-step"
+  [ "$RAN_TORCH_STEP" = "1" ] && _sha="$CANARY_PREV"
+  log "dep-canary: verdict run — $CANARY @ ${_sha:0:8} under torch $CANDIDATE ($_reason, gen $DEP_GEN)."
+  _rc=0; measure_commit "$CANARY" "$_sha" "$RES/${CANARY//\//_}" "$DEP_GEN" "$_reason" none 1 "$CANARY_ELOG" || _rc=$?
+  _inst="$(reg_installed_torch)"; _why=""; _outcome=1
+  if [ -z "$MC_ENGINE_RC" ]; then
+    _outcome=0
+    log "dep-canary: NO OUTCOME (setup rc=$_rc: clone or install failed) — the candidate line stays and tomorrow retries."
+  elif [ "$_inst" != "$CANDIDATE" ]; then
+    _why="measured under torch ${_inst:-none}, not $CANDIDATE (the branch's own pyproject holds torch back)"
+  else
+    [ "$MC_ABORTED" = "1" ] && _why="engine aborted"
+    [ "$MC_ENGINE_RC" = "1" ] && _why="${_why:+$_why; }hard gate FAIL"
+    [ "$MC_ENGINE_RC" -ge 2 ] 2>/dev/null && _why="${_why:+$_why; }engine rc=$MC_ENGINE_RC"
+    [ "$MC_TESTS_OK" = "0" ] && _why="${_why:+$_why; }tests failed"
+    [ "$MC_WARN_PERF" = "1" ] && [ "${DEP_CANARY_WARN_IS_REJECT:-1}" = "1" ] && _why="${_why:+$_why; }gate WARN on time/speedup/memory"
+  fi
+  _ev="$(basename "${MC_RUN:-no-run-file}")"
+  if [ "$MC_WARN_PERF" = "1" ]; then _ev="$_ev warn=perf"; elif [ "$MC_WARN" = "1" ]; then _ev="$_ev warn=info"; fi
+  if [ "$MC_WARN" = "1" ]; then   # a soft warning is visible whichever way the verdict goes
+    { echo "### dep-canary $CANARY @ ${_sha:0:8} under torch $CANDIDATE — GATE WARN lines"
+      grep -aE "GATE: WARN|^ *SOFT |warn" "$CANARY_ELOG" | head -25; echo; } >>"$ALERT_BODY"
+  fi
+  if [ "$_outcome" = "0" ]; then
+    :
+  elif [ -z "$_why" ]; then
+    ledger_append "$LEDGER" "$CANDIDATE" validated "$_ev python=$ENV_PY" && LEDGER_DIRTY=1
+    RUNS_ON="$CANDIDATE"
+    log "dep-canary: torch $CANDIDATE VALIDATED ($_ev) — the nightly runs on it from now on."
+    [ "$MC_WARN_PERF" = "1" ] && LEDGER_ALERT="torch $CANDIDATE validated WITH a performance WARN (DEP_CANARY_WARN_IS_REJECT=0); the warn lines follow.  Ledger: $LEDGER"
+  else
+    ledger_append "$LEDGER" "$CANDIDATE" rejected "$_ev: $_why python=$ENV_PY" && LEDGER_DIRTY=1
+    log "dep-canary: torch $CANDIDATE REJECTED ($_why)."
+    LEDGER_ALERT="torch $CANDIDATE REJECTED by the canary: $_why.  Env restored to ${RUNS_ON:-?}; the verdict run is set aside under results/$PLAT/${CANARY//\//_}/rejected/.  To accept the release anyway, edit its line in $LEDGER to 'validated' (the next start re-pins the env); to re-test it, change the line to 'candidate'."
+    [ "$MC_ENGINE_RC" = "1" ] && { echo "### dep-canary $CANARY @ ${_sha:0:8} under torch $CANDIDATE — GATE FAIL"
+      grep -aE "GATE: FAIL|^ *HARD " "$CANARY_ELOG" | head -25; echo; } >>"$ALERT_BODY"
+    if [ -n "$MC_RUN" ] && [ -f "$MC_RUN" ]; then
+      mkdir -p "$(dirname "$MC_RUN")/rejected"
+      for _f in "$MC_RUN" "${MC_RUN%.yaml}_table.yaml"; do [ -f "$_f" ] && mv -f "$_f" "$(dirname "$MC_RUN")/rejected/"; done
+      log "dep-canary: set aside $(basename "$MC_RUN") (and its table) under rejected/."
+    fi
+  fi
+  if [ "$_outcome" = "0" ] || [ -n "$_why" ]; then   # the rest of the night runs on the ledger's torch
+    if [ -n "$RUNS_ON" ] && [ "$(reg_installed_torch)" != "$RUNS_ON" ]; then
+      if reg_pin_torch "$RUNS_ON" >"$WORK_DIR/pin_torch.log" 2>&1; then log "dep-canary: env restored to torch $RUNS_ON."
+      else log "FATAL: could not restore torch $RUNS_ON (see $WORK_DIR/pin_torch.log) — not measuring the other branches tonight."; GATE_FAIL=1; CHANGED_BR=(); fi
+    fi
+    TORCH_EFFECTIVE=0; [ "$FULL_REFRESH" = "1" ] || DEP_GEN=""
+  fi
+  # An unmoved canary tip was in tonight's list only for the verdict run; the loop need not repeat it.
+  if [ "$CANARY_ADDED" = "1" ]; then
+    _keep=(); for _b in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do [ "$_b" = "$CANARY" ] || _keep+=("$_b"); done
+    CHANGED_BR=(${_keep[@]+"${_keep[@]}"})
+  fi
 fi
 
 # dep-canary full refresh: eager-upgrade every dependency and re-measure the canary tip, which
@@ -553,6 +687,11 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
   # The engine (gate + records + dashboard files).  It re-verifies the platform claim, pins
   # and asserts the device count on every row, and exits 1 on a hard-gate regression / >=2 on a
   # setup failure.  MBIRTORCH_MEMORY_CALIBRATION must be absent (the engine asserts it too).
+  # Tag the run with tonight's dependency generation when the env changed under it (a validated
+  # new torch, or the periodic refresh), and say why the canary branch is measured: code-step is
+  # the moved tip under the new torch after the verdict run measured the previous tip.
+  _reason="commit"
+  [ -n "$DEP_GEN" ] && [ "$TORCH_EFFECTIVE" = "1" ] && [ "$BR" = "$CANARY" ] && _reason="code-step"
   log "$BR: running the measurement engine (output follows)..."
   GLOG="$(mktemp)"
   unset MBIRTORCH_MEMORY_CALIBRATION
@@ -560,6 +699,7 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
        REG_RUN_TAG="$BR" REG_PLATFORM="$PLAT" REG_SKIP_TESTS=1 \
        REG_DEVICE_COUNTS="${DEVICE_COUNTS:-1}" \
        REG_MEM_GATE_WINDOW="${MEM_GATE_WINDOW:-}" \
+       REG_DEP_GEN="${DEP_GEN:-}" REG_RUN_REASON="$_reason" REG_TORCH_AVAILABLE="${PYPI_TORCH:-}" \
        python "$HARNESS_DIR/scaling_tests/performance_tracking.py" 2>&1 | tee "$GLOG"
   engine_rc="${PIPESTATUS[0]}"
   # The engine can in principle print an abort yet exit 0, so catch CUDA and setup markers from
@@ -589,12 +729,12 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
   rm -rf "$WT"
 done
 
-# dep-canary bookkeeping: record the dependency generation and the PyPI torch this run reacted to,
-# so the same release does not re-fire the canary tomorrow.  Written only after the steps above ran.
+# dep-canary bookkeeping: the dependency generation.  torch_seen / torch_seen_python are retired —
+# the ledger is the record of what was reacted to.
 if [ -n "$DEP_GEN" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
   echo "$DEP_GEN" >"$STATE/depgen"
-  [ -n "$PYPI_TORCH" ] && { echo "$PYPI_TORCH" >"$STATE/torch_seen"; echo "$ENV_PY" >"$STATE/torch_seen_python"; }
 fi
+rm -f "$STATE/torch_seen" "$STATE/torch_seen_python"
 
 # ── Publish to the metrics repo (conflict-safe; NON-FATAL) ────────────────────────────────────
 # This wrapper stages ONLY its own platform's paths (results/<plat>/, state/<plat>/), so the GPU
@@ -630,7 +770,7 @@ fi
 fi   # end publish guard
 
 # ── Alert email: gate + test detail, addressed from the mbirtorch-nightly identity ────────────
-if [ "$GATE_FAIL" != "0" ] || [ "$TEST_FAIL" != "0" ]; then
+if [ "$GATE_FAIL" != "0" ] || [ "$TEST_FAIL" != "0" ] || [ -n "$LEDGER_ALERT" ]; then
   SM="$(command -v sendmail || echo /usr/sbin/sendmail)"
   if [ -x "$SM" ]; then
     _brs="$(IFS=,; echo "${CHANGED_BR[*]}")"
@@ -639,6 +779,7 @@ if [ "$GATE_FAIL" != "0" ] || [ "$TEST_FAIL" != "0" ]; then
       [ -n "$TORCHWATCH" ] && { echo; echo "$TORCHWATCH"; [ -n "$HEADROOM" ] && echo "$HEADROOM"; echo; }
       echo "Branches measured this run: ${_brs:-<none>}"
       echo
+      [ -n "$LEDGER_ALERT" ] && { echo "dep-canary: $LEDGER_ALERT"; echo; }
       cat "$ALERT_BODY"
       [ -n "${SLURM_JOB_ID:-}" ] && echo "Full log: $WORK_DIR/nightly-${SLURM_JOB_ID}.log"
       echo "Records:  $RES/<branch>/  (record book records_${PLAT}.yaml)"

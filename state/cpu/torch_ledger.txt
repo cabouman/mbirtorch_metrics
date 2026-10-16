@@ -1,0 +1,5 @@
+# torch version ledger (cpu) — written by the nightly's dependency canary (lib_ledger.sh); read by
+# the wrapper (the torch the env must run) and by mbirtorch's dependency watch (what to propose).
+# <version> <state> <date> <evidence>; states candidate|validated|rejected|unavailable; the latest
+# line per version wins.  Design: mbirtorch_plans/plans/mbirtorch_metrics/torch_version_policy_plan.md
+2.13.0 validated 2026-09-03 bootstrap:env-at-canary-enablement python=3.12
