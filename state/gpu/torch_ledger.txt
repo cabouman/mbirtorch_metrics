@@ -3,3 +3,4 @@
 # <version> <state> <date> <evidence>; states candidate|validated|rejected|unavailable; the latest
 # line per version wins.  Design: mbirtorch_plans/plans/mbirtorch_metrics/torch_version_policy_plan.md
 2.13.0 validated 2026-09-03 bootstrap:env-at-canary-enablement python=3.12
+2.14.0 validated 2026-10-16 bootstrap:env-at-canary-enablement python=3.12

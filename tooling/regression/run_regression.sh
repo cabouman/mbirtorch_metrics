@@ -443,6 +443,10 @@ if [ "$CANARY_ON" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
       fi
     fi
   fi
+  # The full refresh measures the canary tip.  On a night with a new torch, the verdict run (or the
+  # loop, when the tip moved) measures that tip under the same generation number, so one record
+  # would replace the other.  The refresh therefore waits for a night without a new torch.
+  [ "$TORCH_EFFECTIVE" = "1" ] && FULL_REFRESH=0
   if [ "$TORCH_EFFECTIVE" = "1" ] || [ "$FULL_REFRESH" = "1" ]; then
     DEP_GEN="$(( _g + 1 ))"; FULL_GEN="$DEP_GEN"
     CANARY_TIP="$(git ls-remote "$MBIRTORCH_URL" "refs/heads/$CANARY" 2>/dev/null | awk '{print $1}')"
@@ -470,6 +474,10 @@ if [ "${#CHANGED_BR[@]}" -eq 0 ] && [ "$FULL_REFRESH" != "1" ]; then
 fi
 
 DATE="$(date '+%Y%m%d')"
+# Engine output that means the run left no usable record.  The setup marker names the setup
+# worker: a failed automatic-device-choice check prints "the auto-choice worker produced no
+# result", but that run still writes its record, so it is a gate failure (exit 1), not an abort.
+ENGINE_ABORT_RE="setup worker produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED"
 GATE_FAIL=0
 TEST_FAIL=0
 # Alert email: accumulate per-branch hard-gate items + test failures, sent ONCE at the end.  The
@@ -511,7 +519,7 @@ measure_commit() {   # $1=branch $2=sha $3=outdir $4=dep_gen $5=reason $6=upgrad
     python "$HARNESS_DIR/scaling_tests/performance_tracking.py" 2>&1 | tee "$_elog"
   _rc="${PIPESTATUS[0]}"
   MC_ENGINE_RC="$_rc"
-  grep -qaE "produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED" "$_elog" 2>/dev/null && MC_ABORTED=1
+  grep -qaE "$ENGINE_ABORT_RE" "$_elog" 2>/dev/null && MC_ABORTED=1
   grep -qa "GATE: WARN" "$_elog" 2>/dev/null && MC_WARN=1
   # A WARN counts against the release only when a soft line reports a PERFORMANCE change (time,
   # speedup, memory) against the prior.  "new cell, no baseline" and "gained sharding" notes are
@@ -703,11 +711,8 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
        python "$HARNESS_DIR/scaling_tests/performance_tracking.py" 2>&1 | tee "$GLOG"
   engine_rc="${PIPESTATUS[0]}"
   # The engine can in principle print an abort yet exit 0, so catch CUDA and setup markers from
-  # the output too.  A no-record night must be loud, not silently green.  The setup marker names
-  # the setup worker: a failed automatic-device-choice check prints "the auto-choice worker
-  # produced no result", but that run still writes its record, so it is a gate failure (exit 1),
-  # not an abort.
-  if grep -qaE "setup worker produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED" "$GLOG" 2>/dev/null; then engine_aborted=1; else engine_aborted=0; fi
+  # the output too.  A no-record night must be loud, not silently green.
+  if grep -qaE "$ENGINE_ABORT_RE" "$GLOG" 2>/dev/null; then engine_aborted=1; else engine_aborted=0; fi
   if [ "$engine_rc" -eq 0 ] && [ "$engine_aborted" -eq 0 ]; then
     log "$BR: engine ok."
   elif [ "$engine_rc" -eq 1 ] && [ "$engine_aborted" -eq 0 ]; then
@@ -719,7 +724,7 @@ for BR in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do
     TEST_FAIL=1
     log "$BR: ENGINE ABORTED (rc=$engine_rc) — no usable record; emailed."
     { echo "### $BR @ ${SHA:0:8} — TORCH ENGINE ABORTED (rc=$engine_rc; no record -> no dashboard entry)"
-      grep -aE "setup worker produced no result|CUDA error|CUDA_ERROR|PLATFORM MISMATCH|DEVICE PIN FAILED|Traceback" "$GLOG" | sort -u | head -6
+      grep -aE "$ENGINE_ABORT_RE|Traceback" "$GLOG" | sort -u | head -6
       echo; } >>"$ALERT_BODY"
   fi
   rm -f "$GLOG"
