@@ -1468,7 +1468,12 @@ def run(config, platform_key):
     gate_dict = None
     if config.compare_to_prior:
         W = max(1, int(getattr(config, "mem_gate_window", 1)))
-        priors = _find_priors(config.out_dir, platform_key, file_tag, W)
+        # The prior lookup must use the name THIS run is saved under (below): a `_gNNNN`
+        # re-measure of an unmoved commit sorts after that commit's plain run, so the plain run
+        # is its prior -- same code, previous dependency set.  With the bare tag the lookup
+        # skipped its own commit and gated against the previous commit, blaming code on torch.
+        _gen_tag = f"{file_tag}_g{config.dep_gen:04d}" if config.dep_gen else file_tag
+        priors = _find_priors(config.out_dir, platform_key, _gen_tag, W)
         if priors:
             ref = sc.load_yaml(priors[0]) or {}
             gate_result, gate_ref = ((result, ref) if W <= 1

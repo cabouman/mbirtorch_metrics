@@ -94,23 +94,45 @@ what a run says.
 
 ## The torch-release watch and the dependency canary
 
-The watch runs every night, including no-change nights.  It compares PyPI's latest torch with
-`TORCH_LAST_REVIEWED` and prints two lines when a newer one exists: what shipped, and whether that
-version can install on the regression env's Python.  Both lines also go into the notify email.  The
-watch changes nothing on its own; it only says that a re-test is due.
+The watch runs every night, including no-change nights.  It compares PyPI's latest torch with the
+ledger's newest version (`TORCH_LAST_REVIEWED` left empty; set it only to silence the line by hand)
+and prints two lines when a newer one exists: what shipped, and whether that version can install on
+the regression env's Python.  Both lines also go into the notify email.
 
-The canary is the measuring half, and it is off by default (`DEP_CANARY_ENABLED=0`).  When it is on
-it does three things.  A new torch bumps a dependency-generation counter, upgrades torch in the
-shared env, and adds the canary branch to tonight's work even when its tip has not moved.  When the
-canary branch's tip moved as well, the previous tip is re-measured under the new torch first, which
-separates the dependency's effect from the code's.  Every `DEP_FULL_REFRESH_DAYS` days, every
-dependency is eager-upgraded and the canary tip is re-measured, which catches drift in packages
-other than torch.
+The canary is the measuring half, ON since 2026-09-03 on the platforms in `DEP_CANARY_PLATFORMS`
+(gpu; the watch reads the GPU ledger).  It implements the torch version policy (plans repo:
+`plans/mbirtorch_metrics/torch_version_policy_plan.md`):
 
-A canary run keeps its own run file.  Its name gains a `_gNNNN` suffix, so two runs of one commit
-under different dependency sets do not collide, and the dashboard marks it as a dependency change
-rather than a code change.  The canary's own bookkeeping lives in `state/<plat>/depgen`,
-`torch_seen`, `torch_seen_python`, and `last_full_refresh`.
+- **The ledger**, `state/<plat>/torch_ledger.txt`: append-only `<version> <state> <date>
+  <evidence>` lines, the latest line per version wins, states `candidate | validated | rejected |
+  unavailable`.  The nightly writes it (`lib_ledger.sh`); mbirtorch's dependency watch reads the
+  GPU one over GitHub to decide floor advances and exclusions.  `.gitattributes` merges it by
+  union, so a hand edit and the nightly's append never conflict.
+- **Every night** the env must run the ledger's newest validated torch: the wrapper re-pins it at
+  start and refuses to measure (exit 2, Slurm FAIL mail) when that fails.
+- **A new release** is what the pinned wheel index would install (`pip index versions`), not what
+  PyPI has, and it counts while the ledger holds it as neither validated nor rejected.  The
+  wrapper upgrades the env, confirms the installed torch is the release, writes `candidate`, and
+  measures the canary branch under it BEFORE the branch loop: the tip when it did not move
+  (`torch-step`), the previous tip when it did (the loop then measures the new tip as
+  `code-step`).  That run, with the test suite, decides: `validated` when the gate passed with no
+  performance warning, no abort, and green tests; `rejected` otherwise
+  (`DEP_CANARY_WARN_IS_REJECT=1` — a time, speedup or memory WARN against the prior rejects,
+  because the jax 0.10.2 precedent was a pure time regression; "new cell, no baseline" and
+  "gained sharding" notes are informational and never reject).  Rejection restores
+  the ledger's torch, sets the verdict run aside under `results/<plat>/<branch>/rejected/` (out
+  of the prior-selection and dashboard globs), and untags the night, so nothing else is measured
+  under an unvalidated torch.  A clone or install failure is no outcome: the candidate line stays
+  and tomorrow retries.  A PyPI release the pinned index does not serve is `unavailable`, retried
+  nightly, and a reminder that `TORCH_INDEX_URL_<plat>` may need to move.
+- **Mail**: any new `rejected` or `unavailable` line, or a validation with a WARN, forces the
+  notify mail with the gate lines.  A rejection is overridden by editing the ledger line to
+  `validated` (the next start re-pins the env); a rejected version is re-tested by changing its
+  line to `candidate`.
+- **Run files** made under a new dependency set carry `_gNNNN`; the engine compares such a run
+  with the same commit's previous run, so the change is torch's alone.  Every
+  `DEP_FULL_REFRESH_DAYS` days every other dependency is eager-upgraded with torch held at the
+  ledger's version and the canary tip re-measured (`deps-step`).
 
 ## The weekly cluster probe (`cluster_probe.sh`)
 
@@ -188,6 +210,7 @@ These exist for pre-schedule runs.  Production leaves all of them unset.
 | `REG_FORCE=1` | treat every tracked branch as changed, so an unmoved tip is re-measured |
 | `REG_VENV=<dir>` | use an existing venv instead of the dedicated conda env |
 | `REG_NO_WATCHDOG=1` | skip the dependency-watch watchdog line |
+| `METRICS_URL=<path>` (exported) | clone the harness from a scratch copy with uncommitted changes instead of GitHub |
 
 ## Notes and current limits
 
