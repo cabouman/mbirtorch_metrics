@@ -753,12 +753,12 @@ def auto_choice_check(config, platform_key):
     (``prepare_sino_for_devices``), with no pin of either kind, so the settle
     inside it is the same automatic choice a user's first reconstruction
     makes.  The expected count comes from the floors table alone -- the widest
-    count ``_widening_floors.admitted`` accepts at this cell's size -- which is
-    an independent reading of the same table the policy consults, under the
-    assumption that memory is ample.  On the nightly's dedicated node that
-    assumption holds by a wide margin at this cell, and a capacity refusal
-    would itself be an anomaly; the recorded per-count reasons say which rule
-    drove any mismatch.
+    count ``_min_problem_sizes.allowed`` (``_widening_floors.admitted`` on older
+    branches) accepts at this cell's size -- which is an independent reading of
+    the same table the policy consults, under the assumption that memory is
+    ample.  On the nightly's dedicated node that assumption holds by a wide
+    margin at this cell, and a capacity refusal would itself be an anomaly; the
+    recorded per-count reasons say which rule drove any mismatch.
 
     ``ok`` is False when the realized count differs from the expected one,
     when the layout did not come from the automatic branch, when the guard was
@@ -768,7 +768,16 @@ def auto_choice_check(config, platform_key):
     """
     import torch
     import mbirtorch  # noqa: F401
-    from mbirtorch import _widening_floors as wf
+    # mbirtorch commit 7f8ad1f (2026-10-11) renamed the module _widening_floors to
+    # _min_problem_sizes, its function guard_enabled to size_limit_enabled, and its
+    # function admitted to allowed.  The arguments and return values did not change.
+    # Branches older than that commit still have the old names, so accept either.
+    try:
+        from mbirtorch import _min_problem_sizes as wf
+        limit_enabled, allowed = wf.size_limit_enabled, wf.allowed
+    except ImportError:
+        from mbirtorch import _widening_floors as wf
+        limit_enabled, allowed = wf.guard_enabled, wf.admitted
 
     leaked_pin = os.environ.pop("MBIRTORCH_NUM_DEVICES", None)
     size = tuple(AUTO_CHOICE_SIZE)
@@ -777,13 +786,13 @@ def auto_choice_check(config, platform_key):
     result = dict(kind="auto_choice", geometry=geometry, size=list(size),
                   visible_devices=int(visible),
                   leaked_env_pin=leaked_pin,
-                  guard_enabled=bool(wf.guard_enabled()),
+                  guard_enabled=bool(limit_enabled()),
                   floors_stale_note=wf.stale_note())
 
     elements = wf.sinogram_elements(size)
     admitted = {}
     for n in range(1, max(int(visible), 1) + 1):
-        ok, why = wf.admitted(geometry, n, elements)
+        ok, why = allowed(geometry, n, elements)
         admitted[int(n)] = {"admitted": bool(ok), "why": str(why)}
     result["admitted_by_count"] = admitted
     expected = max([n for n, v in admitted.items() if v["admitted"]] or [1])
