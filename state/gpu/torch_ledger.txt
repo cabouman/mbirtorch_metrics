@@ -4,3 +4,5 @@
 # line per version wins.  Design: mbirtorch_plans/plans/mbirtorch_metrics/torch_version_policy_plan.md
 2.13.0 validated 2026-09-03 bootstrap:env-at-canary-enablement python=3.12
 2.14.0 validated 2026-10-16 bootstrap:env-at-canary-enablement python=3.12
+2.14.1 candidate 2026-10-17 index python=3.12
+2.14.1 rejected 2026-10-17 regression_gpu_20261010T004525Z_5e23a151_g0001.yaml warn=perf: gate WARN on time/speedup/memory python=3.12
