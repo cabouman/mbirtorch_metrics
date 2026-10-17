@@ -6,3 +6,4 @@
 2.14.0 validated 2026-10-16 bootstrap:env-at-canary-enablement python=3.12
 2.14.1 candidate 2026-10-17 index python=3.12
 2.14.1 rejected 2026-10-17 regression_gpu_20261010T004525Z_5e23a151_g0001.yaml warn=perf: gate WARN on time/speedup/memory python=3.12
+2.14.1 validated 2026-10-17 manual:gbuzzard rejection on cone|forward|512x448x384|4 time was 4-GPU timing variation (76-126 ms on unchanged code); 1- and 2-GPU times unchanged python=3.12
