@@ -34,7 +34,7 @@ log() { echo "[$(date '+%F %T')] $*"; }
 [ -f "$HERE/regression.env" ] && source "$HERE/regression.env"
 PROBE_STATUS_DIR="${PROBE_STATUS_DIR:-/depot/bouman/data/cluster_status}"
 PROBE_FALLBACK_DIR="${PROBE_FALLBACK_DIR:-$HOME/.mbirtorch/probe}"
-PROBE_ENVS="${PROBE_ENVS:-mbirtorch pcdrecon mbirtorch_regression}"
+PROBE_ENVS="${PROBE_ENVS:-pcdrecon mbirtorch_regression}"
 PROBE_MAIL="${PROBE_MAIL:-1}"
 PROBE_HOME_PCT_MAX="${PROBE_HOME_PCT_MAX:-80}"
 PROBE_SCRATCH_FILES_PCT_MAX="${PROBE_SCRATCH_FILES_PCT_MAX:-80}"
