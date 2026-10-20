@@ -1,4 +1,4 @@
 # Correctness 'reviewed-through' watermark (correctness-gating design note D6).
 # Every correctness divergence on a commit dated <= this is acknowledged: greyed on the
 # dashboard, dropped from the banner / tab badge.  Set by action_scripts/clear_correctness.sh.
-cleared_through: 2026-10-17
+cleared_through: 2026-10-20
