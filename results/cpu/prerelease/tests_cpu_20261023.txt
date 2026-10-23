@@ -1,0 +1,116 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gbuzzard/.mbirtorch/regression/lib_prerelease
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 8/8 workers
+8 workers [231 items]
+
+....................................ssss.......................F........ [ 31%]
+.....................s....................s..................s...sssssss [ 62%]
+ssssssss.sssssssssssssss.ss.ssssssssssssssssssssssssssss................ [ 93%]
+...............                                                          [100%]
+=================================== FAILURES ===================================
+___________________ test_library_dehydrate_and_hyper_denoise ___________________
+[gw3] darwin -- Python 3.12.13 /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/bin/python
+
+stacks = {'root': PosixPath('/private/var/folders/cf/8cqkj58j3d3fs6b3d9h7r0qm0000gn/T/pytest-of-gbuzzard/pytest-290/popen-gw3/h...e/var/folders/cf/8cqkj58j3d3fs6b3d9h7r0qm0000gn/T/pytest-of-gbuzzard/pytest-290/popen-gw3/hsnt_cli0/processed.h5', ...}
+capsys = <_pytest.capture.CaptureFixture object at 0x142087080>
+
+    def test_library_dehydrate_and_hyper_denoise(stacks, capsys):
+        with h5py.File(stacks["h5"]) as f:
+            A = f["sample_dataset/data"][()]                                 # (1, ROWS, COLS, K) attenuation
+        sub_data, basis, dtype = hsnt.dehydrate(A, "attenuation", num_materials=R, verbose=0)
+        assert sub_data.shape == (1, ROWS, COLS, R) and basis.shape == (R, K) and dtype == "attenuation"
+        assert sub_data.min() >= 0 and basis.min() >= 0 and sub_data.dtype == np.float32
+        W, H = _truth()
+        X = W @ H
+        den = hsnt.hyper_denoise(A, "attenuation", num_materials=R, verbose=0)
+        assert den.shape == A.shape and _relative_error(den, X) < 0.35
+        est = hsnt.dehydrate(A[0], "attenuation", verbose=0)                 # rank estimated, pooling over (rows, cols)
+        assert est[0].shape == (ROWS, COLS, R)
+        den_t = hsnt.hyper_denoise(np.exp(-A), "transmission", num_materials=R, verbose=0)    # transmission in and out
+        assert den_t.shape == A.shape and 0 < den_t.min() and _relative_error(-np.log(den_t), X) < 0.35
+        sup = hsnt.dehydrate(A, num_materials=R, spectra="support", dose=DOSE, verbose=0)
+        assert sup[0].shape == sub_data.shape and sup[0].min() >= 0
+        with pytest.raises(ValueError, match="dose"):
+            hsnt.dehydrate(A, num_materials=R, spectra="support", verbose=0)
+        capsys.readouterr()
+        streamed = hsnt.dehydrate(A, num_materials=R, mode="stream", chunk_pixels=40, max_passes=2, verbose=1)
+        assert "streamed, " in capsys.readouterr().out and streamed[0].shape == sub_data.shape
+        assert streamed[0].min() >= 0 and _relative_error(hsnt.rehydrate(streamed), X) < 0.35
+        with pytest.raises(ValueError, match="chunk_pixels"):
+            hsnt.dehydrate(A, num_materials=R, chunk_pixels=0, verbose=0)
+        phantom = material_basis()
+        counts, open_beam, _, truth = hsnt.generate_hyper_data(phantom, 1, 8, 8, 300, None, 0)  # the 7th argument is verbose
+        assert counts.shape == open_beam.shape == truth.shape == (1, 8, 8, phantom.shape[1])
+        assert np.all(open_beam == 300) and np.abs(counts / open_beam - np.exp(-truth)).max() > 1e-2
+        maps, same, _ = hsnt.dehydrate(A, subspace_basis=basis, verbose=0)  # the maps of a given basis
+>       assert np.array_equal(same, basis) and np.abs(maps - sub_data).max() < 1e-3 * sub_data.max()
+E       AssertionError: assert (True and np.float32(4.439803) < (0.001 * np.float32(0.73665)))
+E        +  where True = <function array_equal at 0x10670f870>(array([[1.056035  , 0.59953207, 1.3288414 , 0.75866145, 0.49695125,\n        1.4540617 , 0.24679574, 1.0739301 , 0.1221...322, 0.5293877 , 0.38570863,\n        0.14342694, 0.363177  , 0.69475746, 0.8117297 , 0.22039032]],\n      dtype=float32), array([[1.056035  , 0.59953207, 1.3288414 , 0.75866145, 0.49695125,\n        1.4540617 , 0.24679574, 1.0739301 , 0.1221...322, 0.5293877 , 0.38570863,\n        0.14342694, 0.363177  , 0.69475746, 0.8117297 , 0.22039032]],\n      dtype=float32))
+E        +    where <function array_equal at 0x10670f870> = np.array_equal
+E        +  and   np.float32(4.439803) = <built-in method max of numpy.ndarray object at 0x314633090>()
+E        +    where <built-in method max of numpy.ndarray object at 0x314633090> = array([[[[3.7909136 , 1.9362011 ],\n         [3.837378  , 1.9842279 ],\n         [2.2835703 , 1.5741382 ],\n         [1.8...      [0.7675067 , 1.3541284 ],\n         [0.26508647, 0.7412013 ],\n         [0.28207105, 0.27748483]]]], dtype=float32).max
+E        +      where array([[[[3.7909136 , 1.9362011 ],\n         [3.837378  , 1.9842279 ],\n         [2.2835703 , 1.5741382 ],\n         [1.8...      [0.7675067 , 1.3541284 ],\n         [0.26508647, 0.7412013 ],\n         [0.28207105, 0.27748483]]]], dtype=float32) = <ufunc 'absolute'>((array([[[[3.79091358e+00, 1.93735862e+00],\n         [3.83737803e+00, 1.99525499e+00],\n         [2.28596139e+00, 1.6172....37393022e+00],\n         [2.17886969e-01, 8.03647101e-01],\n         [5.29870152e-01, 1.64563075e-01]]]], dtype=float32) - array([[[[0.00000000e+00, 1.15755608e-03],\n         [0.00000000e+00, 1.10270409e-02],\n         [2.39103613e-03, 4.3127....98018551e-02],\n         [4.82973427e-01, 6.24458119e-02],\n         [2.47799084e-01, 4.42047924e-01]]]], dtype=float32)))
+E        +        where <ufunc 'absolute'> = np.abs
+E        +  and   np.float32(0.73665) = <built-in method max of numpy.ndarray object at 0x16c016010>()
+E        +    where <built-in method max of numpy.ndarray object at 0x16c016010> = array([[[[0.00000000e+00, 1.15755608e-03],\n         [0.00000000e+00, 1.10270409e-02],\n         [2.39103613e-03, 4.3127....98018551e-02],\n         [4.82973427e-01, 6.24458119e-02],\n         [2.47799084e-01, 4.42047924e-01]]]], dtype=float32).max
+
+tests/test_hsnt_cli.py:255: AssertionError
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 14 warnings
+tests/test_adjoint.py: 28 warnings
+tests/test_demo_data.py: 14 warnings
+tests/test_denoiser.py: 14 warnings
+tests/test_exact_line_search.py: 14 warnings
+tests/test_multiaxis.py: 14 warnings
+tests/test_params_and_paths.py: 14 warnings
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 1 warning
+tests/test_recon_smoke.py: 2 warnings
+tests/test_mace4d.py: 16 warnings
+tests/test_sharding.py: 6 warnings
+  /Users/gbuzzard/.mbirtorch/regression/lib_prerelease/mbirtorch/vcd_utils.py:153: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+tests/test_hsnt_cli.py::test_library_dehydrate_and_hyper_denoise
+  /Users/gbuzzard/.mbirtorch/regression/lib_prerelease/mbirtorch/hsnt/denoise.py:53: UserWarning: 16.3% of the entries have a negative transmission; clipped at zero
+    warnings.warn(f"{100 * info['negative_frac']:.3g}% of the entries have a negative transmission; clipped at "
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [2] tests/test_kernels_sharded.py:125: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [3] tests/test_kernels_sharded.py:162: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [1] tests/test_hsnt_solvers.py:171: needs CUDA
+SKIPPED [1] tests/test_sharding.py:76: needs a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:92: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_cone.py:183: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_cone.py:206: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_cone.py:230: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_cone.py:252: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_cone.py:280: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_multiaxis.py:168: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_multiaxis.py:192: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_multiaxis.py:273: the hand-written Triton kernels need a CUDA device
+SKIPPED [5] tests/test_triton_multiaxis.py:396: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_multiaxis.py:418: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:452: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:500: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:550: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:136: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_parallel.py:201: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:225: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:247: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_parallel.py:279: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:308: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:345: the hand-written Triton kernels need a CUDA device
+FAILED tests/test_hsnt_cli.py::test_library_dehydrate_and_hyper_denoise - Ass...
+====== 1 failed, 163 passed, 67 skipped, 138 warnings in 79.71s (0:01:19) ======
