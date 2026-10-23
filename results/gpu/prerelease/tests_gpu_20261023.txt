@@ -1,0 +1,79 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0
+rootdir: /home/buzzard/.mbirtorch/regression/lib_prerelease
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 4/4 workers
+4 workers [231 items]
+
+...........................................F............................ [ 31%]
+........................................................................ [ 62%]
+........................................................................ [ 93%]
+...............                                                          [100%]
+=================================== FAILURES ===================================
+___________________ test_library_dehydrate_and_hyper_denoise ___________________
+[gw1] linux -- Python 3.12.14 /home/buzzard/.conda/envs/mbirtorch_regression/bin/python
+
+stacks = {'root': PosixPath('/tmp/pytest-of-buzzard/pytest-0/popen-gw1/hsnt_cli0'), 'sample': '/tmp/pytest-of-buzzard/pytest-0/...pytest-0/popen-gw1/hsnt_cli0/open_beam', 'h5': '/tmp/pytest-of-buzzard/pytest-0/popen-gw1/hsnt_cli0/processed.h5', ...}
+capsys = <_pytest.capture.CaptureFixture object at 0x150515fdf440>
+
+    def test_library_dehydrate_and_hyper_denoise(stacks, capsys):
+        with h5py.File(stacks["h5"]) as f:
+            A = f["sample_dataset/data"][()]                                 # (1, ROWS, COLS, K) attenuation
+        sub_data, basis, dtype = hsnt.dehydrate(A, "attenuation", num_materials=R, verbose=0)
+        assert sub_data.shape == (1, ROWS, COLS, R) and basis.shape == (R, K) and dtype == "attenuation"
+        assert sub_data.min() >= 0 and basis.min() >= 0 and sub_data.dtype == np.float32
+        W, H = _truth()
+        X = W @ H
+        den = hsnt.hyper_denoise(A, "attenuation", num_materials=R, verbose=0)
+        assert den.shape == A.shape and _relative_error(den, X) < 0.35
+        est = hsnt.dehydrate(A[0], "attenuation", verbose=0)                 # rank estimated, pooling over (rows, cols)
+        assert est[0].shape == (ROWS, COLS, R)
+        den_t = hsnt.hyper_denoise(np.exp(-A), "transmission", num_materials=R, verbose=0)    # transmission in and out
+        assert den_t.shape == A.shape and 0 < den_t.min() and _relative_error(-np.log(den_t), X) < 0.35
+        sup = hsnt.dehydrate(A, num_materials=R, spectra="support", dose=DOSE, verbose=0)
+        assert sup[0].shape == sub_data.shape and sup[0].min() >= 0
+        with pytest.raises(ValueError, match="dose"):
+            hsnt.dehydrate(A, num_materials=R, spectra="support", verbose=0)
+        capsys.readouterr()
+        streamed = hsnt.dehydrate(A, num_materials=R, mode="stream", chunk_pixels=40, max_passes=2, verbose=1)
+        assert "streamed, " in capsys.readouterr().out and streamed[0].shape == sub_data.shape
+        assert streamed[0].min() >= 0 and _relative_error(hsnt.rehydrate(streamed), X) < 0.35
+        with pytest.raises(ValueError, match="chunk_pixels"):
+            hsnt.dehydrate(A, num_materials=R, chunk_pixels=0, verbose=0)
+        phantom = material_basis()
+        counts, open_beam, _, truth = hsnt.generate_hyper_data(phantom, 1, 8, 8, 300, None, 0)  # the 7th argument is verbose
+        assert counts.shape == open_beam.shape == truth.shape == (1, 8, 8, phantom.shape[1])
+        assert np.all(open_beam == 300) and np.abs(counts / open_beam - np.exp(-truth)).max() > 1e-2
+        maps, same, _ = hsnt.dehydrate(A, subspace_basis=basis, verbose=0)  # the maps of a given basis
+>       assert np.array_equal(same, basis) and np.abs(maps - sub_data).max() < 1e-3 * sub_data.max()
+E       AssertionError: assert (True and np.float32(4.4395547) < (0.001 * np.float32(0.73660153)))
+E        +  where True = <function array_equal at 0x1507acf88170>(array([[1.056092  , 0.5995646 , 1.3289158 , 0.75870496, 0.49697676,\n        1.4541422 , 0.24680717, 1.0739883 , 0.1221...111, 0.5294224 , 0.38573506,\n        0.14343639, 0.36320183, 0.6948041 , 0.81178445, 0.22040507]],\n      dtype=float32), array([[1.056092  , 0.5995646 , 1.3289158 , 0.75870496, 0.49697676,\n        1.4541422 , 0.24680717, 1.0739883 , 0.1221...111, 0.5294224 , 0.38573506,\n        0.14343639, 0.36320183, 0.6948041 , 0.81178445, 0.22040507]],\n      dtype=float32))
+E        +    where <function array_equal at 0x1507acf88170> = np.array_equal
+E        +  and   np.float32(4.4395547) = <built-in method max of numpy.ndarray object at 0x1504fa9be730>()
+E        +    where <built-in method max of numpy.ndarray object at 0x1504fa9be730> = array([[[[3.7907012 , 1.936077  ],\n         [3.8371618 , 1.9841009 ],\n         [2.2834423 , 1.5740359 ],\n         [1.8...      [0.7674656 , 1.3540368 ],\n         [0.26507184, 0.74115145],\n         [0.28205472, 0.27746516]]]], dtype=float32).max
+E        +      where array([[[[3.7907012 , 1.936077  ],\n         [3.8371618 , 1.9841009 ],\n         [2.2834423 , 1.5740359 ],\n         [1.8...      [0.7674656 , 1.3540368 ],\n         [0.26507184, 0.74115145],\n         [0.28205472, 0.27746516]]]], dtype=float32) = <ufunc 'absolute'>((array([[[[3.79070115e+00, 1.93723440e+00],\n         [3.83716178e+00, 1.99512732e+00],\n         [2.28583288e+00, 1.6171....37383878e+00],\n         [2.17874616e-01, 8.03593636e-01],\n         [5.29840231e-01, 1.64553121e-01]]]], dtype=float32) - array([[[[0.00000000e+00, 1.15744467e-03],\n         [0.00000000e+00, 1.10264067e-02],\n         [2.39056069e-03, 4.3124....98019445e-02],\n         [4.82946455e-01, 6.24421760e-02],\n         [2.47785509e-01, 4.42018300e-01]]]], dtype=float32)))
+E        +        where <ufunc 'absolute'> = np.abs
+E        +  and   np.float32(0.73660153) = <built-in method max of numpy.ndarray object at 0x1505146acb10>()
+E        +    where <built-in method max of numpy.ndarray object at 0x1505146acb10> = array([[[[0.00000000e+00, 1.15744467e-03],\n         [0.00000000e+00, 1.10264067e-02],\n         [2.39056069e-03, 4.3124....98019445e-02],\n         [4.82946455e-01, 6.24421760e-02],\n         [2.47785509e-01, 4.42018300e-01]]]], dtype=float32).max
+
+tests/test_hsnt_cli.py:255: AssertionError
+=============================== warnings summary ===============================
+tests/test_hsnt_cli.py::test_library_dehydrate_and_hyper_denoise
+  /home/buzzard/.mbirtorch/regression/lib_prerelease/mbirtorch/hsnt/denoise.py:53: UserWarning: 16.3% of the entries have a negative transmission; clipped at zero
+    warnings.warn(f"{100 * info['negative_frac']:.3g}% of the entries have a negative transmission; clipped at "
+
+tests/test_device_policy.py: 1 warning
+tests/test_mace4d.py: 16 warnings
+tests/test_recon_smoke.py: 2 warnings
+tests/test_sharding.py: 6 warnings
+  /home/buzzard/.mbirtorch/regression/lib_prerelease/mbirtorch/vcd_utils.py:153: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_hsnt_cli.py::test_library_dehydrate_and_hyper_denoise - Ass...
+============ 1 failed, 230 passed, 26 warnings in 416.92s (0:06:56) ============

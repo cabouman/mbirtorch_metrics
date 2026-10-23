@@ -443,10 +443,10 @@ cone|direct_filter|200x208x160|1:
     prev:
 cone|direct_filter|512x448x384|4:
   min_ms:
-    value: 17.041214276105165
-    commit: 296f7381d919e070f1de5065d071e94a0a3c838f
-    date: '20261017'
-    prev: 17.083278158679605
+    value: 16.81996599654667
+    commit: 3bad7e111c9e6a9fc29498f149706676c8b3b848
+    date: '20261023'
+    prev: 17.041214276105165
   mem_mb:
     value: 197.7
     commit: 9825a43c019e5d72dd8a4ca872e8f9b69e4d6517
