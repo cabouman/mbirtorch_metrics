@@ -165,10 +165,10 @@ cone|direct_filter|200x208x160|1:
     prev: 328.5
 cone|forward|128x112x96|1:
   min_ms:
-    value: 435.4942499194294
-    commit: bf9d73cb12760a35aa8c89011b78bc6835132e0e
-    date: '20261007'
-    prev: 435.91020815074444
+    value: 433.3630409091711
+    commit: 0d4ed6615e63a3a5ed6a85cc5cb6b57252fcb1f1
+    date: '20261025'
+    prev: 435.4942499194294
   mem_mb:
     value: 997.9
     commit: da7fc90d9a36307a378526a4823109529cdedac8
@@ -357,10 +357,10 @@ multiaxis_parallel|direct_filter|96x80x64|1:
     date: '20261007'
     prev: 5.793542004539631
   mem_mb:
-    value: 228.7
-    commit: 23da49bd9007d40688a8095b52d6f4ac4c5979c3
-    date: '20260919'
-    prev: 229.8
+    value: 226.2
+    commit: 0d4ed6615e63a3a5ed6a85cc5cb6b57252fcb1f1
+    date: '20261025'
+    prev: 228.7
 multiaxis_parallel|direct_filter|128x112x96|1:
   min_ms:
     value: 14.247833983972669
