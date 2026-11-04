@@ -59,28 +59,45 @@ if [ -z "${REG_FRESH:-}" ]; then
     log "another run holds the lock ($WORK_DIR/.lock.d) — exiting."; exit 0
   fi
   MC="$WORK_DIR/metrics"
+  # Clone into a new directory, and replace $MC only after that clone succeeds.  A failed clone
+  # then leaves the existing clone in place.  The weekly cluster probe runs from $MC, so deleting
+  # it before a clone that fails would also stop the probe.  When the cluster proxy stopped
+  # answering on 2026-10-28, the old code deleted the clone, and no clone existed until one was
+  # made by hand on 2026-11-01.
+  replace_metrics_clone() {
+    local new="$MC.new.$$"
+    rm -rf "$new"
+    if ! git clone --quiet "$METRICS_URL" "$new"; then
+      rm -rf "$new"
+      log "FATAL: clone metrics failed; the existing clone at $MC is unchanged."
+      rmdir "$WORK_DIR/.lock.d" 2>/dev/null; exit 2
+    fi
+    if ! { rm -rf "$MC" && mv "$new" "$MC"; }; then
+      log "FATAL: could not move the new clone $new to $MC."
+      rmdir "$WORK_DIR/.lock.d" 2>/dev/null; exit 2
+    fi
+  }
   # A clone of a DIFFERENT repository must never be reused.  This directory was the mbirtorch
   # nightly's work dir while that nightly still lived in mbirjax_metrics, so an existing clone here
   # can point at the wrong origin.  Fetching into it would rebase this repository's work onto
   # another repository's history, and the re-exec below would then look for a wrapper that is not
   # there.  Replace it instead.
-  if [ -d "$MC/.git" ]; then
-    MC_ORIGIN="$(git -C "$MC" remote get-url origin 2>/dev/null || true)"
-    if [ "${MC_ORIGIN%.git}" != "${METRICS_URL%.git}" ]; then
-      log "metrics clone at $MC points at '${MC_ORIGIN:-<none>}', not '$METRICS_URL' — re-cloning."
-      rm -rf "$MC"
-    fi
-  fi
-  if [ -d "$MC/.git" ]; then
+  MC_ORIGIN=""
+  [ -d "$MC/.git" ] && MC_ORIGIN="$(git -C "$MC" remote get-url origin 2>/dev/null || true)"
+  if [ ! -d "$MC/.git" ]; then
+    log "cloning metrics -> $MC"
+    replace_metrics_clone
+  elif [ "${MC_ORIGIN%.git}" != "${METRICS_URL%.git}" ]; then
+    log "metrics clone at $MC points at '${MC_ORIGIN:-<none>}', not '$METRICS_URL' — re-cloning."
+    replace_metrics_clone
+  else
     log "updating metrics clone (fetch + rebase) -> $MC"
     if ! { git -C "$MC" fetch -q origin && git -C "$MC" pull -q --rebase --autostash; }; then
-      log "metrics clone unusable — re-cloning fresh."
-      rm -rf "$MC"
-      git clone --quiet "$METRICS_URL" "$MC" || { log "FATAL: clone metrics failed."; rmdir "$WORK_DIR/.lock.d" 2>/dev/null; exit 2; }
+      # A failed rebase stops partway.  Abort it so the old clone stays usable if the clone fails.
+      git -C "$MC" rebase --abort 2>/dev/null || true
+      log "metrics clone could not be updated — re-cloning."
+      replace_metrics_clone
     fi
-  else
-    log "cloning metrics -> $MC"
-    git clone --quiet "$METRICS_URL" "$MC" || { log "FATAL: clone metrics failed."; rmdir "$WORK_DIR/.lock.d" 2>/dev/null; exit 2; }
   fi
   exec env REG_FRESH=1 "$MC/tooling/regression/run_regression.sh"
 fi
