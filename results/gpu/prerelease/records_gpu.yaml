@@ -945,10 +945,10 @@ translation|direct_filter|15x2048x2048|2:
     date: '20260829'
     prev:
   speedup:
-    value: 1.1726335149802614
-    commit: d9e89332f80f967b4e83da5c0f7bdade6dd36b62
-    date: '20261020'
-    prev: 1.1573993535498903
+    value: 1.1871549416137583
+    commit: dfd0c2b7d73c9e37be4ce27632e3b652ea0aae82
+    date: '20261118'
+    prev: 1.1726335149802614
 translation|direct_filter|15x2048x2048|1:
   min_ms:
     value: 76.59740466624498
@@ -1534,10 +1534,10 @@ multiaxis_parallel|back|1024x1008x992|2:
     prev:
 multiaxis_parallel|back|1024x1008x992|1:
   min_ms:
-    value: 4149.081232957542
-    commit: f27ed09feb42aca5df4a5a6faf8377804741919b
-    date: '20261012'
-    prev: 4173.913369886577
+    value: 4145.320109091699
+    commit: dfd0c2b7d73c9e37be4ce27632e3b652ea0aae82
+    date: '20261118'
+    prev: 4149.081232957542
   mem_mb:
     value: 9169.4
     commit: f27ed09feb42aca5df4a5a6faf8377804741919b
@@ -1571,10 +1571,10 @@ denoiser|denoise|512x448x384|2:
     date: '20260829'
     prev:
   speedup:
-    value: 0.4457261377076395
-    commit: d9e89332f80f967b4e83da5c0f7bdade6dd36b62
-    date: '20261020'
-    prev: 0.43891348323292134
+    value: 0.454978753175689
+    commit: dfd0c2b7d73c9e37be4ce27632e3b652ea0aae82
+    date: '20261118'
+    prev: 0.4457261377076395
 denoiser|denoise|1024x1008x992|4:
   min_ms:
     value: 2044.9518969981
@@ -1587,10 +1587,10 @@ denoiser|denoise|1024x1008x992|4:
     date: '20260829'
     prev:
   speedup:
-    value: 1.4349721297397653
-    commit: 0d4ed6615e63a3a5ed6a85cc5cb6b57252fcb1f1
-    date: '20261026'
-    prev: 1.4289730421162914
+    value: 1.4363931190893129
+    commit: dfd0c2b7d73c9e37be4ce27632e3b652ea0aae82
+    date: '20261118'
+    prev: 1.4349721297397653
 denoiser|denoise|1024x1008x992|2:
   min_ms:
     value: 2186.316000064835
@@ -1603,7 +1603,7 @@ denoiser|denoise|1024x1008x992|2:
     date: '20260829'
     prev:
   speedup:
-    value: 1.969517947469101
-    commit: ebb71a1f55dada51c8dab9e4368fdbccf7c3d751
-    date: '20261015'
-    prev: 1.9293134616110919
+    value: 1.998967841549728
+    commit: dfd0c2b7d73c9e37be4ce27632e3b652ea0aae82
+    date: '20261118'
+    prev: 1.969517947469101
