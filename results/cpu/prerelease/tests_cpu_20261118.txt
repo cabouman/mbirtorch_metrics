@@ -1,0 +1,65 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/gbuzzard/.mbirtorch/regression/lib_prerelease
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 8/8 workers
+8 workers [229 items]
+
+ssss.............................sss.................................... [ 31%]
+...............................s........sss...........ssssssssssssssssss [ 62%]
+ssssssssssss..ssssssssssssssssssssssssssssss............................ [ 94%]
+.............                                                            [100%]
+=============================== warnings summary ===============================
+tests/test_device_policy.py: 28 warnings
+tests/test_adjoint.py: 28 warnings
+tests/test_demo_data.py: 14 warnings
+tests/test_denoiser.py: 14 warnings
+tests/test_prox_map.py: 14 warnings
+tests/test_mace.py: 14 warnings
+  /Users/gbuzzard/miniforge3/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_device_policy.py: 1 warning
+tests/test_recon_smoke.py: 2 warnings
+tests/test_sharding.py: 6 warnings
+tests/test_mace4d.py: 16 warnings
+  /Users/gbuzzard/.mbirtorch/regression/lib_prerelease/mbirtorch/vcd_utils.py:153: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [2] tests/test_cone_thick_slices.py:98: the Triton cone kernels need a CUDA device
+SKIPPED [1] tests/test_cone_thick_slices.py:111: the Triton cone kernels need a CUDA device
+SKIPPED [1] tests/test_cone_thick_slices.py:120: the Triton cone kernels need a CUDA device
+SKIPPED [1] tests/test_hsnt_solvers.py:170: needs CUDA
+SKIPPED [3] tests/test_kernels_sharded.py:162: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [1] tests/test_sharding.py:76: needs a CUDA device
+SKIPPED [2] tests/test_kernels_sharded.py:125: the kernel-times-sharding gate needs at least two CUDA devices
+SKIPPED [4] tests/test_triton_cone.py:92: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_cone.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_cone.py:183: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_cone.py:206: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_cone.py:230: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_cone.py:252: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_cone.py:280: the hand-written Triton kernels need a CUDA device
+SKIPPED [6] tests/test_triton_multiaxis.py:168: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_multiaxis.py:194: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_multiaxis.py:275: the hand-written Triton kernels need a CUDA device
+SKIPPED [5] tests/test_triton_multiaxis.py:398: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_multiaxis.py:420: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:454: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:502: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_multiaxis.py:552: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:115: the hand-written Triton kernels need a CUDA device
+SKIPPED [4] tests/test_triton_parallel.py:137: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_parallel.py:202: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:226: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:248: the hand-written Triton kernels need a CUDA device
+SKIPPED [2] tests/test_triton_parallel.py:280: the hand-written Triton kernels need a CUDA device
+SKIPPED [1] tests/test_triton_parallel.py:309: the hand-written Triton kernels need a CUDA device
+SKIPPED [3] tests/test_triton_parallel.py:346: the hand-written Triton kernels need a CUDA device
+================ 158 passed, 71 skipped, 137 warnings in 54.54s ================
