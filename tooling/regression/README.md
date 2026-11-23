@@ -155,7 +155,13 @@ data or source files, no symlinks escaping it).
 
 Every fact is `key=value` or `key=UNKNOWN:<reason>`; every UNKNOWN is a finding, and every
 threshold test passes only if the value parses and satisfies the rule.  Identity facts are
-compared with the previous run's file, which then advances, so a change mails once.  The report
+compared with the previous run's file, which then advances, so a change mails once.  A fact the
+previous run could not read is compared with the last value read, which an UNKNOWN fact carries
+forward as `last_read.<key>`.  A value that comes back unchanged is a recovery note, not a
+finding, and a value that comes back different is still a `changed:` finding.  A failed env check
+records why it failed: a timeout (`PROBE_ENV_TIMEOUT`, 300 s), an exit status or a signal, with
+the elapsed time and the last line printed.  That reason is the finding's hint and the
+`env.<env>.fail` fact, and every check's time is the `env.<env>.check_s` fact.  The report
 (stdout, the mail body, `history/report-<date>.txt`) has four parts, and each fact appears in
 exactly one of them: the findings, each with a hint saying what it means and what to do; a
 `checks` table with every rule and its `ok` / `FAIL` / `UNKNOWN` / `skip`; the identity facts
