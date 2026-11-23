@@ -10,7 +10,9 @@
 #     and every threshold test PASSES ONLY IF the value parses and satisfies the rule, so a check
 #     that errors can never read as a pass;
 #   * identity facts (slurm, driver, partition limits, env versions) are diffed against the
-#     previous run's facts file, which then advances — one mail per change, no committed baseline;
+#     previous run's facts file, which then advances — one mail per change, no committed baseline.
+#     A fact the previous run could not read is compared with the newest run in history/ that
+#     could; when it is unchanged, its return is a recovery note, not a finding;
 #   * nothing here changes the cluster: it reads, computes, and writes its own output files;
 #   * a scron job has a clean environment and $HOME as its cwd (Slurm ignores the user's
 #     environment), so everything below is sourced or resolved by absolute path.
@@ -35,6 +37,7 @@ log() { echo "[$(date '+%F %T')] $*"; }
 PROBE_STATUS_DIR="${PROBE_STATUS_DIR:-/depot/bouman/data/cluster_status}"
 PROBE_FALLBACK_DIR="${PROBE_FALLBACK_DIR:-$HOME/.mbirtorch/probe}"
 PROBE_ENVS="${PROBE_ENVS:-pcdrecon mbirtorch_regression}"
+PROBE_ENV_TIMEOUT_S="${PROBE_ENV_TIMEOUT_S:-300}"
 PROBE_MAIL="${PROBE_MAIL:-1}"
 PROBE_HOME_PCT_MAX="${PROBE_HOME_PCT_MAX:-80}"
 PROBE_SCRATCH_FILES_PCT_MAX="${PROBE_SCRATCH_FILES_PCT_MAX:-80}"
@@ -197,7 +200,8 @@ for e in $PROBE_ENVS; do
     for kv in python torch torch_cuda triton; do fact "env.$e.$kv" "UNKNOWN:no env"; done
     unknown "env.$e.gpu_ok" "no python at $py"
   else
-    out="$(T 300 "$py" - <<'PY' 2>&1
+    t0=$SECONDS
+    out="$(T "$PROBE_ENV_TIMEOUT_S" "$py" - <<'PY' 2>&1
 import sys
 try:
     import torch
@@ -215,6 +219,7 @@ except Exception as exc:
     sys.exit(1)
 PY
 )"
+    rc=$?; fact "env.$e.check_s" "$(( SECONDS - t0 ))"
     line="$(printf '%s\n' "$out" | grep '^PROBE_ENV ' | tail -1)"
     if [ -n "$line" ]; then
       for kv in python torch torch_cuda triton; do fact "env.$e.$kv" "$(printf '%s' "$line" | grep -oE " $kv=[^ ]+" | cut -d= -f2)"; done
@@ -222,7 +227,16 @@ PY
     else
       for kv in python torch torch_cuda triton; do fact "env.$e.$kv" "UNKNOWN:probe failed"; done
       fact "env.$e.gpu_ok" 0
-      HINT["env.$e.gpu_ok"]="$(printf '%s\n' "$out" | grep -E 'PROBE_ERR|Error|error' | tail -1 | cut -c1-160)"
+      fact "env.$e.check_rc" "$rc"
+      # A timed-out check prints nothing, so the exit code is the only evidence of a timeout.
+      # timeout(1) exits 124 after its TERM signal and 137 after the KILL that follows it.
+      case "$rc" in
+        124|137) why="timed out after $PROBE_ENV_TIMEOUT_S s (exit $rc)" ;;
+        *)       why="exited with code $rc after ${F[env.$e.check_s]} s" ;;
+      esac
+      err="$(printf '%s\n' "$out" | grep -E 'PROBE_ERR|Error|error' | tail -1 | cut -c1-160)"
+      [ -n "$err" ] || err="$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -1 | cut -c1-160)"
+      HINT["env.$e.gpu_ok"]="the env check $why${err:+; last output: $err}"
     fi
   fi
   check_eq "env.$e.gpu_ok" 1
@@ -345,13 +359,32 @@ check_eq depot_writable 1
 # ── identity diff against the previous run; the previous file then advances ──────────────────
 IDENTITY="slurm driver cuda_max partition.ai.DefaultTime partition.ai.MaxTime partition.ai.DefMemPerCPU partition.ai.MaxMemPerCPU"
 for e in $PROBE_ENVS; do IDENTITY="$IDENTITY env.$e.python env.$e.torch env.$e.torch_cuda env.$e.triton"; done
-declare -A IDWAS IDNEW   # IDWAS[key]=previous value when it changed; IDNEW[key]=1 when it had none
+declare -A IDWAS IDNEW IDREC   # IDWAS[key]=previous value when it changed; IDNEW[key]=1 when it
+                                # had none; IDREC[key]=1 when it returned unchanged from UNKNOWN
+# last_known KEY: the newest value of KEY that is not UNKNOWN in the history facts files, or "".
+# history/ holds one facts file per run, named facts-<YYYY-MM-DD>.txt, so a reverse sort is newest first.
+last_known() {
+  local f v
+  for f in $(ls -1 "$OUT"/history/facts-*.txt 2>/dev/null | sort -r); do
+    v="$(grep -m1 "^$1=" "$f" | cut -d= -f2-)"
+    case "$v" in ''|UNKNOWN:*) ;; *) printf '%s' "$v"; return 0 ;; esac
+  done
+}
 PREV="$OUT/${PROBE_CLUSTER}_facts.txt"; PREV_DATE=""
 if [ -f "$PREV" ]; then
   PREV_DATE="$(grep -m1 '^date=' "$PREV" | cut -d= -f2-)"
   for k in $IDENTITY; do
     pv="$(grep -m1 "^$k=" "$PREV" | cut -d= -f2-)"; cv="${F[$k]:-}"
     case "$cv" in UNKNOWN:*) continue;; esac
+    case "$pv" in UNKNOWN:*)
+      lv="$(last_known "$k")"
+      if [ -z "$lv" ] || [ "$lv" = "$cv" ]; then
+        IDREC[$k]=1; note "recovered: $k=$cv (UNKNOWN on the previous run: ${pv#UNKNOWN:})"
+      else
+        IDWAS[$k]="$lv"; finding "changed: $k $lv -> $cv (UNKNOWN on the previous run)"
+      fi
+      continue ;;
+    esac
     if [ -z "$pv" ]; then IDNEW[$k]=1; note "new fact: $k=$cv"
     elif [ "$pv" != "$cv" ]; then IDWAS[$k]="$pv"; finding "changed: $k $pv -> $cv"; fi
   done
@@ -383,6 +416,7 @@ mkdir -p "$OUT/history"; cp -f "$PREV" "$OUT/history/facts-$(date +%F).txt"
 idv() { local k="$1" v="${F[$1]:-}"
         if [ -n "${IDNEW[$k]:-}" ]; then printf '%s (new)' "$v"
         elif [ -n "${IDWAS[$k]:-}" ]; then printf '%s (CHANGED from %s)' "$v" "${IDWAS[$k]}"
+        elif [ -n "${IDREC[$k]:-}" ]; then printf '%s (recovered)' "$v"
         else printf '%s' "$v"; fi; }
 R=(); add() { R+=("$1"); }
 add "cluster probe: $VERDICT — $PROBE_CLUSTER $(date '+%F %T') on $(hostname -s), job ${SLURM_JOB_ID:-none}"
@@ -401,6 +435,8 @@ for e in $PROBE_ENVS; do
   add "  env.$e: python=$(idv "env.$e.python")  torch=$(idv "env.$e.torch")  torch_cuda=$(idv "env.$e.torch_cuda")  triton=$(idv "env.$e.triton")"
 done
 add ""; add "info:"
+envt=""; for e in $PROBE_ENVS; do envt="$envt  $e ${F[env.$e.check_s]:-?} s"; done
+add "  env check times (limit $PROBE_ENV_TIMEOUT_S s):$envt"
 add "  modules after the preamble: conda=${F[module.conda]:-?}  cuda=${F[module.cuda]:-?}  cudnn=${F[module.cudnn]:-?}  (default cuda module: ${F[cuda_default]:-?})"
 add "  quotas: home ${F[home_used]:-?} (${F[home_pct]:-?}%)  scratch ${F[scratch_pct]:-?}% of space, ${F[scratch_files_pct]:-?}% of files  depot ${F[depot_pct]:-?}%"
 burn="${F[burn_per_week]:-n/a}"; if is_num "$burn"; then burn="burning $burn per week"; else burn="burn rate $burn"; fi
