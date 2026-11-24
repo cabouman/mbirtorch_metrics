@@ -125,6 +125,16 @@ The canary is the measuring half, ON since 2026-09-03 on the platforms in `DEP_C
   under an unvalidated torch.  A clone or install failure is no outcome: the candidate line stays
   and tomorrow retries.  A PyPI release the pinned index does not serve is `unavailable`, retried
   nightly, and a reminder that `TORCH_INDEX_URL_<plat>` may need to move.
+- **A CUDA build change** is a move of `TORCH_INDEX_URL_<plat>` to another build (`cu130` to
+  `cu132`, say).  The next night sees that the installed torch's local label differs from the
+  index's last path part, reinstalls the ledger's torch version as the new build, and measures the
+  canary branch under it before the branch loop (`build-step`, with the test suite), choosing the
+  tip or the previous tip as the verdict run does.  A newer torch on the new index waits for the
+  next night, so the build and the version never change in one comparison.  The ledger gets no
+  line, and the step's outcome is always mailed; moving the index back undoes the change the same
+  way.  `state/<plat>/build_pending` keeps the step until it has an outcome, so a night whose
+  clone or install failed retries it.  A failed reinstall leaves the env on the old build, and it
+  is mailed and retried each night.
 - **Mail**: any new `rejected` or `unavailable` line, or a validation with a WARN, forces the
   notify mail with the gate lines.  A rejection is overridden by editing the ledger line to
   `validated` (the next start re-pins the env); a rejected version is re-tested by changing its

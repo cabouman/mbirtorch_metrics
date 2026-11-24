@@ -179,7 +179,7 @@ class Config:
     # several runs of ONE commit with different dependencies do not collide.  Generation 0 is
     # the historical name with no suffix.  run_reason records what triggered the run.
     dep_gen: int = 0
-    run_reason: str = "commit"   # "commit" | "torch-step" | "code-step" | "deps-step"
+    run_reason: str = "commit"   # "commit" | "torch-step" | "code-step" | "deps-step" | "build-step"
     torch_available: str = ""    # PyPI-latest torch at run time, when a canary reports it.  Records
                                  # what was AVAILABLE even where the install resolved to an older
                                  # torch, so the dashboard can say "X available, installed Y".
