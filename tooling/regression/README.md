@@ -155,11 +155,7 @@ data or source files, no symlinks escaping it).
 
 Every fact is `key=value` or `key=UNKNOWN:<reason>`; every UNKNOWN is a finding, and every
 threshold test passes only if the value parses and satisfies the rule.  Identity facts are
-compared with the previous run's file, which then advances, so a change mails once.  A fact that
-the previous run could not read is compared with the newest run in `history/` that could; when it
-is unchanged, its return is listed under notes as a recovery, not as a finding.  A failed env check
-records its exit code and run time, and its finding says whether it timed out
-(`PROBE_ENV_TIMEOUT_S`, 300 s by default).  The report
+compared with the previous run's file, which then advances, so a change mails once.  The report
 (stdout, the mail body, `history/report-<date>.txt`) has four parts, and each fact appears in
 exactly one of them: the findings, each with a hint saying what it means and what to do; a
 `checks` table with every rule and its `ok` / `FAIL` / `UNKNOWN` / `skip`; the identity facts
