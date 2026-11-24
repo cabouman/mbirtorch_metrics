@@ -1207,13 +1207,17 @@ function pickRun(spec, idx) {
 function depTipHtml(entries) {
   const head = (e) => e.reason === "deps-step" ? "deps refresh"
                     : e.reason === "torch-step" ? "torch bump"
+                    : e.reason === "build-step" ? "torch CUDA build change"
                     : e.reason === "code-step" ? "code + new torch" : "dep change";
   const parts = entries.slice().sort((a, b) => (a.gen || 0) - (b.gen || 0)).map((e) => {
     // Prefer "available X, installed Y" when a newer torch shipped but the install resolved to an
     // older one (held back by the env Python floor or a pyproject exclusion); else the installed-
-    // version delta between generations; else the bare installed version.
+    // version delta between generations; else the bare installed version.  A build step shows its
+    // delta first, because the build change ("+cu130 → +cu132") is what that step measured.
     let torch;
-    if (e.torch_available && e.torch_to && e.torch_available !== e.torch_to)
+    if (e.reason === "build-step" && e.torch_from && e.torch_from !== e.torch_to)
+      torch = `torch ${e.torch_from} → ${e.torch_to}`;
+    else if (e.torch_available && e.torch_to && e.torch_available !== e.torch_to)
       torch = `torch ${e.torch_available} available, installed ${e.torch_to}`;
     else if (e.torch_from && e.torch_from !== e.torch_to)
       torch = `torch ${e.torch_from} → ${e.torch_to}`;

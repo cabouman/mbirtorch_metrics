@@ -130,6 +130,31 @@ reg_pin_torch() {
   [ "$(reg_installed_torch)" = "$1" ]
 }
 
+# reg_index_build : the build that the pinned index serves, which is the last part of its URL
+# ("cu132" for .../whl/cu132), or "" when no index is pinned.  torch's local version label names
+# the same build ("2.14.1+cu132").
+reg_index_build() {
+  local idx; idx="$(reg_torch_index)"; idx="${idx%/}"
+  [ -n "$idx" ] && printf '%s' "${idx##*/}"
+  return 0
+}
+
+# reg_installed_build : the local version label of the installed torch ("cu130"), or "" when it
+# has none or does not import.
+reg_installed_build() {
+  python -c 'import torch; v = torch.__version__; print(v.split("+", 1)[1] if "+" in v else "")' 2>/dev/null || true
+}
+
+# reg_rebuild_torch VERSION : install torch VERSION as the build the pinned index serves, and
+# confirm both.  The specifier carries the local label ("torch==2.14.1+cu132"), because a plain
+# "torch==2.14.1" is already satisfied by the installed build and pip would change nothing.
+reg_rebuild_torch() {
+  local idx b; idx="$(reg_torch_index)"; b="$(reg_index_build)"
+  [ -n "$idx" ] && [ -n "$b" ] || return 1
+  pip install --index-url "$idx" "torch==$1+$b" || return 1
+  [ "$(reg_installed_torch)" = "$1" ] && [ "$(reg_installed_build)" = "$b" ]
+}
+
 reg_install_lib() {   # $1=clone dir ; caller logs/redirects/handles the exit code
   local wt="$1" idx spec
   idx="$(reg_torch_index)"; spec="$(reg_torch_spec "$wt")"

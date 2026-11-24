@@ -425,6 +425,7 @@ done
 # run further down decides BEFORE any other branch is measured.  Design record: the plans repo's
 # plans/mbirtorch_metrics/torch_version_policy_plan.md.
 NEW_TORCH=0; TORCH_EFFECTIVE=0; FULL_REFRESH=0; DEP_GEN=""; FULL_GEN=""; RAN_TORCH_STEP=0
+BUILD_STEP=0; BUILD_EFFECTIVE=0; IDX_BUILD=""; INST_BUILD=""
 PYPI_TORCH=""; IDX_TORCH=""; CANDIDATE=""; CANARY=""; CANARY_PREV=""; CANARY_TIP=""; CANARY_ADDED=0
 LEDGER_DIRTY=0; LEDGER_ALERT=""
 _newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | _ledger_vsort_desc | head -1)" = "$1" ]; }
@@ -439,8 +440,44 @@ if [ "$CANARY_ON" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
       LEDGER_ALERT="torch $PYPI_TORCH is on PyPI but the pinned wheel index ($(reg_torch_index)) stops at $IDX_TORCH: TORCH_INDEX_URL_$PLAT in run_configs.env may need to move (check the driver's CUDA ceiling in the cluster probe's facts first).  Ledger: $LEDGER"
     fi
   fi
+  # A CUDA build change comes first.  When the pinned index serves another build than the installed
+  # torch's (TORCH_INDEX_URL_<plat> moved from cu130 to cu132, say), tonight reinstalls the SAME
+  # torch version from the new index and measures the canary branch under it (build-step).  The
+  # CUDA build and the torch version then change on different nights, so each comparison changes
+  # one thing.  A newer torch on the new index waits for the next night.  state/<plat>/build_pending
+  # holds "<old build> <new build>" from the reinstall until the build step has an outcome, so a
+  # night whose build step could not clone or install retries the step the next night.
+  IDX_BUILD="$(reg_index_build)"; INST_BUILD="$(reg_installed_build)"
+  _pending="$(cat "$STATE/build_pending" 2>/dev/null || true)"
+  if [ -n "$RUNS_ON" ] && [ -n "$IDX_BUILD" ] && [ -n "$INST_BUILD" ] && [ "${REG_SMOKE:-0}" != "1" ] \
+     && { [ "$IDX_BUILD" != "$INST_BUILD" ] || [ "${_pending#* }" = "$IDX_BUILD" ]; }; then
+    BUILD_STEP=1
+    if [ "$IDX_BUILD" = "$INST_BUILD" ]; then   # reinstalled on an earlier night; measure it now
+      BUILD_EFFECTIVE=1; INST_BUILD="${_pending%% *}"
+      log "dep-canary: the build step for torch $RUNS_ON +$INST_BUILD -> +$IDX_BUILD had no outcome yet — retrying it tonight."
+    else
+      log "dep-canary: the env runs torch $RUNS_ON+$INST_BUILD, but the pinned index serves $IDX_BUILD — reinstalling torch $RUNS_ON+$IDX_BUILD ..."
+    fi
+    if [ "$BUILD_EFFECTIVE" = "1" ]; then
+      :
+    elif reg_rebuild_torch "$RUNS_ON" >"$WORK_DIR/rebuild_torch.log" 2>&1; then
+      BUILD_EFFECTIVE=1; echo "$INST_BUILD $IDX_BUILD" >"$STATE/build_pending"
+      log "dep-canary: env now runs torch $RUNS_ON+$IDX_BUILD; the build step measures it tonight, and a newer torch waits for tomorrow."
+    else
+      _inst="$(reg_installed_torch)+$(reg_installed_build)"
+      log "dep-canary: the reinstall did not land torch $RUNS_ON+$IDX_BUILD (env has $_inst; see $WORK_DIR/rebuild_torch.log) — no build step tonight; it is retried tomorrow."
+      LEDGER_ALERT="${LEDGER_ALERT:+$LEDGER_ALERT  }torch $RUNS_ON could not be reinstalled as the $IDX_BUILD build from $(reg_torch_index) (the env has $_inst; see $WORK_DIR/rebuild_torch.log).  The canary tests no newer torch until this build change lands.  To undo the build change, move TORCH_INDEX_URL_$PLAT back in action_scripts/run_configs.env."
+      if [ "$(reg_installed_torch)" != "$RUNS_ON" ]; then   # hold the invariant
+        if reg_pin_torch "$RUNS_ON" >>"$WORK_DIR/rebuild_torch.log" 2>&1; then log "dep-canary: env held at torch $RUNS_ON."
+        else log "FATAL: env left on torch $(reg_installed_torch) and could not restore $RUNS_ON — refusing to measure."; exit 2; fi
+      fi
+    fi
+  fi
   _st="$(ledger_state "$LEDGER" "$CANDIDATE")"
-  if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "$RUNS_ON" ] && [ "$_st" != "validated" ] && [ "$_st" != "rejected" ]; then NEW_TORCH=1; fi
+  if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "$RUNS_ON" ] && [ "$_st" != "validated" ] && [ "$_st" != "rejected" ]; then
+    if [ "$BUILD_STEP" = "1" ]; then log "dep-canary: torch $CANDIDATE waits until the build change is measured."
+    else NEW_TORCH=1; fi
+  fi
   _last="$(cat "$STATE/last_full_refresh" 2>/dev/null || echo 0)"
   _now="$(date +%s)"
   _days="${DEP_FULL_REFRESH_DAYS:-14}"
@@ -460,19 +497,21 @@ if [ "$CANARY_ON" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
       fi
     fi
   fi
-  # The full refresh measures the canary tip.  On a night with a new torch, the verdict run (or the
-  # loop, when the tip moved) measures that tip under the same generation number, so one record
-  # would replace the other.  The refresh therefore waits for a night without a new torch.
-  [ "$TORCH_EFFECTIVE" = "1" ] && FULL_REFRESH=0
-  if [ "$TORCH_EFFECTIVE" = "1" ] || [ "$FULL_REFRESH" = "1" ]; then
+  # The full refresh measures the canary tip.  On a night with a new torch or a build change, the
+  # verdict run or the build step (or the loop, when the tip moved) measures that tip under the same
+  # generation number, so one record would replace the other.  The refresh therefore waits for a
+  # night without either.
+  { [ "$TORCH_EFFECTIVE" = "1" ] || [ "$BUILD_EFFECTIVE" = "1" ]; } && FULL_REFRESH=0
+  if [ "$TORCH_EFFECTIVE" = "1" ] || [ "$BUILD_EFFECTIVE" = "1" ] || [ "$FULL_REFRESH" = "1" ]; then
     DEP_GEN="$(( _g + 1 ))"; FULL_GEN="$DEP_GEN"
     CANARY_TIP="$(git ls-remote "$MBIRTORCH_URL" "refs/heads/$CANARY" 2>/dev/null | awk '{print $1}')"
     CANARY_PREV="$(cat "$STATE/${CANARY//\//_}" 2>/dev/null || true)"
-    # Both changed: a new torch AND a moved canary tip.  The verdict run measures the PREVIOUS tip
-    # under the new torch, which isolates the dependency; the loop then measures the new tip.
-    [ "$TORCH_EFFECTIVE" = "1" ] && [ -n "$CANARY_PREV" ] && [ -n "$CANARY_TIP" ] && \
-      [ "$CANARY_PREV" != "$CANARY_TIP" ] && RAN_TORCH_STEP=1
-    log "dep-canary: TORCH_EFFECTIVE=$TORCH_EFFECTIVE FULL=$FULL_REFRESH  gen=$DEP_GEN  prev=${CANARY_PREV:0:8} tip=${CANARY_TIP:0:8}"
+    # Both changed: a new torch (or build) AND a moved canary tip.  The verdict run (or the build
+    # step) measures the PREVIOUS tip under the new torch, which isolates the dependency; the loop
+    # then measures the new tip.
+    { [ "$TORCH_EFFECTIVE" = "1" ] || [ "$BUILD_EFFECTIVE" = "1" ]; } && [ -n "$CANARY_PREV" ] && \
+      [ -n "$CANARY_TIP" ] && [ "$CANARY_PREV" != "$CANARY_TIP" ] && RAN_TORCH_STEP=1
+    log "dep-canary: TORCH_EFFECTIVE=$TORCH_EFFECTIVE BUILD=$BUILD_EFFECTIVE FULL=$FULL_REFRESH  gen=$DEP_GEN  prev=${CANARY_PREV:0:8} tip=${CANARY_TIP:0:8}"
     if [ "$TORCH_EFFECTIVE" = "1" ]; then   # keep the night alive for the verdict run
       _in=0; for _b in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do [ "$_b" = "$CANARY" ] && _in=1; done
       [ "$_in" = "0" ] && [ -n "$CANARY_TIP" ] && { CHANGED_BR+=("$CANARY"); CANARY_ADDED=1; }
@@ -480,11 +519,14 @@ if [ "$CANARY_ON" = "1" ] && [ -f "$HERE/check_torch_release.py" ]; then
   fi
 fi
 
-# Proceed when a branch changed, the canary has a step to run, or the ledger gained a line that
-# must be published — an `unavailable` written on a quiet night would otherwise never be committed.
-if [ "${#CHANGED_BR[@]}" -eq 0 ] && [ "$FULL_REFRESH" != "1" ]; then
+# Proceed when a branch changed, the canary has a step to run, the ledger gained a line that must
+# be published, or the canary has an alert to mail.  An `unavailable` written on a quiet night
+# would otherwise never be committed, and a failed build reinstall would never be mailed.
+if [ "${#CHANGED_BR[@]}" -eq 0 ] && [ "$FULL_REFRESH" != "1" ] && [ "$BUILD_EFFECTIVE" != "1" ]; then
   if [ "$LEDGER_DIRTY" = "1" ]; then
     log "no tracked branch changed — publishing the ledger only."
+  elif [ -n "$LEDGER_ALERT" ]; then
+    log "no tracked branch changed — mailing the dep-canary alert only."
   else
     log "no tracked branch changed — done."; exit 0
   fi
@@ -633,6 +675,38 @@ if [ "$TORCH_EFFECTIVE" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
     _keep=(); for _b in ${CHANGED_BR[@]+"${CHANGED_BR[@]}"}; do [ "$_b" = "$CANARY" ] || _keep+=("$_b"); done
     CHANGED_BR=(${_keep[@]+"${_keep[@]}"})
   fi
+fi
+
+# ── dep-canary: the build step, BEFORE the branch loop ──────────────────────────────────────
+# One measurement of the canary branch under the ledger's torch, rebuilt tonight for the CUDA that
+# the pinned index serves (see the canary block).  It takes the tip, or the previous tip when the
+# tip moved, as the verdict run does.  The ledger gets no line, because its versions did not
+# change.  The run's outcome is always mailed: the index is configuration, so a regression is
+# undone by moving TORCH_INDEX_URL_<plat> back, which the next night measures the same way.
+if [ "$BUILD_EFFECTIVE" = "1" ] && [ -n "$CANARY_TIP" ]; then
+  _sha="$CANARY_TIP"; [ "$RAN_TORCH_STEP" = "1" ] && _sha="$CANARY_PREV"
+  log "dep-canary: build step — $CANARY @ ${_sha:0:8} under torch $RUNS_ON+$IDX_BUILD (was +$INST_BUILD; build-step, gen $DEP_GEN)."
+  _rc=0; measure_commit "$CANARY" "$_sha" "$RES/${CANARY//\//_}" "$DEP_GEN" "build-step" none 1 "$CANARY_ELOG" || _rc=$?
+  if [ -z "$MC_ENGINE_RC" ]; then _res="the clone or install failed (setup rc=$_rc)"
+  elif [ "$MC_ABORTED" = "1" ] || [ "$MC_ENGINE_RC" -ge 2 ] 2>/dev/null; then _res="engine aborted (rc=$MC_ENGINE_RC)"
+  elif [ "$MC_ENGINE_RC" = "1" ]; then _res="hard gate FAIL"; GATE_FAIL=1
+  elif [ "$MC_WARN_PERF" = "1" ]; then _res="gate WARN on time/speedup/memory"
+  else _res="gate pass"; fi
+  case "${MC_TESTS_OK:-}" in 1) _res="$_res, tests passed";; 0) _res="$_res, tests FAILED";; esac
+  log "dep-canary: build step result: $_res."
+  if [ -n "$MC_ENGINE_RC" ]; then
+    rm -f "$STATE/build_pending"
+    _did="and $CANARY @ ${_sha:0:8} was measured under it: $_res."
+    _next="The canary tests a newer torch on this index from the next night."
+  else
+    _did="but $CANARY @ ${_sha:0:8} could not be measured under it: $_res."
+    _next="The build step is retried tomorrow, and a newer torch waits until it has an outcome."
+  fi
+  if [ "$MC_WARN" = "1" ] || [ "$MC_ENGINE_RC" = "1" ]; then
+    { echo "### dep-canary build step: $CANARY @ ${_sha:0:8}, torch $RUNS_ON +$INST_BUILD -> +$IDX_BUILD — gate lines"
+      grep -aE "GATE: (WARN|FAIL)|^ *(SOFT|HARD) |^[[:space:]]*warn[[:space:]]" "$CANARY_ELOG" | head -25; echo; } >>"$ALERT_BODY"
+  fi
+  LEDGER_ALERT="${LEDGER_ALERT:+$LEDGER_ALERT  }torch $RUNS_ON was rebuilt for $IDX_BUILD (was $INST_BUILD), $_did  $_next  To undo the build change, move TORCH_INDEX_URL_$PLAT back in action_scripts/run_configs.env."
 fi
 
 # dep-canary full refresh: eager-upgrade every dependency and re-measure the canary tip, which
