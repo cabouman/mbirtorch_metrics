@@ -10,7 +10,10 @@
 #     and every threshold test PASSES ONLY IF the value parses and satisfies the rule, so a check
 #     that errors can never read as a pass;
 #   * identity facts (slurm, driver, partition limits, env versions) are diffed against the
-#     previous run's facts file, which then advances — one mail per change, no committed baseline;
+#     previous run's facts file, which then advances — one mail per change, no committed baseline.
+#     A fact the previous run could not read is compared with the last value read instead, which
+#     an UNKNOWN fact carries forward as last_read.<key>: back unchanged is a recovery note, not a
+#     finding, and a change made while the fact was unreadable is still a finding;
 #   * nothing here changes the cluster: it reads, computes, and writes its own output files;
 #   * a scron job has a clean environment and $HOME as its cwd (Slurm ignores the user's
 #     environment), so everything below is sourced or resolved by absolute path.
@@ -41,6 +44,7 @@ PROBE_SCRATCH_FILES_PCT_MAX="${PROBE_SCRATCH_FILES_PCT_MAX:-80}"
 PROBE_DEPOT_PCT_MAX="${PROBE_DEPOT_PCT_MAX:-90}"
 PROBE_BALANCE_MIN="${PROBE_BALANCE_MIN:-2000}"
 PROBE_NIGHTLY_MAX_AGE_H="${PROBE_NIGHTLY_MAX_AGE_H:-48}"
+PROBE_ENV_TIMEOUT="${PROBE_ENV_TIMEOUT:-300}"
 PROBE_WWW_BASE="${PROBE_WWW_BASE:-/depot/bouman/www}"
 PROBE_WWW_ROOTS="${PROBE_WWW_ROOTS:-$PROBE_WWW_BASE/mbirtorch $PROBE_WWW_BASE/mbirjax $PROBE_WWW_BASE/pcdrecon}"
 PROBE_CLUSTER="${PROBE_CLUSTER:-gautschi}"
@@ -191,13 +195,27 @@ for f in cluster_probe.sh regression.env; do
 done
 
 # ── each env: versions (identity) and a real CUDA workload (gpu_ok) ──────────────────────────
+# A failed check records why it failed, because the probe log is overwritten every week.  The exit
+# status and the elapsed time tell a timeout (the check never finished) from a crash or a Python
+# error; env.<e>.fail keeps that reason and the last line printed in the dated facts file, and the
+# same text is the finding's hint.  env.<e>.check_s records every check's time, so a check that is
+# growing slow shows up before it fails.
+fail_reason() {   # $1=exit status  $2=elapsed s: why a check printed no PROBE_ENV line
+  case "$1" in
+    124|137) printf 'timed out after %s s' "$PROBE_ENV_TIMEOUT";;   # timeout(1): TERM, then KILL
+    0)       printf 'exited 0 after %s s without a PROBE_ENV line' "$2";;
+    *)       if [ "$1" -gt 128 ]; then printf 'was killed by signal %s after %s s' "$(( $1 - 128 ))" "$2"
+             else printf 'exited %s after %s s' "$1" "$2"; fi;;
+  esac
+}
 for e in $PROBE_ENVS; do
   py="$HOME/.conda/envs/$e/bin/python"
   if [ ! -x "$py" ]; then
     for kv in python torch torch_cuda triton; do fact "env.$e.$kv" "UNKNOWN:no env"; done
     unknown "env.$e.gpu_ok" "no python at $py"
   else
-    out="$(T 300 "$py" - <<'PY' 2>&1
+    t0="$(date +%s)"
+    out="$(T "$PROBE_ENV_TIMEOUT" "$py" - <<'PY' 2>&1
 import sys
 try:
     import torch
@@ -215,14 +233,21 @@ except Exception as exc:
     sys.exit(1)
 PY
 )"
+    rc=$?
+    fact "env.$e.check_s" "$(( $(date +%s) - t0 ))"
     line="$(printf '%s\n' "$out" | grep '^PROBE_ENV ' | tail -1)"
     if [ -n "$line" ]; then
       for kv in python torch torch_cuda triton; do fact "env.$e.$kv" "$(printf '%s' "$line" | grep -oE " $kv=[^ ]+" | cut -d= -f2)"; done
       fact "env.$e.gpu_ok" 1
     else
+      why="$(fail_reason "$rc" "${F[env.$e.check_s]}")"
+      # The last error line, else the last line of any kind: a timeout or a signal often prints nothing.
+      lastout="$(printf '%s\n' "$out" | grep -E 'PROBE_ERR|Error|error' | tail -1 | cut -c1-160)"
+      [ -n "$lastout" ] || lastout="$(printf '%s\n' "$out" | grep -v '^[[:space:]]*$' | tail -1 | cut -c1-160)"
       for kv in python torch torch_cuda triton; do fact "env.$e.$kv" "UNKNOWN:probe failed"; done
       fact "env.$e.gpu_ok" 0
-      HINT["env.$e.gpu_ok"]="$(printf '%s\n' "$out" | grep -E 'PROBE_ERR|Error|error' | tail -1 | cut -c1-160)"
+      fact "env.$e.fail" "$why; last output: ${lastout:-none}"
+      HINT["env.$e.gpu_ok"]="the check of $py $why; last output: ${lastout:-none}"
     fi
   fi
   check_eq "env.$e.gpu_ok" 1
@@ -343,18 +368,34 @@ HINT[depot_writable]="$PROBE_STATUS_DIR is not writable; this run's files went t
 check_eq depot_writable 1
 
 # ── identity diff against the previous run; the previous file then advances ──────────────────
+# A fact this run cannot read is not compared, because its UNKNOWN is already a finding.  Instead it
+# carries the last value any run read forward as last_read.<key>.  When the fact is readable again,
+# it is compared with that value: equal is a recovery (a note), and different is a change (a
+# finding), so a change made while the fact was unreadable is not lost.  A fact unreadable since
+# before last_read existed has no value to compare; it is reported as readable again (a note).
 IDENTITY="slurm driver cuda_max partition.ai.DefaultTime partition.ai.MaxTime partition.ai.DefMemPerCPU partition.ai.MaxMemPerCPU"
 for e in $PROBE_ENVS; do IDENTITY="$IDENTITY env.$e.python env.$e.torch env.$e.torch_cuda env.$e.triton"; done
-declare -A IDWAS IDNEW   # IDWAS[key]=previous value when it changed; IDNEW[key]=1 when it had none
+declare -A IDWAS IDNEW IDBACK IDNOBASE   # IDWAS[key]=the value it changed from; IDNEW[key]=1 when it
+#   had none; IDBACK[key] / IDNOBASE[key]=the previous run's UNKNOWN when the value is readable again,
+#   equal to the last value read / with no last value to compare
+RECOVERED=(); NOBASE=()
 PREV="$OUT/${PROBE_CLUSTER}_facts.txt"; PREV_DATE=""
 if [ -f "$PREV" ]; then
   PREV_DATE="$(grep -m1 '^date=' "$PREV" | cut -d= -f2-)"
   for k in $IDENTITY; do
     pv="$(grep -m1 "^$k=" "$PREV" | cut -d= -f2-)"; cv="${F[$k]:-}"
-    case "$cv" in UNKNOWN:*) continue;; esac
+    # lr = the last value any run read: the previous run's, or what it carried when it could not read it.
+    case "$pv" in UNKNOWN:*) lr="$(grep -m1 "^last_read\.$k=" "$PREV" | cut -d= -f2-)";; *) lr="$pv";; esac
+    case "$cv" in UNKNOWN:*) [ -n "$lr" ] && fact "last_read.$k" "$lr"; continue;; esac
     if [ -z "$pv" ]; then IDNEW[$k]=1; note "new fact: $k=$cv"
-    elif [ "$pv" != "$cv" ]; then IDWAS[$k]="$pv"; finding "changed: $k $pv -> $cv"; fi
+    elif [[ "$pv" != UNKNOWN:* ]]; then
+      if [ "$pv" != "$cv" ]; then IDWAS[$k]="$pv"; finding "changed: $k $pv -> $cv"; fi
+    elif [ -z "$lr" ]; then IDNOBASE[$k]="$pv"; NOBASE+=("$k")
+    elif [ "$lr" = "$cv" ]; then IDBACK[$k]="$pv"; RECOVERED+=("$k")
+    else IDWAS[$k]="$lr"; finding "changed: $k $lr -> $cv (the previous run could not read it: $pv)"; fi
   done
+  [ "${#RECOVERED[@]}" -gt 0 ] && note "recovered: readable again after the previous run's UNKNOWN, and equal to the last value read: ${RECOVERED[*]}"
+  [ "${#NOBASE[@]}" -gt 0 ] && note "readable again after the previous run's UNKNOWN, with no earlier value on record to compare: ${NOBASE[*]}"
   pb="$(grep -m1 '^slist_balance=' "$PREV" | cut -d= -f2)"
   if is_num "$pb" && is_num "${F[slist_balance]:-x}" && [ -n "$PREV_DATE" ]; then
     days=$(( ( $(date +%s) - $(date -d "$PREV_DATE" +%s 2>/dev/null || date +%s) ) / 86400 ))
@@ -383,6 +424,8 @@ mkdir -p "$OUT/history"; cp -f "$PREV" "$OUT/history/facts-$(date +%F).txt"
 idv() { local k="$1" v="${F[$1]:-}"
         if [ -n "${IDNEW[$k]:-}" ]; then printf '%s (new)' "$v"
         elif [ -n "${IDWAS[$k]:-}" ]; then printf '%s (CHANGED from %s)' "$v" "${IDWAS[$k]}"
+        elif [ -n "${IDBACK[$k]:-}" ]; then printf '%s (recovered from %s)' "$v" "${IDBACK[$k]}"
+        elif [ -n "${IDNOBASE[$k]:-}" ]; then printf '%s (readable again after %s)' "$v" "${IDNOBASE[$k]}"
         else printf '%s' "$v"; fi; }
 R=(); add() { R+=("$1"); }
 add "cluster probe: $VERDICT — $PROBE_CLUSTER $(date '+%F %T') on $(hostname -s), job ${SLURM_JOB_ID:-none}"
@@ -406,6 +449,8 @@ add "  quotas: home ${F[home_used]:-?} (${F[home_pct]:-?}%)  scratch ${F[scratch
 burn="${F[burn_per_week]:-n/a}"; if is_num "$burn"; then burn="burning $burn per week"; else burn="burn rate $burn"; fi
 add "  $PROBE_CLUSTER GPU-hours: balance ${F[slist_balance]:-?}, $burn"
 add "  nightly: queue entry \"${F[nightly.job]:-?}\"; newest log ${F[nightly.log_age_h]:-?} h old, last line: ${F[nightly.last_line]:-?}"
+ect=""; for e in $PROBE_ENVS; do ect="${ect:+$ect, }$e ${F[env.$e.check_s]:-?} s"; done
+add "  env check times (limit $PROBE_ENV_TIMEOUT s): $ect"
 add "  preamble compared with: ${F[preamble.ref]:-?}"
 add "  web roots: ${F[web.symlinks]:-?} symlinks; this run's files: $OUT"
 add ""; add "facts: $PREV"; add "log:   ${F[log]:-$WORK_DIR/probe-${SLURM_JOB_ID:-none}.log}"
