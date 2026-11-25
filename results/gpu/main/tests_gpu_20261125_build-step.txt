@@ -1,0 +1,30 @@
+Running pytest with multiple workers on all tests.
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/buzzard/.mbirtorch/regression/canary_main_d9e89332
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 4/4 workers
+4 workers [231 items]
+
+........................................................................ [ 31%]
+........................................................................ [ 62%]
+........................................................................ [ 93%]
+...............                                                          [100%]
+=============================== warnings summary ===============================
+tests/test_hsnt_solvers.py::test_compiled_and_eager_solves_agree
+tests/test_hsnt_solvers.py::test_compiled_and_eager_solves_agree
+  /home/buzzard/.conda/envs/mbirtorch_regression/lib/python3.12/site-packages/torch/_inductor/lowering.py:2487: FutureWarning: `torch._prims_common.check` is deprecated and will be removed in the future. Please use `torch._check*` functions instead.
+    check(
+
+tests/test_device_policy.py: 1 warning
+tests/test_recon_smoke.py: 2 warnings
+tests/test_sharding.py: 6 warnings
+tests/test_mace4d.py: 15 warnings
+  /home/buzzard/.mbirtorch/regression/canary_main_d9e89332/mbirtorch/vcd_utils.py:153: UserWarning: 
+  The number of partition subsets is greater than the number of pixels in the region of reconstruction.  
+  Reducing the number of subsets to equal the number of indices.
+    warnings.warn('\nThe number of partition subsets is greater than the number of '
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================= 231 passed, 26 warnings in 815.56s (0:13:35) =================
