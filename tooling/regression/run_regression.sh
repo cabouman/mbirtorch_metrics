@@ -641,8 +641,11 @@ if [ "$TORCH_EFFECTIVE" = "1" ] && [ "${REG_SMOKE:-0}" != "1" ]; then
   _ev="$(basename "${MC_RUN:-no-run-file}")"
   if [ "$MC_WARN_PERF" = "1" ]; then _ev="$_ev warn=perf"; elif [ "$MC_WARN" = "1" ]; then _ev="$_ev warn=info"; fi
   if [ "$MC_WARN" = "1" ]; then   # a soft warning is visible whichever way the verdict goes
+    # The pattern matches only the gate's own lines.  A bare "warn" also matched library warnings
+    # such as Triton 3.9's UserWarning, which every worker prints, and on 2026-11-26 those filled
+    # all 25 lines and hid the gate lines.
     { echo "### dep-canary $CANARY @ ${_sha:0:8} under torch $CANDIDATE — GATE WARN lines"
-      grep -aE "GATE: WARN|^ *SOFT |warn" "$CANARY_ELOG" | head -25; echo; } >>"$ALERT_BODY"
+      grep -aE "GATE: WARN|^ *SOFT |^[[:space:]]*warn[[:space:]]" "$CANARY_ELOG" | head -25; echo; } >>"$ALERT_BODY"
   fi
   if [ "$_outcome" = "0" ]; then
     :
@@ -873,7 +876,9 @@ if [ "$GATE_FAIL" != "0" ] || [ "$TEST_FAIL" != "0" ] || [ -n "$LEDGER_ALERT" ];
   SM="$(command -v sendmail || echo /usr/sbin/sendmail)"
   if [ -x "$SM" ]; then
     _brs="$(IFS=,; echo "${CHANGED_BR[*]}")"
-    { printf 'Subject: [mbirtorch-nightly] %s regression: %s\nTo: %s\n\n' "$PLAT" "${_brs:-<none>}" "$MAIL_TO"
+    # The body holds UTF-8 text (the em dashes of the log lines).  Without a charset header some
+    # mail readers decode it as Latin-1 and show each dash as "â€”".
+    { printf 'Subject: [mbirtorch-nightly] %s regression: %s\nTo: %s\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\n\n' "$PLAT" "${_brs:-<none>}" "$MAIL_TO"
       echo "mbirtorch nightly ($PLAT) on $(hostname) at $(date '+%F %T')."
       [ -n "$TORCHWATCH" ] && { echo; echo "$TORCHWATCH"; [ -n "$HEADROOM" ] && echo "$HEADROOM"; echo; }
       echo "Branches measured this run: ${_brs:-<none>}"
